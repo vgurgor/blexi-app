@@ -36,7 +36,7 @@ const mainMenuItems: MenuItem[] = [
     name: 'Firmalar',
     href: '/dashboard/companies',
     icon: <Building2 className="h-5 w-5" />,
-    roles: [UserRole.ADMIN, UserRole.MANAGER],
+    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.MANAGER],
   },
   {
     name: 'Apartlar',
@@ -60,13 +60,13 @@ const additionalItems: MenuItem[] = [
     name: 'Kullanıcılar',
     href: '/dashboard/users',
     icon: <Users className="h-5 w-5" />,
-    roles: [UserRole.ADMIN],
+    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
   },
   {
     name: 'Raporlar',
     href: '/dashboard/reports',
     icon: <BarChart className="h-5 w-5" />,
-    roles: [UserRole.ADMIN, UserRole.MANAGER],
+    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.MANAGER],
   },
   {
     name: 'Duyurular',
@@ -82,7 +82,7 @@ const additionalItems: MenuItem[] = [
     name: 'Ayarlar',
     href: '/dashboard/settings',
     icon: <Settings className="h-5 w-5" />,
-    roles: [UserRole.ADMIN],
+    roles: [UserRole.SUPER_ADMIN, UserRole.ADMIN],
   },
 ];
 

@@ -1,7 +1,7 @@
 import { getAuthToken } from '../auth';
 import { ApiResponse, ApiErrorResponse } from '../../types/api';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.blexi.co/api/v1';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.blexi.co';
 const API_TIMEOUT = 15000; // 15 seconds timeout
 
 export class ApiError extends Error {
@@ -70,7 +70,7 @@ export async function fetchApi<T = any>(
         status: response.status,
         success: false,
         error: data.message || 'API isteği başarısız oldu',
-        data: null,
+        data: null as T | undefined,
       };
     }
 

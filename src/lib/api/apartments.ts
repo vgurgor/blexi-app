@@ -2,21 +2,28 @@ import { api } from './base';
 import { ApiResponse, PaginatedResponse } from '../../types/api';
 import { IApartment } from '../../types/models';
 
-export interface ApartmentDto {
+// API'de tanımlanan Apart modeli
+export interface ApartDto {
   id: number;
+  firm_id: number;
   name: string;
   address: string;
-  firm_id: number;
   gender_type: 'MALE' | 'FEMALE' | 'MIXED';
   opening_date: string;
   status: 'active' | 'inactive';
   rooms_count?: number;
-  total_rooms?: number;
-  occupied_rooms?: number;
-  internet_speed?: string;
+  created_at?: string;
+  updated_at?: string;
+  // İlişkili firma bilgileri
+  firm?: {
+    id: number;
+    name: string;
+    // Diğer firma alanları
+  };
 }
 
-export interface ApartmentFilters {
+// API isteklerinde kullanılacak filtreler
+export interface ApartFilters {
   status?: 'active' | 'inactive';
   gender_type?: 'MALE' | 'FEMALE' | 'MIXED';
   firm_id?: number;
@@ -27,13 +34,17 @@ export interface ApartmentFilters {
   sort_order?: 'asc' | 'desc';
 }
 
-export interface ApartmentFeature {
+// API'de tanımlanan özellik (feature) modeli
+export interface ApartFeature {
   id: number;
   name: string;
   category: string;
+  feature_type: 'ROOM' | 'BED' | 'APART' | 'MIXED';
+  status: 'active' | 'inactive';
 }
 
-export interface ApartmentInventoryItem {
+// API'de tanımlanan envanter (inventory) modeli
+export interface ApartInventoryItem {
   id: number;
   name: string;
   quantity: number;
@@ -42,41 +53,67 @@ export interface ApartmentInventoryItem {
   updated_at: string;
 }
 
+// Yeni apart oluşturma isteği için model (API dokümanına göre)
+export interface CreateApartRequest {
+  firm_id: number;
+  name: string;
+  address: string;
+  gender_type: 'MALE' | 'FEMALE' | 'MIXED';
+  opening_date: string;
+  status: 'active' | 'inactive';
+}
+
+// Apart güncelleme isteği için model (API dokümanına göre)
+export interface UpdateApartRequest {
+  name: string;
+  address: string;
+  gender_type: 'MALE' | 'FEMALE' | 'MIXED';
+  opening_date?: string;
+  status: 'active' | 'inactive';
+}
+
 /**
- * Convert API DTO to internal model
+ * API DTO'yu iç modele dönüştür
  */
-function mapDtoToModel(dto: ApartmentDto): IApartment {
+function mapDtoToModel(dto: ApartDto): IApartment {
   return {
     id: dto.id.toString(),
     name: dto.name,
     address: dto.address,
-    city: '', // We'll need to extract this from address if available
-    zipCode: '', // We'll need to extract this from address if available
-    country: 'Turkey', // Default for now
+    city: '', // Eğer adresten çıkarmamız gerekiyorsa
+    zipCode: '', // Eğer adresten çıkarmamız gerekiyorsa
+    country: 'Turkey', // Varsayılan
     companyId: dto.firm_id.toString(),
+    genderType: dto.gender_type,
+    openingDate: dto.opening_date,
+    status: dto.status,
+    roomsCount: dto.rooms_count,
     features: [],
-    createdAt: '', // We'll need this from the API
-    updatedAt: '', // We'll need this from the API
+    createdAt: dto.created_at || '',
+    updatedAt: dto.updated_at || '',
   };
 }
 
 /**
- * Convert internal model to API DTO
+ * İç modeli API DTO'ya dönüştür
  */
-function mapModelToDto(model: Partial<IApartment>): Partial<ApartmentDto> {
+function mapModelToDto(model: Partial<IApartment>): Partial<CreateApartRequest | UpdateApartRequest> {
   return {
     name: model.name,
     address: model.address,
     firm_id: model.companyId ? parseInt(model.companyId, 10) : undefined,
-    // Add other fields as needed
+    gender_type: model.genderType as 'MALE' | 'FEMALE' | 'MIXED',
+    opening_date: model.openingDate,
+    status: model.status as 'active' | 'inactive',
   };
 }
 
-export const apartmentsApi = {
+// API endpoint'leri için apart ismi kullanılıyor, apartments değil
+export const apartsApi = {
   /**
-   * Get all apartments with optional filtering
+   * Tüm apart'ları opsiyonel filtrelerle getir
    */
-  getAll: async (filters?: ApartmentFilters): Promise<ApiResponse<IApartment[]>> => {
+  getAll: async (filters?: ApartFilters): Promise<ApiResponse<IApartment[]>> => {
     const params = new URLSearchParams();
     
     if (filters) {
@@ -87,103 +124,162 @@ export const apartmentsApi = {
       });
     }
     
-    const response = await api.get<PaginatedResponse<ApartmentDto>>(`/aparts?${params.toString()}`);
+    // API yanıt yapısı
+    interface ApartsResponse {
+      success: boolean;
+      data: {
+        data: ApartDto[];
+      };
+      message?: string;
+      status?: number;
+    }
     
-    if (response.success && response.data) {
-      const modelData: IApartment[] = response.data.data?.map(mapDtoToModel) || [];
+    const response = await api.get<ApartsResponse>(`/api/v1/aparts?${params.toString()}`);
+    
+    if (response.success && response.data?.data?.data) {
+      const modelData: IApartment[] = response.data.data.data.map(mapDtoToModel);
       return {
-        ...response,
+        success: response.success,
+        status: response.data.status || 200,
         data: modelData,
       };
     }
     
-    return response;
+    return {
+      success: false,
+      status: response.data?.status || 404,
+      error: 'Veri bulunamadı',
+      data: [],
+    };
   },
 
   /**
-   * Get apartment by ID
+   * ID'ye göre apart getir
    */
   getById: async (id: string): Promise<ApiResponse<IApartment>> => {
-    const response = await api.get<ApartmentDto>(`/aparts/${id}`);
+    // API yanıt yapısı
+    interface ApartResponse {
+      success: boolean;
+      data: ApartDto;
+      message?: string;
+      status?: number;
+    }
     
-    if (response.success && response.data) {
+    const response = await api.get<ApartResponse>(`/api/v1/aparts/${id}`);
+    
+    if (response.success && response.data?.data) {
       return {
-        ...response,
-        data: mapDtoToModel(response.data),
+        success: response.success,
+        status: response.data.status || 200,
+        data: mapDtoToModel(response.data.data),
       };
     }
     
-    return response;
+    return {
+      success: false,
+      status: response.data?.status || 404,
+      error: 'Apart bulunamadı',
+    };
   },
 
   /**
-   * Create a new apartment
+   * Yeni bir apart oluştur
    */
   create: async (data: Partial<IApartment>): Promise<ApiResponse<IApartment>> => {
-    const dto = mapModelToDto(data);
-    const response = await api.post<ApartmentDto>('/aparts', dto);
+    const dto = mapModelToDto(data) as CreateApartRequest;
     
-    if (response.success && response.data) {
+    // API yanıt yapısı
+    interface ApartResponse {
+      success: boolean;
+      data: ApartDto;
+      message?: string;
+      status?: number;
+    }
+    
+    const response = await api.post<ApartResponse>('/api/v1/aparts', dto);
+    
+    if (response.success && response.data?.data) {
       return {
-        ...response,
-        data: mapDtoToModel(response.data),
+        success: response.success,
+        status: response.data.status || 201,
+        data: mapDtoToModel(response.data.data),
       };
     }
     
-    return response;
+    return {
+      success: false,
+      status: response.data?.status || 400,
+      error: 'Apart oluşturulamadı',
+    };
   },
 
   /**
-   * Update an existing apartment
+   * Mevcut bir apart'ı güncelle
    */
   update: async (id: string, data: Partial<IApartment>): Promise<ApiResponse<IApartment>> => {
-    const dto = mapModelToDto(data);
-    const response = await api.put<ApartmentDto>(`/aparts/${id}`, dto);
+    const dto = mapModelToDto(data) as UpdateApartRequest;
     
-    if (response.success && response.data) {
+    // API yanıt yapısı
+    interface ApartResponse {
+      success: boolean;
+      data: ApartDto;
+      message?: string;
+      status?: number;
+    }
+    
+    const response = await api.put<ApartResponse>(`/api/v1/aparts/${id}`, dto);
+    
+    if (response.success && response.data?.data) {
       return {
-        ...response,
-        data: mapDtoToModel(response.data),
+        success: response.success,
+        status: response.data.status || 200,
+        data: mapDtoToModel(response.data.data),
       };
     }
     
-    return response;
+    return {
+      success: false,
+      status: response.data?.status || 400,
+      error: 'Apart güncellenemedi',
+    };
   },
 
   /**
-   * Delete an apartment
+   * Bir apart'ı sil
    */
   delete: async (id: string): Promise<ApiResponse<void>> => {
-    return api.delete(`/aparts/${id}`);
+    return api.delete(`/api/v1/aparts/${id}`);
   },
 
   /**
-   * Get apartment features
+   * Apart özelliklerini getir
    */
-  getFeatures: async (apartmentId: string): Promise<ApiResponse<ApartmentFeature[]>> => {
-    return api.get<ApartmentFeature[]>(`/aparts/${apartmentId}/features`);
+  getFeatures: async (apartId: string): Promise<ApiResponse<ApartFeature[]>> => {
+    return api.get<ApartFeature[]>(`/api/v1/aparts/${apartId}/features`);
   },
 
   /**
-   * Add a feature to an apartment
+   * Apart'a özellik ekle
    */
-  addFeature: async (apartmentId: string, featureId: string): Promise<ApiResponse<void>> => {
-    return api.post(`/aparts/${apartmentId}/features`, {
-      feature_id: featureId
-    });
+  addFeature: async (apartId: string, featureId: string): Promise<ApiResponse<void>> => {
+    return api.post(`/api/v1/aparts/${apartId}/features/${featureId}`, {});
   },
 
   /**
-   * Remove a feature from an apartment
+   * Apart'tan özellik kaldır
    */
-  removeFeature: async (apartmentId: string, featureId: string): Promise<ApiResponse<void>> => {
-    return api.delete(`/aparts/${apartmentId}/features/${featureId}`);
+  removeFeature: async (apartId: string, featureId: string): Promise<ApiResponse<void>> => {
+    return api.delete(`/api/v1/aparts/${apartId}/features/${featureId}`);
   },
 
   /**
-   * Get apartment inventory
+   * Apart envanterini getir
    */
-  getInventory: async (apartmentId: string): Promise<ApiResponse<ApartmentInventoryItem[]>> => {
-    return api.get<ApartmentInventoryItem[]>(`/aparts/${apartmentId}/inventory`);
+  getInventory: async (apartId: string): Promise<ApiResponse<ApartInventoryItem[]>> => {
+    return api.get<ApartInventoryItem[]>(`/api/v1/aparts/${apartId}/inventory`);
   },
 };
+
+// Geriye dönük uyumluluk için apartmentsApi'yi yayınlayalım
+// apartsApi doğru isimlendirme (API dokümanına uygun)
+export const apartmentsApi = apartsApi;

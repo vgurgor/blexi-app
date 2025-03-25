@@ -15,14 +15,16 @@ export default function UsersPage() {
   
   // Mock users data
   const users = [
-    { id: 1, username: 'admin', name: 'Sistem Yöneticisi', role: 'admin', createdAt: '2023-01-01' },
-    { id: 2, username: 'manager1', name: 'Ali Yılmaz', role: 'manager', createdAt: '2023-02-15' },
-    { id: 3, username: 'user1', name: 'Ayşe Demir', role: 'user', createdAt: '2023-03-20' },
-    { id: 4, username: 'user2', name: 'Mehmet Öz', role: 'user', createdAt: '2023-04-10' },
+    { id: 1, username: 'super-admin', name: 'Super Admin', role: 'super-admin', createdAt: '2023-02-15' },
+    { id: 2, username: 'admin', name: 'Sistem Yöneticisi', role: 'admin', createdAt: '2023-01-01' },
+    { id: 3, username: 'manager1', name: 'Ali Yılmaz', role: 'manager', createdAt: '2023-02-15' },
+    { id: 4, username: 'user1', name: 'Ayşe Demir', role: 'user', createdAt: '2023-03-20' },
+    { id: 5, username: 'user2', name: 'Mehmet Öz', role: 'user', createdAt: '2023-04-10' },
   ];
   
   const getRoleName = (role: string) => {
     switch (role) {
+      case 'super-admin': return 'Super Admin';
       case 'admin': return 'Yönetici';
       case 'manager': return 'Apartman Yöneticisi';
       case 'user': return 'Kullanıcı';
@@ -32,6 +34,7 @@ export default function UsersPage() {
   
   const getRoleColor = (role: string) => {
     switch (role) {
+      case 'super-admin': return 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300';
       case 'admin': return 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300';
       case 'manager': return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300';
       case 'user': return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300';

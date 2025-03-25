@@ -4,6 +4,7 @@
 
 // Define available roles
 export enum UserRole {
+  SUPER_ADMIN = 'super-admin',
   ADMIN = 'admin',
   MANAGER = 'manager',
   USER = 'user',
@@ -62,6 +63,7 @@ export enum Permission {
 
 // Define permission sets for each role
 const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
+  [UserRole.SUPER_ADMIN]: Object.values(Permission),
   [UserRole.ADMIN]: Object.values(Permission),
   [UserRole.MANAGER]: [
     // Companies
@@ -128,6 +130,8 @@ export const getPermissionsForRole = (role: UserRole): Permission[] => {
  */
 export const getRoleName = (role: UserRole): string => {
   switch (role) {
+    case UserRole.SUPER_ADMIN:
+      return 'Super Admin';
     case UserRole.ADMIN:
       return 'Yönetici';
     case UserRole.MANAGER:

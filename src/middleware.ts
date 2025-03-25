@@ -74,7 +74,7 @@ export function middleware(request: NextRequest) {
       if (!userRole) return NextResponse.next();
       
       // Admin-only paths
-      if (pathname.startsWith('/dashboard/settings') && userRole !== 'admin') {
+      if (pathname.startsWith('/dashboard/settings') && userRole !== 'super-admin' && userRole !== 'admin') {
         return NextResponse.redirect(new URL('/dashboard', request.url));
       }
       
@@ -82,7 +82,7 @@ export function middleware(request: NextRequest) {
       if (
         (pathname.startsWith('/dashboard/companies') || 
          pathname.startsWith('/dashboard/reports')) && 
-        !['admin', 'manager'].includes(userRole)
+        !['super-admin', 'admin', 'manager'].includes(userRole)
       ) {
         return NextResponse.redirect(new URL('/dashboard', request.url));
       }

@@ -1,16 +1,26 @@
 export interface IUser {
   id: string;
   username: string;
+  email: string;
   name: string;
-  role: 'admin' | 'manager' | 'user';
+  role: 'super-admin' | 'admin' | 'manager' | 'user';
   tenant_id: string;
   tenant?: {
     id: string;
     name: string;
     slug: string;
   };
-  avatar?: string;
+  person_id?: string;
+  person?: {
+    id: string;
+    name: string;
+    email?: string;
+    phone?: string;
+  };
   permissions?: string[];
+  last_login?: string;
+  email_verified_at?: string;
+  avatar?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -25,6 +35,9 @@ export interface ICompany {
   contactPerson: string;
   email: string;
   phone: string;
+  taxNumber: string;
+  taxOffice: string;
+  status: 'active' | 'inactive';
   createdAt: string;
   updatedAt: string;
 }
@@ -37,6 +50,10 @@ export interface IApartment {
   zipCode: string;
   country: string;
   companyId: string;
+  genderType: 'MALE' | 'FEMALE' | 'MIXED';
+  openingDate: string;
+  status: 'active' | 'inactive';
+  roomsCount?: number;
   features: string[];
   createdAt: string;
   updatedAt: string;
@@ -44,9 +61,14 @@ export interface IApartment {
 
 export interface IRoom {
   id: string;
-  name: string;
-  apartmentId: string;
-  size: number;
+  apart_id: string;
+  room_number: string;
+  floor: number;
+  capacity: number;
+  room_type: 'STANDARD' | 'SUITE' | 'DELUXE';
+  status: 'active' | 'inactive' | 'maintenance';
+  beds_count?: number;
+  beds?: IBed[];
   features: string[];
   createdAt: string;
   updatedAt: string;
@@ -56,6 +78,10 @@ export interface IBed {
   id: string;
   name: string;
   roomId: string;
+  bed_number: string;
+  bed_type: 'SINGLE' | 'DOUBLE' | 'BUNK';
+  status: 'available' | 'occupied' | 'maintenance' | 'reserved';
+  guest_id?: string | null;
   features: string[];
   createdAt: string;
   updatedAt: string;
@@ -63,13 +89,18 @@ export interface IBed {
 
 export interface IInventoryItem {
   id: string;
-  name: string;
-  category: string;
-  quantity: number;
-  location: 'apartment' | 'room' | 'bed';
-  locationId: string;
-  condition: 'new' | 'good' | 'fair' | 'poor';
-  notes?: string;
+  tenant_id: string;
+  assignable_type?: string;
+  assignable_id?: string;
+  item_type: 'furniture' | 'appliance' | 'linen' | 'electronic' | 'kitchenware' | 'decoration';
+  status: 'in_use' | 'in_storage' | 'maintenance' | 'disposed';
+  tracking_number: string;
+  brand: string;
+  model: string;
+  purchase_date: string;
+  warranty_end?: string;
+  location?: 'apartment' | 'room' | 'bed';
+  locationId?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -77,6 +108,9 @@ export interface IInventoryItem {
 export interface IFeature {
   id: string;
   name: string;
+  code: string;
+  type: 'ROOM' | 'BED' | 'APART' | 'MIXED';
+  status: 'active' | 'inactive';
   category: 'apartment' | 'room' | 'bed';
   createdAt: string;
   updatedAt: string;
