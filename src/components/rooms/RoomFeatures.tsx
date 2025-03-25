@@ -1,15 +1,24 @@
 import { useState, useEffect } from 'react';
+import { useAuth } from '@/lib/auth';
 import { Plus, X, Wifi, Tv, Bed, Home, Coffee, Utensils, ShowerHead as Shower, Wind, Settings } from 'lucide-react';
-import { featuresApi, type Feature } from '@/lib/api/features';
+
+interface Feature {
+  id: number;
+  name: string;
+  code: string;
+  type: 'ROOM' | 'BED' | 'APART' | 'MIXED';
+  status: 'active' | 'inactive';
+}
 
 interface RoomFeaturesProps {
   roomId: number;
 }
 
 export default function RoomFeatures({ roomId }: RoomFeaturesProps) {
+  const { token } = useAuth();
   const [features, setFeatures] = useState<Feature[]>([]);
   const [availableFeatures, setAvailableFeatures] = useState<Feature[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
   const [isRemoving, setIsRemoving] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -18,10 +27,10 @@ export default function RoomFeatures({ roomId }: RoomFeaturesProps) {
   const [success, setSuccess] = useState('');
 
   useEffect(() => {
-    if (roomId) {
+    if (roomId && token) {
       fetchRoomFeatures();
     }
-  }, [roomId]);
+  }, [roomId, token]);
 
   // Clear success message after 3 seconds
   useEffect(() => {
@@ -34,55 +43,96 @@ export default function RoomFeatures({ roomId }: RoomFeaturesProps) {
   }, [success]);
 
   const fetchRoomFeatures = async () => {
-    setIsLoading(true);
-    setError('');
+    if (!token) return;
     
+    setIsLoading(true);
     try {
-      const response = await featuresApi.getRoomFeatures(roomId);
-      setFeatures(response.data || []); // Initialize to empty array if no data
-    } catch (error: any) {
+      const response = await fetch(`https://api.blexi.co/api/v1/rooms/${roomId}/features`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      });
+
+      const data = await response.json();
+      
+      if (response.ok) {
+        setFeatures(data.data);
+      } else {
+        console.error('Özellik verileri alınamadı:', data);
+        setError('Özellikler yüklenirken bir hata oluştu.');
+      }
+    } catch (error) {
       console.error('Özellik verileri çekilirken hata oluştu:', error);
-      setError(error.message || 'Özellikler yüklenirken bir hata oluştu.');
-      setFeatures([]); // Initialize to empty array on error
+      setError('Özellikler yüklenirken bir hata oluştu.');
     } finally {
       setIsLoading(false);
     }
   };
 
   const fetchAvailableFeatures = async () => {
+    if (!token) return;
+    
     try {
-      const response = await featuresApi.getAll({
-        status: 'active',
-        per_page: 100
+      const response = await fetch('https://api.blexi.co/api/v1/features?per_page=100&status=active', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
       });
+
+      const data = await response.json();
       
-      // Filter out features that are already assigned to the room
-      // AND only include features with type 'ROOM'
-      const featureIds = features.map(f => f.id);
-      const filtered = (response.data || []).filter((f: Feature) => 
-        !featureIds.includes(f.id) && f.type === 'ROOM'
-      );
-      setAvailableFeatures(filtered);
-    } catch (error: any) {
+      if (response.ok) {
+        // Filter out features that are already assigned to the room
+        // AND only include features with type 'ROOM'
+        const featureIds = features.map(f => f.id);
+        const filtered = data.data.filter((f: Feature) => 
+          !featureIds.includes(f.id) && f.type === 'ROOM'
+        );
+        setAvailableFeatures(filtered);
+      } else {
+        console.error('Kullanılabilir özellik verileri alınamadı:', data);
+        setError('Kullanılabilir özellikler yüklenirken bir hata oluştu.');
+      }
+    } catch (error) {
       console.error('Kullanılabilir özellik verileri çekilirken hata oluştu:', error);
-      setError(error.message || 'Kullanılabilir özellikler yüklenirken bir hata oluştu.');
-      setAvailableFeatures([]); // Initialize to empty array on error
+      setError('Kullanılabilir özellikler yüklenirken bir hata oluştu.');
     }
   };
 
   const handleAddFeature = async () => {
-    if (!selectedFeature) return;
+    if (!token || !selectedFeature) return;
     
     setIsAdding(true);
     setError('');
     setSuccess('');
     
     try {
-      await featuresApi.addRoomFeature(roomId, selectedFeature);
-      setSuccess('Özellik başarıyla eklendi.');
-      fetchRoomFeatures();
-      setShowAddModal(false);
-      setSelectedFeature(null);
+      const response = await fetch(`https://api.blexi.co/api/v1/rooms/${roomId}/features`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({
+          feature_id: selectedFeature
+        })
+      });
+
+      const data = await response.json();
+      
+      if (response.ok) {
+        setSuccess('Özellik başarıyla eklendi.');
+        fetchRoomFeatures();
+        setShowAddModal(false);
+        setSelectedFeature(null);
+      } else {
+        throw new Error(data.message || 'Özellik eklenirken bir hata oluştu');
+      }
     } catch (error: any) {
       console.error('Özellik ekleme hatası:', error);
       setError(error.message || 'Özellik eklenirken bir hata oluştu');
@@ -92,14 +142,30 @@ export default function RoomFeatures({ roomId }: RoomFeaturesProps) {
   };
 
   const handleRemoveFeature = async (featureId: number) => {
+    if (!token) return;
+    
     setIsRemoving(true);
     setError('');
     setSuccess('');
     
     try {
-      await featuresApi.removeRoomFeature(roomId, featureId);
-      setSuccess('Özellik başarıyla kaldırıldı.');
-      setFeatures(prev => prev.filter(f => f.id !== featureId));
+      const response = await fetch(`https://api.blexi.co/api/v1/rooms/${roomId}/features/${featureId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      });
+
+      const data = await response.json();
+      
+      if (response.ok) {
+        setSuccess('Özellik başarıyla kaldırıldı.');
+        setFeatures(prev => prev.filter(f => f.id !== featureId));
+      } else {
+        throw new Error(data.message || 'Özellik kaldırılırken bir hata oluştu');
+      }
     } catch (error: any) {
       console.error('Özellik kaldırma hatası:', error);
       setError(error.message || 'Özellik kaldırılırken bir hata oluştu');
@@ -185,30 +251,30 @@ export default function RoomFeatures({ roomId }: RoomFeaturesProps) {
                 className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700"
               >
                 <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400">
-                    <FeatureIcon className="w-5 h-5" />
-                  </div>
+                  <FeatureIcon className="w-5 h-5 text-gray-500" />
                   <div>
-                    <p className="font-medium text-gray-900 dark:text-white">{feature.name}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                    <div className="font-medium text-gray-900 dark:text-white">
+                      {feature.name}
+                    </div>
+                    <div className="text-sm text-gray-500">
                       {getTypeLabel(feature.type)}
-                    </p>
+                    </div>
                   </div>
                 </div>
                 <button
                   onClick={() => handleRemoveFeature(feature.id)}
                   disabled={isRemoving}
-                  className="p-1.5 text-gray-500 hover:text-red-500 dark:text-gray-400 dark:hover:text-red-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                  className="p-1 text-gray-400 hover:text-red-500 transition-colors"
                 >
-                  <X className="w-4 h-4" />
+                  <X className="w-5 h-5" />
                 </button>
               </div>
             );
           })}
         </div>
       ) : (
-        <div className="py-8 text-center text-gray-500 dark:text-gray-400">
-          Bu odaya henüz özellik eklenmemiş.
+        <div className="text-center py-8 text-gray-500">
+          Henüz özellik eklenmemiş
         </div>
       )}
 

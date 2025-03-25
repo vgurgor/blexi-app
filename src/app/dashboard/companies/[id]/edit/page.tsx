@@ -4,82 +4,68 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import { ArrowLeft } from 'lucide-react';
-import { firmsApi, type Firm } from '@/lib/api/firms';
 import EditCompanyForm from '@/components/EditCompanyForm';
 import PageLoader from '@/components/PageLoader';
 
-interface EditCompanyPageProps {
-  params: { id: string };
-}
-
-export default function EditCompanyPage({ params }: EditCompanyPageProps) {
+export default function EditCompanyPage({ params }: { params: { id: string } }) {
   const router = useRouter();
-  const { isAuthenticated, checkAuth } = useAuth();
-  const [isChecking, setIsChecking] = useState(true);
+  const { isAuthenticated, token } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [company, setCompany] = useState<Firm | null>(null);
+  const [company, setCompany] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    const init = async () => {
+    const fetchCompany = async () => {
+      if (!token) return;
+      
+      setIsLoading(true);
       try {
-        const isValid = await checkAuth();
-        if (!isValid) {
-          router.replace('/auth/login');
-          return;
+        const response = await fetch(`https://api.blexi.co/api/v1/firms/${params.id}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+        });
+
+        const data = await response.json();
+        
+        if (response.ok && data.data) {
+          setCompany(data.data);
+        } else {
+          console.error('Firma detayları alınamadı:', data);
+          setError('Firma bilgileri yüklenirken bir hata oluştu.');
         }
       } catch (error) {
-        console.error('Auth kontrolü hatası:', error);
-        router.replace('/auth/login');
+        console.error('Firma detayları çekilirken hata oluştu:', error);
+        setError('Firma bilgileri yüklenirken bir hata oluştu.');
       } finally {
-        setIsChecking(false);
+        setIsLoading(false);
       }
     };
 
-    init();
-  }, [checkAuth, router]);
-
-  useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && token) {
       fetchCompany();
     }
-  }, [isAuthenticated, params.id]);
+  }, [isAuthenticated, token, params.id]);
 
-  const fetchCompany = async () => {
-    setIsLoading(true);
-    setError('');
-    
-    try {
-      const response = await firmsApi.getById(parseInt(params.id));
-      setCompany(response.data);
-    } catch (error: any) {
-      console.error('Firma detayları çekilirken hata oluştu:', error);
-      setError(error.message || 'Firma bilgileri yüklenirken bir hata oluştu.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  if (!isAuthenticated) {
+    return null;
+  }
 
   const handleSubmit = async (data: any) => {
     setIsSubmitting(true);
     try {
-      await firmsApi.update(parseInt(params.id), data);
+      // API entegrasyonu EditCompanyForm içinde yapıldı
+      console.log('Firma güncellendi:', data);
+      await new Promise(resolve => setTimeout(resolve, 500)); // Kısa bir bekleme
       router.back();
-    } catch (error: any) {
+    } catch (error) {
       console.error('Hata:', error);
-      setError(error.message || 'Firma güncellenirken bir hata oluştu');
       setIsSubmitting(false);
     }
   };
-
-  if (isChecking || !isAuthenticated) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    );
-  }
 
   if (isLoading) {
     return (

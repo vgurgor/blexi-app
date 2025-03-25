@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { useEffect } from 'react';
-import { authApi, type LoginResponse } from './api/auth';
 
 interface Tenant {
   id: number;
@@ -32,6 +31,8 @@ interface AuthState {
   checkAuth: () => Promise<boolean>;
 }
 
+const API_URL = 'https://api.blexi.co/api/v1';
+
 const authStore = create<AuthState>()(
   persist(
     (set, get) => ({
@@ -42,16 +43,29 @@ const authStore = create<AuthState>()(
 
       login: async (username: string, password: string) => {
         try {
-          const response = await authApi.login(username, password);
-          
+          const response = await fetch(`${API_URL}/auth/login`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+            body: JSON.stringify({ username, password }),
+          });
+
+          const data = await response.json();
+
+          if (!response.ok || !data.success) {
+            throw new Error(data.message || 'Giriş başarısız');
+          }
+
           set({
-            token: response.token,
-            user: response.user,
-            tenant: response.user.tenant,
+            token: data.data.token,
+            user: data.data.user,
+            tenant: data.data.user.tenant,
             isAuthenticated: true,
           });
 
-          return response;
+          return data.data;
         } catch (error: any) {
           set({ token: null, user: null, tenant: null, isAuthenticated: false });
           throw error;
@@ -63,11 +77,24 @@ const authStore = create<AuthState>()(
         if (!state.token) return false;
 
         try {
-          const user = await authApi.me();
-          
+          const response = await fetch(`${API_URL}/auth/me`, {
+            headers: {
+              'Authorization': `Bearer ${state.token}`,
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+          });
+
+          const data = await response.json();
+
+          if (!response.ok || !data.success) {
+            set({ token: null, user: null, tenant: null, isAuthenticated: false });
+            return false;
+          }
+
           set({ 
-            user, 
-            tenant: user.tenant,
+            user: data.data, 
+            tenant: data.data.tenant,
             isAuthenticated: true 
           });
           return true;
@@ -81,7 +108,14 @@ const authStore = create<AuthState>()(
         const state = get();
         try {
           if (state.token) {
-            await authApi.logout();
+            await fetch(`${API_URL}/auth/logout`, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${state.token}`,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+              },
+            });
           }
         } catch (error) {
           console.error('Logout error:', error);

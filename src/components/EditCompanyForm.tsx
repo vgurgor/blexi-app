@@ -2,15 +2,27 @@
 
 import { useState, useEffect } from 'react';
 import { Building, MapPin, Phone, Mail, FileText, Briefcase } from 'lucide-react';
-import { firmsApi, type Firm } from '@/lib/api/firms';
+import { useAuth } from '@/lib/auth';
+
+interface Company {
+  id: number;
+  name: string;
+  address: string | null;
+  phone: string | null;
+  email: string | null;
+  tax_number: string;
+  tax_office: string | null;
+  status: 'active' | 'inactive';
+}
 
 interface EditCompanyFormProps {
-  company: Firm;
+  company: Company;
   onSubmit: (data: any) => void;
 }
 
 export default function EditCompanyForm({ company, onSubmit }: EditCompanyFormProps) {
-  const [formData, setFormData] = useState<Partial<Firm>>({
+  const { token } = useAuth();
+  const [formData, setFormData] = useState({
     name: '',
     tax_number: '',
     address: '',
@@ -20,36 +32,99 @@ export default function EditCompanyForm({ company, onSubmit }: EditCompanyFormPr
     status: 'active'
   });
   const [error, setError] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    // Initialize form with company data
+    // Fetch company details if not provided completely
+    const fetchCompanyDetails = async () => {
+      if (!token) return;
+      
+      setIsLoading(true);
+      try {
+        const response = await fetch(`https://api.blexi.co/api/v1/firms/${company.id}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+        });
+
+        const data = await response.json();
+        
+        if (response.ok && data.data) {
+          setFormData({
+            name: data.data.name || '',
+            tax_number: data.data.tax_number || '',
+            address: data.data.address || '',
+            phone: data.data.phone || '',
+            email: data.data.email || '',
+            tax_office: data.data.tax_office || '',
+            status: data.data.status || 'active'
+          });
+        } else {
+          console.error('Firma detayları alınamadı:', data);
+          setError('Firma bilgileri yüklenirken bir hata oluştu.');
+        }
+      } catch (error) {
+        console.error('Firma detayları çekilirken hata oluştu:', error);
+        setError('Firma bilgileri yüklenirken bir hata oluştu.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    // Initialize form with provided company data
     setFormData({
-      name: company.name,
-      tax_number: company.tax_number,
-      tax_office: company.tax_office,
-      address: company.address,
-      phone: company.phone,
-      email: company.email,
-      status: company.status
+      name: company.name || '',
+      tax_number: company.tax_number || '',
+      address: company.address || '',
+      phone: company.phone || '',
+      email: company.email || '',
+      tax_office: company.tax_office || '',
+      status: company.status || 'active'
     });
-  }, [company]);
+
+    // If tax_number is missing, fetch complete details
+    if (!company.tax_number) {
+      fetchCompanyDetails();
+    }
+  }, [company, token]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    setIsSubmitting(true);
     
     try {
-      const response = await firmsApi.update(company.id, formData);
-      onSubmit(response.data);
+      const response = await fetch(`https://api.blexi.co/api/v1/firms/${company.id}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify(formData)
+      });
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || 'Firma güncellenirken bir hata oluştu');
+      }
+      
+      onSubmit(data.data);
     } catch (error: any) {
       console.error('Firma güncelleme hatası:', error);
       setError(error.message || 'Firma güncellenirken bir hata oluştu');
-    } finally {
-      setIsSubmitting(false);
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center py-12">
+        <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -73,7 +148,6 @@ export default function EditCompanyForm({ company, onSubmit }: EditCompanyFormPr
               placeholder="Örnek Firma A.Ş."
               className="w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
               required
-              disabled={isSubmitting}
             />
           </div>
         </div>
@@ -91,7 +165,6 @@ export default function EditCompanyForm({ company, onSubmit }: EditCompanyFormPr
               placeholder="1234567890"
               className="w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
               required
-              disabled={isSubmitting}
             />
           </div>
         </div>
@@ -104,11 +177,10 @@ export default function EditCompanyForm({ company, onSubmit }: EditCompanyFormPr
             <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
               type="text"
-              value={formData.tax_office || ''}
+              value={formData.tax_office}
               onChange={(e) => setFormData({ ...formData, tax_office: e.target.value })}
               placeholder="Kadıköy Vergi Dairesi"
               className="w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
-              disabled={isSubmitting}
             />
           </div>
         </div>
@@ -121,11 +193,10 @@ export default function EditCompanyForm({ company, onSubmit }: EditCompanyFormPr
             <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
               type="text"
-              value={formData.address || ''}
+              value={formData.address}
               onChange={(e) => setFormData({ ...formData, address: e.target.value })}
               placeholder="Örnek Mah. Test Sok. No:1 Kadıköy/İstanbul"
               className="w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
-              disabled={isSubmitting}
             />
           </div>
         </div>
@@ -138,11 +209,10 @@ export default function EditCompanyForm({ company, onSubmit }: EditCompanyFormPr
             <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
               type="tel"
-              value={formData.phone || ''}
+              value={formData.phone}
               onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
               placeholder="+90 555 123 4567"
               className="w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
-              disabled={isSubmitting}
             />
           </div>
         </div>
@@ -155,11 +225,10 @@ export default function EditCompanyForm({ company, onSubmit }: EditCompanyFormPr
             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
               type="email"
-              value={formData.email || ''}
+              value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               placeholder="info@ornekfirma.com"
               className="w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
-              disabled={isSubmitting}
             />
           </div>
         </div>
@@ -170,10 +239,9 @@ export default function EditCompanyForm({ company, onSubmit }: EditCompanyFormPr
           </label>
           <select
             value={formData.status}
-            onChange={(e) => setFormData({ ...formData, status: e.target.value as 'active' | 'inactive' })}
+            onChange={(e) => setFormData({ ...formData, status: e.target.value })}
             className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
             required
-            disabled={isSubmitting}
           >
             <option value="active">Aktif</option>
             <option value="inactive">Pasif</option>
@@ -184,17 +252,9 @@ export default function EditCompanyForm({ company, onSubmit }: EditCompanyFormPr
       <div className="flex justify-end gap-3">
         <button
           type="submit"
-          disabled={isSubmitting}
-          className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors flex items-center gap-2"
+          className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
         >
-          {isSubmitting ? (
-            <>
-              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              <span>Kaydediliyor...</span>
-            </>
-          ) : (
-            <span>Değişiklikleri Kaydet</span>
-          )}
+          Değişiklikleri Kaydet
         </button>
       </div>
     </form>

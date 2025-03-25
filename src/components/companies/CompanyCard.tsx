@@ -1,15 +1,33 @@
 'use client';
 
 import { useState } from 'react';
-import { Building, MapPin, Phone, Mail, Edit, MoreHorizontal, Trash2, Tag, Package, Building2 } from 'lucide-react';
+import { Building, MapPin, Phone, Mail, Edit, MoreHorizontal, Building2, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import MoreActionsDropdown from '../MoreActionsDropdown';
 import { useAuth } from '@/lib/auth';
 import DeleteConfirmationModal from '../DeleteConfirmationModal';
-import { firmsApi, type Firm } from '@/lib/api/firms';
 
 interface CompanyCardProps {
-  company: Firm;
+  company: {
+    id: number;
+    name: string;
+    address: string | null;
+    phone: string | null;
+    email: string | null;
+    status: 'active' | 'inactive';
+    aparts_count: number;
+    aparts: {
+      id: number;
+      firm_id: number;
+      name: string;
+      address: string;
+      gender_type: string;
+      opening_date: string;
+      status: string;
+      created_at: string;
+      updated_at: string;
+    }[];
+  };
   onStatusChange: (id: number, status: 'active' | 'inactive') => void;
   onDelete: (id: number) => void;
 }
@@ -34,9 +52,23 @@ export default function CompanyCard({ company, onStatusChange, onDelete }: Compa
     setDeleteError('');
     
     try {
-      await firmsApi.delete(company.id);
-      onDelete(company.id);
-      setShowDeleteModal(false);
+      const response = await fetch(`https://api.blexi.co/api/v1/firms/${company.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      });
+
+      const data = await response.json();
+      
+      if (response.ok) {
+        onDelete(company.id);
+        setShowDeleteModal(false);
+      } else {
+        throw new Error(data.message || 'Firma silinirken bir hata oluştu');
+      }
     } catch (error: any) {
       console.error('Firma silme hatası:', error);
       setDeleteError(error.message || 'Firma silinirken bir hata oluştu');

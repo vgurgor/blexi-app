@@ -2,14 +2,11 @@
 
 import { useState } from 'react';
 import { Building, MapPin, Phone, Mail, FileText, Briefcase } from 'lucide-react';
-import { firmsApi, type Firm } from '@/lib/api/firms';
+import { useAuth } from '@/lib/auth';
 
-interface NewCompanyFormProps {
-  onSubmit: (data: any) => void;
-}
-
-export default function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
-  const [formData, setFormData] = useState<Partial<Firm>>({
+export default function NewCompanyForm({ onSubmit }: { onSubmit: (data: any) => void }) {
+  const { token } = useAuth();
+  const [formData, setFormData] = useState({
     name: '',
     tax_number: '',
     address: '',
@@ -19,21 +16,32 @@ export default function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
     status: 'active'
   });
   const [error, setError] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    setIsSubmitting(true);
     
     try {
-      const response = await firmsApi.create(formData);
-      onSubmit(response.data);
+      const response = await fetch('https://api.blexi.co/api/v1/firms', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify(formData)
+      });
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || 'Firma eklenirken bir hata oluştu');
+      }
+      
+      onSubmit(data.data);
     } catch (error: any) {
       console.error('Firma ekleme hatası:', error);
       setError(error.message || 'Firma eklenirken bir hata oluştu');
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -59,7 +67,6 @@ export default function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
               placeholder="Örnek Firma A.Ş."
               className="w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
               required
-              disabled={isSubmitting}
             />
           </div>
         </div>
@@ -77,7 +84,6 @@ export default function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
               placeholder="1234567890"
               className="w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
               required
-              disabled={isSubmitting}
             />
           </div>
         </div>
@@ -90,11 +96,10 @@ export default function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
             <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
               type="text"
-              value={formData.tax_office || ''}
+              value={formData.tax_office}
               onChange={(e) => setFormData({ ...formData, tax_office: e.target.value })}
               placeholder="Kadıköy Vergi Dairesi"
               className="w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
-              disabled={isSubmitting}
             />
           </div>
         </div>
@@ -107,11 +112,10 @@ export default function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
             <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
               type="text"
-              value={formData.address || ''}
+              value={formData.address}
               onChange={(e) => setFormData({ ...formData, address: e.target.value })}
               placeholder="Örnek Mah. Test Sok. No:1 Kadıköy/İstanbul"
               className="w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
-              disabled={isSubmitting}
             />
           </div>
         </div>
@@ -124,11 +128,10 @@ export default function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
             <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
               type="tel"
-              value={formData.phone || ''}
+              value={formData.phone}
               onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
               placeholder="+90 555 123 4567"
               className="w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
-              disabled={isSubmitting}
             />
           </div>
         </div>
@@ -141,11 +144,10 @@ export default function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
               type="email"
-              value={formData.email || ''}
+              value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               placeholder="info@ornekfirma.com"
               className="w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
-              disabled={isSubmitting}
             />
           </div>
         </div>
@@ -156,10 +158,9 @@ export default function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
           </label>
           <select
             value={formData.status}
-            onChange={(e) => setFormData({ ...formData, status: e.target.value as 'active' | 'inactive' })}
+            onChange={(e) => setFormData({ ...formData, status: e.target.value })}
             className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
             required
-            disabled={isSubmitting}
           >
             <option value="active">Aktif</option>
             <option value="inactive">Pasif</option>
@@ -170,17 +171,9 @@ export default function NewCompanyForm({ onSubmit }: NewCompanyFormProps) {
       <div className="flex justify-end gap-3">
         <button
           type="submit"
-          disabled={isSubmitting}
-          className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors flex items-center gap-2"
+          className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
         >
-          {isSubmitting ? (
-            <>
-              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              <span>Ekleniyor...</span>
-            </>
-          ) : (
-            <span>Firma Ekle</span>
-          )}
+          Firma Ekle
         </button>
       </div>
     </form>

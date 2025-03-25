@@ -4,12 +4,37 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import { Settings, Plus, Edit, Trash2, Search, Filter, ArrowLeft, Wifi, Tv, Bed, Home, Coffee, Utensils, ShowerHead as Shower, Wind, Check, X } from 'lucide-react';
-import { featuresApi, type Feature } from '@/lib/api/features';
 import DeleteConfirmationModal from '@/components/DeleteConfirmationModal';
+
+interface Feature {
+  id: number;
+  name: string;
+  code: string;
+  type: 'ROOM' | 'BED' | 'APART' | 'MIXED';
+  status: 'active' | 'inactive';
+  assignments_count?: number;
+  created_at: string;
+  updated_at: string;
+}
+
+interface PaginationMeta {
+  current_page: number;
+  from: number;
+  last_page: number;
+  links: Array<{
+    url: string | null;
+    label: string;
+    active: boolean;
+  }>;
+  path: string;
+  per_page: number;
+  to: number;
+  total: number;
+}
 
 export default function FeaturesPage() {
   const router = useRouter();
-  const { isAuthenticated, checkAuth } = useAuth();
+  const { isAuthenticated, checkAuth, token } = useAuth();
   const [isChecking, setIsChecking] = useState(true);
   const [features, setFeatures] = useState<Feature[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -17,7 +42,7 @@ export default function FeaturesPage() {
   const [selectedType, setSelectedType] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
-  const [paginationMeta, setPaginationMeta] = useState<any>(null);
+  const [paginationMeta, setPaginationMeta] = useState<PaginationMeta | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [featureToDelete, setFeatureToDelete] = useState<Feature | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -29,8 +54,8 @@ export default function FeaturesPage() {
     id: 0,
     name: '',
     code: '',
-    type: 'ROOM' as const,
-    status: 'active' as const
+    type: 'ROOM',
+    status: 'active'
   });
   const [formErrors, setFormErrors] = useState({
     name: '',
@@ -40,7 +65,6 @@ export default function FeaturesPage() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
-  const [error, setError] = useState('');
 
   useEffect(() => {
     const init = async () => {
@@ -62,10 +86,10 @@ export default function FeaturesPage() {
   }, [checkAuth, router]);
 
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && token) {
       fetchFeatures();
     }
-  }, [isAuthenticated, currentPage, selectedType, selectedStatus]);
+  }, [isAuthenticated, token, currentPage, selectedType, selectedStatus]);
 
   // Reset success state when modal is closed
   useEffect(() => {
@@ -75,81 +99,139 @@ export default function FeaturesPage() {
   }, [showAddEditModal]);
 
   const fetchFeatures = async () => {
-    setIsLoading(true);
-    setError('');
+    if (!token) return;
     
+    setIsLoading(true);
     try {
-      const filters = {
-        page: currentPage,
-        per_page: 10,
-        ...(selectedType !== 'all' && { type: selectedType }),
-        ...(selectedStatus !== 'all' && { status: selectedStatus })
-      };
+      let url = 'https://api.blexi.co/api/v1/features';
+      let queryParams = new URLSearchParams();
+      
+      queryParams.append('page', currentPage.toString());
+      queryParams.append('per_page', '10');
+      
+      if (selectedType !== 'all') {
+        queryParams.append('type', selectedType);
+      }
+      
+      if (selectedStatus !== 'all') {
+        queryParams.append('status', selectedStatus);
+      }
+      
+      const response = await fetch(`${url}?${queryParams.toString()}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      });
 
-      const response = await featuresApi.getAll(filters);
-      setFeatures(response.data || []);
-      setPaginationMeta(response.meta);
-    } catch (error: any) {
-      console.error('Özellik verileri çekilirken hata oluştu:', error);
-      setError(error.message || 'Özellikler yüklenirken bir hata oluştu');
-      setFeatures([]); // Initialize to empty array on error
+      const data = await response.json();
+      
+      if (response.ok) {
+        setFeatures(data.data);
+        
+        // Set pagination meta
+        if (data.meta) {
+          setPaginationMeta(data.meta);
+        }
+      } else {
+        console.error('Veri çekme hatası:', data);
+      }
+    } catch (error) {
+      console.error('Veri çekilirken hata oluştu:', error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!validateForm()) {
-      return;
-    }
-    
-    setIsSubmitting(true);
-    setSubmitSuccess(false);
-    
-    try {
-      if (isEditing && currentFeature) {
-        await featuresApi.update(currentFeature.id, formData);
-      } else {
-        await featuresApi.create(formData);
-      }
-      
-      setSubmitSuccess(true);
-      fetchFeatures(); // Refresh the list
-      
-      // Close modal after a short delay
-      setTimeout(() => {
-        setShowAddEditModal(false);
-      }, 1500);
-    } catch (error: any) {
-      console.error('Form gönderme hatası:', error);
-      setFormErrors({
-        ...formErrors,
-        name: error.message || 'İşlem sırasında bir hata oluştu'
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
+  const handlePageChange = (page: number) => {
+    if (page < 1 || (paginationMeta && page > paginationMeta.last_page)) return;
+    setCurrentPage(page);
+  };
+
+  const handleDeleteClick = (feature: Feature) => {
+    setFeatureToDelete(feature);
+    setShowDeleteModal(true);
   };
 
   const handleDeleteFeature = async () => {
-    if (!featureToDelete) return;
+    if (!token || !featureToDelete) return;
     
     setIsDeleting(true);
     setDeleteError('');
     
     try {
-      await featuresApi.delete(featureToDelete.id);
-      setFeatures(prev => prev.filter(f => f.id !== featureToDelete.id));
-      setShowDeleteModal(false);
-      fetchFeatures(); // Refresh the list
+      const response = await fetch(`https://api.blexi.co/api/v1/features/${featureToDelete.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        setFeatures(prev => prev.filter(f => f.id !== featureToDelete.id));
+        setShowDeleteModal(false);
+        fetchFeatures(); // Refresh the list
+      } else {
+        const data = await response.json();
+        throw new Error(data.message || 'Özellik silinirken bir hata oluştu');
+      }
     } catch (error: any) {
       console.error('Özellik silme hatası:', error);
       setDeleteError(error.message || 'Özellik silinirken bir hata oluştu');
     } finally {
       setIsDeleting(false);
     }
+  };
+
+  const handleAddClick = () => {
+    setIsEditing(false);
+    setCurrentFeature(null);
+    setFormData({
+      id: 0,
+      name: '',
+      code: '',
+      type: 'ROOM',
+      status: 'active'
+    });
+    setFormErrors({
+      name: '',
+      code: '',
+      type: '',
+      status: ''
+    });
+    setSubmitSuccess(false); // Reset success state
+    setShowAddEditModal(true);
+  };
+
+  const handleEditClick = (feature: Feature) => {
+    if (!feature) return;
+    
+    setIsEditing(true);
+    setCurrentFeature(feature);
+    setFormData({
+      id: feature.id,
+      name: feature.name,
+      code: feature.code,
+      type: feature.type,
+      status: feature.status
+    });
+    setFormErrors({
+      name: '',
+      code: '',
+      type: '',
+      status: ''
+    });
+    setSubmitSuccess(false); // Reset success state
+    setShowAddEditModal(true);
+  };
+
+  const handleCloseModal = () => {
+    if (isSubmitting) return;
+    setShowAddEditModal(false);
+    setSubmitSuccess(false); // Reset success state when closing modal
   };
 
   const validateForm = () => {
@@ -178,9 +260,73 @@ export default function FeaturesPage() {
     return valid;
   };
 
-  const handlePageChange = (page: number) => {
-    if (page < 1 || (paginationMeta && page > paginationMeta.last_page)) return;
-    setCurrentPage(page);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+    
+    setIsSubmitting(true);
+    setSubmitSuccess(false);
+    
+    try {
+      let url = 'https://api.blexi.co/api/v1/features';
+      let method = 'POST';
+      
+      // Create a clean request object without the id field
+      const { id, ...requestData } = formData;
+      
+      if (isEditing && currentFeature) {
+        url = `${url}/${currentFeature.id}`;
+        method = 'PUT';
+      }
+      
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify(requestData)
+      });
+
+      const data = await response.json();
+      
+      if (response.ok) {
+        setSubmitSuccess(true);
+        fetchFeatures(); // Refresh the list
+        
+        // Close modal after a short delay
+        setTimeout(() => {
+          setShowAddEditModal(false);
+        }, 1500);
+      } else {
+        // Handle validation errors from the server
+        if (data.errors) {
+          const serverErrors = {
+            name: data.errors.name?.[0] || '',
+            code: data.errors.code?.[0] || '',
+            type: data.errors.type?.[0] || '',
+            status: data.errors.status?.[0] || ''
+          };
+          setFormErrors(serverErrors);
+        } else {
+          throw new Error(data.message || 'İşlem sırasında bir hata oluştu');
+        }
+      }
+    } catch (error: any) {
+      console.error('Form gönderme hatası:', error);
+      // Show a more user-friendly error message
+      const errorMessage = error?.message || 'İşlem sırasında bir hata oluştu. Lütfen tekrar deneyin.';
+      setFormErrors({
+        ...formErrors,
+        name: errorMessage
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const getFeatureIcon = (type: string, code: string) => {
@@ -212,22 +358,25 @@ export default function FeaturesPage() {
     }
   };
 
-  // Filter features by search term
-  const filteredFeatures = features?.filter(feature => {
+  const filteredFeatures = features.filter(feature => {
     if (!searchTerm) return true;
     
     return (
       feature.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       feature.code.toLowerCase().includes(searchTerm.toLowerCase())
     );
-  }) || [];
+  });
 
-  if (isChecking || !isAuthenticated) {
+  if (isChecking) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
+  }
+
+  if (!isAuthenticated) {
+    return null;
   }
 
   return (
@@ -244,13 +393,6 @@ export default function FeaturesPage() {
             Özellik Yönetimi
           </h1>
         </div>
-
-        {/* Error Message */}
-        {error && (
-          <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-600 dark:text-red-400">
-            {error}
-          </div>
-        )}
 
         {/* Search and Filters */}
         <div className="mb-6 flex flex-col md:flex-row gap-4">
@@ -289,25 +431,7 @@ export default function FeaturesPage() {
             </select>
             
             <button
-              onClick={() => {
-                setIsEditing(false);
-                setCurrentFeature(null);
-                setFormData({
-                  id: 0,
-                  name: '',
-                  code: '',
-                  type: 'ROOM',
-                  status: 'active'
-                });
-                setFormErrors({
-                  name: '',
-                  code: '',
-                  type: '',
-                  status: ''
-                });
-                setSubmitSuccess(false);
-                setShowAddEditModal(true);
-              }}
+              onClick={handleAddClick}
               className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg shadow-md shadow-blue-500/20 hover:shadow-lg hover:shadow-blue-500/30 transition-all"
             >
               <Plus className="w-5 h-5" />
@@ -373,35 +497,14 @@ export default function FeaturesPage() {
                             <td className="px-6 py-4 whitespace-nowrap text-right">
                               <div className="flex justify-end gap-2">
                                 <button
-                                  onClick={() => {
-                                    setIsEditing(true);
-                                    setCurrentFeature(feature);
-                                    setFormData({
-                                      id: feature.id,
-                                      name: feature.name,
-                                      code: feature.code,
-                                      type: feature.type,
-                                      status: feature.status
-                                    });
-                                    setFormErrors({
-                                      name: '',
-                                      code: '',
-                                      type: '',
-                                      status: ''
-                                    });
-                                    setSubmitSuccess(false);
-                                    setShowAddEditModal(true);
-                                  }}
+                                  onClick={() => handleEditClick(feature)}
                                   className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                                   title="Düzenle"
                                 >
                                   <Edit className="w-5 h-5 text-gray-500 dark:text-gray-400" />
                                 </button>
                                 <button
-                                  onClick={() => {
-                                    setFeatureToDelete(feature);
-                                    setShowDeleteModal(true);
-                                  }}
+                                  onClick={() => handleDeleteClick(feature)}
                                   className="p-2 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-lg transition-colors"
                                   title="Sil"
                                 >
@@ -491,7 +594,7 @@ export default function FeaturesPage() {
           {/* Backdrop */}
           <div 
             className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
-            onClick={() => !isSubmitting && setShowAddEditModal(false)}
+            onClick={handleCloseModal}
           />
 
           {/* Modal */}
@@ -503,7 +606,7 @@ export default function FeaturesPage() {
                   {isEditing ? 'Özellik Düzenle' : 'Yeni Özellik Ekle'}
                 </h3>
                 <button
-                  onClick={() => !isSubmitting && setShowAddEditModal(false)}
+                  onClick={handleCloseModal}
                   disabled={isSubmitting}
                   className="p-1 rounded-md text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                 >
@@ -533,7 +636,7 @@ export default function FeaturesPage() {
                         value={formData.name}
                         onChange={(e) => setFormData({...formData, name: e.target.value})}
                         className={`w-full px-4 py-2 bg-white dark:bg-gray-800 border ${
-                          formErrors.name ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'
+                          formErrors.name ? 'border-red-500 dark:border-red-500' : 'border-gray-200 dark:border-gray-700'
                         } rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all`}
                         placeholder="Wi-Fi"
                         disabled={isSubmitting}
@@ -552,7 +655,7 @@ export default function FeaturesPage() {
                         value={formData.code}
                         onChange={(e) => setFormData({...formData, code: e.target.value.toUpperCase()})}
                         className={`w-full px-4 py-2 bg-white dark:bg-gray-800 border ${
-                          formErrors.code ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'
+                          formErrors.code ? 'border-red-500 dark:border-red-500' : 'border-gray-200 dark:border-gray-700'
                         } rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all`}
                         placeholder="WIFI"
                         disabled={isSubmitting}
@@ -571,9 +674,9 @@ export default function FeaturesPage() {
                       </label>
                       <select
                         value={formData.type}
-                        onChange={(e) => setFormData({...formData, type: e.target.value as any})}
+                        onChange={(e) => setFormData({...formData, type: e.target.value})}
                         className={`w-full px-4 py-2 bg-white dark:bg-gray-800 border ${
-                          formErrors.type ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'
+                          formErrors.type ? 'border-red-500 dark:border-red-500' : 'border-gray-200 dark:border-gray-700'
                         } rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all`}
                         disabled={isSubmitting}
                       >
@@ -593,9 +696,9 @@ export default function FeaturesPage() {
                       </label>
                       <select
                         value={formData.status}
-                        onChange={(e) => setFormData({...formData, status: e.target.value as any})}
+                        onChange={(e) => setFormData({...formData, status: e.target.value})}
                         className={`w-full px-4 py-2 bg-white dark:bg-gray-800 border ${
-                          formErrors.status ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'
+                          formErrors.status ? 'border-red-500 dark:border-red-500' : 'border-gray-200 dark:border-gray-700'
                         } rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all`}
                         disabled={isSubmitting}
                       >
@@ -614,7 +717,7 @@ export default function FeaturesPage() {
               {!submitSuccess && (
                 <div className="flex justify-end gap-3 p-4 bg-gray-50 dark:bg-gray-800/80 border-t border-gray-200 dark:border-gray-700">
                   <button
-                    onClick={() => setShowAddEditModal(false)}
+                    onClick={handleCloseModal}
                     disabled={isSubmitting}
                     className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
                   >

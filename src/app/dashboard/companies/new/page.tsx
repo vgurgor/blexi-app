@@ -1,58 +1,33 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import { ArrowLeft } from 'lucide-react';
-import { firmsApi } from '@/lib/api/firms';
 import NewCompanyForm from '@/components/NewCompanyForm';
 import PageLoader from '@/components/PageLoader';
 
 export default function NewCompanyPage() {
   const router = useRouter();
-  const { isAuthenticated, checkAuth } = useAuth();
-  const [isChecking, setIsChecking] = useState(true);
+  const { isAuthenticated } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState('');
 
-  useEffect(() => {
-    const init = async () => {
-      try {
-        const isValid = await checkAuth();
-        if (!isValid) {
-          router.replace('/auth/login');
-          return;
-        }
-      } catch (error) {
-        console.error('Auth kontrolü hatası:', error);
-        router.replace('/auth/login');
-      } finally {
-        setIsChecking(false);
-      }
-    };
-
-    init();
-  }, [checkAuth, router]);
+  if (!isAuthenticated) {
+    return null;
+  }
 
   const handleSubmit = async (data: any) => {
     setIsSubmitting(true);
     try {
-      await firmsApi.create(data);
+      // API entegrasyonu NewCompanyForm içinde yapıldı
+      console.log('Yeni firma eklendi:', data);
+      await new Promise(resolve => setTimeout(resolve, 500)); // Kısa bir bekleme
       router.back();
-    } catch (error: any) {
+    } catch (error) {
       console.error('Hata:', error);
-      setError(error.message || 'Firma eklenirken bir hata oluştu');
       setIsSubmitting(false);
     }
   };
-
-  if (isChecking || !isAuthenticated) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    );
-  }
 
   return (
     <>
