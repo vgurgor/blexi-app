@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/lib/auth';
+import { useAuth } from '@/lib/authExport';
 import { Plus, Search, Filter } from 'lucide-react';
 import { firmsApi, type Firm, type FirmFilters } from '@/lib/api/firms';
 import CompanyCard from '@/components/companies/CompanyCard';

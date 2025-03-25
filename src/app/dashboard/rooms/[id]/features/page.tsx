@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/lib/auth';
+import { useAuth } from '@/lib/authExport';
 import { ArrowLeft, Plus, Bed as BedIcon, Tag, Package } from 'lucide-react';
 import PageLoader from '@/components/PageLoader';
 import RoomFeatures from '@/components/rooms/RoomFeatures';

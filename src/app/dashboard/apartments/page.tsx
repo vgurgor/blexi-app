@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/lib/auth';
+import { useAuth } from '@/lib/authExport';
 import { Plus, Building2, Building, ChevronLeft, ChevronRight } from 'lucide-react';
 import ApartmentCard from '@/components/apartments/ApartmentCard';
 import CompanyCard from '@/components/companies/CompanyCard';

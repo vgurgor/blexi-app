@@ -1,54 +1,72 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/lib/auth';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { LogIn } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { loginSchema, LoginFormData } from '@/utils/validations/user';
+import { Form, FormInput, FormCheckbox } from '@/components/ui';
+import { Button } from '@/components/ui/atoms/Button';
+import { useAuthStore } from '@/store/authStore';
 
 export default function LoginPage() {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const { login, isAuthenticated } = useAuth();
+  const searchParams = useSearchParams();
+  const { login, isAuthenticated, isLoading } = useAuth();
+  const [serverError, setServerError] = useState<string | null>(null);
+  
+  // Get the callbackUrl from search params (for redirecting after login)
+  const callbackUrl = searchParams.get('callbackUrl') || '/dashboard';
+  
+  // Initialize the form with validation schema
+  const form = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      username: '',
+      password: '',
+      rememberMe: false,
+    },
+  });
 
+  // Redirect if already authenticated
   useEffect(() => {
-    // Initial auth check
     if (isAuthenticated) {
-      console.log('Redirecting...');
-      window.location.href = '/dashboard';
+      router.push(callbackUrl);
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, router, callbackUrl]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (loading) return;
+  // Handle form submission
+  const onSubmit = async (data: LoginFormData) => {
+    setServerError(null);
     
-    setError('');
-    setLoading(true);
-
     try {
-      const result = await login(username, password);
-      console.log('Login successful:', result);
-      
-      // Redirect on successful login
-      window.location.href = '/dashboard';
-    } catch (err: any) {
-      console.error('Login error:', err);
-      setError(err.message || 'Giriş başarısız. Lütfen bilgilerinizi kontrol edin.');
-    } finally {
-      setLoading(false);
+      // The rememberMe parameter will affect token expiration
+      const success = await login(data.username, data.password);
+      if (success) {
+        // Cookie'yi kontrol et
+        setTimeout(() => {
+          const cookies = document.cookie.split(';');
+          const hasAuthToken = cookies.some(c => c.trim().startsWith('auth_token='));
+          console.log('Login sonrası auth_token kontrolü:', hasAuthToken);
+          
+          // Zustand store'dan token'ı kontrol et
+          const token = useAuthStore.getState().token;
+          console.log('Zustand token kontrolü:', token ? 'Token var' : 'Token yok');
+          
+          // Dashboard'a yönlendir
+          router.push(callbackUrl);
+        }, 100);
+      }
+    } catch (error) {
+      if (error instanceof Error) {
+        setServerError(error.message);
+      } else {
+        setServerError('Giriş sırasında bir hata oluştu');
+      }
     }
   };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-gray-100 to-gray-200 dark:from-gray-900 dark:via-gray-800 dark:to-black flex items-center justify-center p-4">
@@ -63,58 +81,55 @@ export default function LoginPage() {
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Kullanıcı Adı
-              </label>
-              <input
-                id="username"
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className="w-full px-4 py-2 bg-white/50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-cyan-400 dark:focus:ring-cyan-400/50 transition-all"
-                placeholder="kullanici.adi"
-                required
-              />
-            </div>
-
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Şifre
-              </label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-2 bg-white/50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-cyan-400 dark:focus:ring-cyan-400/50 transition-all"
-                placeholder="••••••••"
-                required
-              />
-            </div>
-
-            {error && (
-              <div className="text-sm text-red-600 dark:text-red-400 text-center">
-                {error}
+          <Form form={form} onSubmit={onSubmit} className="space-y-6">
+            {serverError && (
+              <div className="p-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm rounded-lg">
+                {serverError}
               </div>
             )}
+            
+            <FormInput
+              name="username"
+              label="Kullanıcı Adı"
+              type="text"
+              autoComplete="username"
+              placeholder="kullanici.adi"
+              className="w-full px-4 py-2 bg-white/50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-cyan-400 dark:focus:ring-cyan-400/50 transition-all"
+            />
+            
+            <FormInput
+              name="password"
+              label="Şifre"
+              type="password"
+              autoComplete="current-password"
+              placeholder="••••••••"
+              className="w-full px-4 py-2 bg-white/50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-cyan-400 dark:focus:ring-cyan-400/50 transition-all"
+            />
+            
+            <div className="flex items-center justify-between">
+              <FormCheckbox
+                name="rememberMe"
+                label="Beni hatırla"
+              />
+              
+              <div className="text-sm text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 cursor-pointer">
+                Şifremi unuttum
+              </div>
+            </div>
 
-            <button
+            <Button
               type="submit"
-              disabled={loading}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white rounded-lg font-medium transition-all disabled:opacity-50"
+              isLoading={isLoading}
+              leftIcon={!isLoading && <LogIn className="w-5 h-5" />}
+              className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white"
             >
-              {loading ? (
-                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              ) : (
-                <>
-                  <LogIn className="w-5 h-5" />
-                  Giriş Yap
-                </>
-              )}
-            </button>
-          </form>
+              Giriş Yap
+            </Button>
+            
+            <div className="text-center text-sm text-gray-600 dark:text-gray-400">
+              Yeni kullanıcı kaydı için sistem yöneticinize başvurun.
+            </div>
+          </Form>
         </div>
       </div>
     </div>

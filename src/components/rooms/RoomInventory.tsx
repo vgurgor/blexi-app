@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/lib/auth';
+import { useAuth } from '@/lib/authExport';
 import { ArrowLeft, Plus, Bed as BedIcon, Tag, Package, Trash2 } from 'lucide-react';
 import PageLoader from '@/components/PageLoader';
 import DeleteConfirmationModal from '@/components/DeleteConfirmationModal';

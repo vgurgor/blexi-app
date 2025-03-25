@@ -1,5 +1,10 @@
 {
-  "/page": "app/page.js",
-  "/auth/login/page": "app/auth/login/page.js",
-  "/dashboard/page": "app/dashboard/page.js"
+  "/_not-found/page": "app/_not-found/page.js",
+  "/dashboard/page": "app/dashboard/page.js",
+  "/dashboard/apartments/page": "app/dashboard/apartments/page.js",
+  "/dashboard/rooms/page": "app/dashboard/rooms/page.js",
+  "/dashboard/inventory/page": "app/dashboard/inventory/page.js",
+  "/dashboard/apartments/[id]/inventory/page": "app/dashboard/apartments/[id]/inventory/page.js",
+  "/dashboard/apartments/[id]/edit/page": "app/dashboard/apartments/[id]/edit/page.js",
+  "/dashboard/settings/page": "app/dashboard/settings/page.js"
 }

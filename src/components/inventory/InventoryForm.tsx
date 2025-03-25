@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { FileText, Tag, Calendar, Briefcase, Hash } from 'lucide-react';
-import { useAuth } from '@/lib/auth';
+import { useAuth } from '@/lib/authExport';
 
 interface InventoryFormProps {
   onSubmit: (data: any) => Promise<void>;

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Building2, MapPin, Wifi, Building, Calendar } from 'lucide-react';
-import { useAuth } from '@/lib/auth';
+import { useAuth } from '@/lib/authExport';
 
 interface Firm {
   id: number;

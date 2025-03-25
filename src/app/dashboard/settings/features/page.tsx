@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/lib/auth';
+import { useAuth } from '@/lib/authExport';
 import { Settings, Plus, Edit, Trash2, Search, Filter, ArrowLeft, Wifi, Tv, Bed, Home, Coffee, Utensils, ShowerHead as Shower, Wind, Check, X } from 'lucide-react';
 import DeleteConfirmationModal from '@/components/DeleteConfirmationModal';
 

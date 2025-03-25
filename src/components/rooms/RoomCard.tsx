@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { DoorOpen, Building2, Users2, Edit, MoreHorizontal, Trash2, Tag, Package, Bed } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import MoreActionsDropdown from '../MoreActionsDropdown';
-import { useAuth } from '@/lib/auth';
+import { useAuth } from '@/lib/authExport';
 import DeleteConfirmationModal from '../DeleteConfirmationModal';
 
 interface RoomCardProps {

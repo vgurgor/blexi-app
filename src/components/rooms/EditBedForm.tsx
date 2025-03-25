@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Bed, Hash } from 'lucide-react';
-import { useAuth } from '@/lib/auth';
+import { useAuth } from '@/lib/authExport';
 
 interface BedData {
   id: number;

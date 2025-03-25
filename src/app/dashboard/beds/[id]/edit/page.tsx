@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/lib/auth';
+import { useAuth } from '@/lib/authExport';
 import { ArrowLeft } from 'lucide-react';
 import EditBedForm from '@/components/rooms/EditBedForm';
 import PageLoader from '@/components/PageLoader';

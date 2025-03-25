@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/lib/auth';
+import { useAuth } from '@/lib/authExport';
 import { Plus, X, Wifi, Tv, Bed, Home, Coffee, Utensils, ShowerHead as Shower, Wind, Settings } from 'lucide-react';
 
 interface Feature {

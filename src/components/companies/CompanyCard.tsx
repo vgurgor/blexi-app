@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Building, MapPin, Phone, Mail, Edit, MoreHorizontal, Building2, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import MoreActionsDropdown from '../MoreActionsDropdown';
-import { useAuth } from '@/lib/auth';
+import { useAuth } from '@/lib/authExport';
 import DeleteConfirmationModal from '../DeleteConfirmationModal';
 
 interface CompanyCardProps {

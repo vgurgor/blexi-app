@@ -1,152 +1,129 @@
-import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
-import { useEffect } from 'react';
+'use client';
 
-interface Tenant {
-  id: number;
-  name: string;
-  slug: string;
-}
+import { jwtDecode } from 'jwt-decode';
+import { useAuthStore } from '@/store/authStore';
 
-interface User {
-  id: number;
-  name: string;
-  username: string;
-  tenant_id: number;
-  tenant: Tenant;
-  role: string;
-  permissions: string[];
-  email_verified_at: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
-interface AuthState {
-  token: string | null;
-  user: User | null;
-  tenant: Tenant | null;
-  isAuthenticated: boolean;
-  login: (username: string, password: string) => Promise<void>;
-  logout: () => Promise<void>;
-  checkAuth: () => Promise<boolean>;
-}
-
-const API_URL = 'https://api.blexi.co/api/v1';
-
-const authStore = create<AuthState>()(
-  persist(
-    (set, get) => ({
-      token: null,
-      user: null,
-      tenant: null,
-      isAuthenticated: false,
-
-      login: async (username: string, password: string) => {
-        try {
-          const response = await fetch(`${API_URL}/auth/login`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-            },
-            body: JSON.stringify({ username, password }),
-          });
-
-          const data = await response.json();
-
-          if (!response.ok || !data.success) {
-            throw new Error(data.message || 'Giriş başarısız');
-          }
-
-          set({
-            token: data.data.token,
-            user: data.data.user,
-            tenant: data.data.user.tenant,
-            isAuthenticated: true,
-          });
-
-          return data.data;
-        } catch (error: any) {
-          set({ token: null, user: null, tenant: null, isAuthenticated: false });
-          throw error;
-        }
-      },
-
-      checkAuth: async () => {
-        const state = get();
-        if (!state.token) return false;
-
-        try {
-          const response = await fetch(`${API_URL}/auth/me`, {
-            headers: {
-              'Authorization': `Bearer ${state.token}`,
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-            },
-          });
-
-          const data = await response.json();
-
-          if (!response.ok || !data.success) {
-            set({ token: null, user: null, tenant: null, isAuthenticated: false });
-            return false;
-          }
-
-          set({ 
-            user: data.data, 
-            tenant: data.data.tenant,
-            isAuthenticated: true 
-          });
-          return true;
-        } catch (error) {
-          set({ token: null, user: null, tenant: null, isAuthenticated: false });
-          return false;
-        }
-      },
-
-      logout: async () => {
-        const state = get();
-        try {
-          if (state.token) {
-            await fetch(`${API_URL}/auth/logout`, {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${state.token}`,
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-              },
-            });
-          }
-        } catch (error) {
-          console.error('Logout error:', error);
-        } finally {
-          set({ token: null, user: null, tenant: null, isAuthenticated: false });
-        }
-      },
-    }),
-    {
-      name: 'auth-storage',
-      storage: createJSONStorage(() => sessionStorage),
-    }
-  )
-);
-
-export const useAuth = () => {
-  const store = authStore();
+/**
+ * Get the authentication token from the store or document.cookie
+ */
+export const getAuthToken = (): string | null => {
+  // First try to get from store (client-side)
+  const storeToken = useAuthStore.getState().token;
+  if (storeToken) return storeToken;
   
-  useEffect(() => {
-    const init = async () => {
-      if (store.token && !store.isAuthenticated) {
-        await store.checkAuth();
+  // Try to read from document.cookie directly
+  try {
+    const cookies = document.cookie.split('; ');
+    const authCookie = cookies.find(row => row.startsWith('auth_token='));
+    if (authCookie) {
+      const token = authCookie.split('=')[1];
+      // "undefined" string değerini kontrol et
+      if (token && token !== "undefined") {
+        return token;
       }
-    };
-    init();
-  }, [store]);
-
-  return store;
+    }
+    return null;
+  } catch (e) {
+    console.error('Cookie okuma hatası:', e);
+    return null;
+  }
 };
 
-export const getAuthToken = () => authStore.getState().token;
-export const isAuthenticated = () => authStore.getState().isAuthenticated;
-export const getUser = () => authStore.getState().user;
-export const getTenant = () => authStore.getState().tenant;
+/**
+ * Check if the user is authenticated
+ */
+export const isAuthenticated = (): boolean => {
+  const { token, isAuthenticated } = useAuthStore.getState();
+  
+  if (!token) return false;
+  
+  // Check if token is expired
+  try {
+    const decoded = jwtDecode<{ exp: number }>(token);
+    const currentTime = Date.now() / 1000;
+    
+    if (decoded.exp < currentTime) {
+      // Token is expired, log user out
+      useAuthStore.getState().logout();
+      return false;
+    }
+    
+    return isAuthenticated;
+  } catch (error) {
+    // If token can't be decoded, log user out
+    useAuthStore.getState().logout();
+    return false;
+  }
+};
+
+/**
+ * Get the authenticated user
+ */
+export const getUser = () => {
+  return useAuthStore.getState().user;
+};
+
+/**
+ * Get user's role
+ */
+export const getUserRole = (): string | null => {
+  const user = getUser();
+  return user ? user.role : null;
+};
+
+/**
+ * Check if user has a specific role
+ */
+export const hasRole = (role: string | string[]): boolean => {
+  const userRole = getUserRole();
+  
+  if (!userRole) return false;
+  
+  if (Array.isArray(role)) {
+    return role.includes(userRole);
+  }
+  
+  return userRole === role;
+};
+
+/**
+ * Calculate token expiration time
+ */
+export const getTokenExpirationTime = (): number | null => {
+  const token = getAuthToken();
+  
+  if (!token) return null;
+  
+  try {
+    const decoded = jwtDecode<{ exp: number }>(token);
+    return decoded.exp;
+  } catch (error) {
+    return null;
+  }
+};
+
+/**
+ * Get the remaining time before token expires (in seconds)
+ */
+export const getTokenRemainingTime = (): number | null => {
+  const expTime = getTokenExpirationTime();
+  
+  if (!expTime) return null;
+  
+  const currentTime = Date.now() / 1000;
+  const remainingTime = expTime - currentTime;
+  
+  return remainingTime > 0 ? Math.floor(remainingTime) : 0;
+};
+
+/**
+ * Check if token needs refresh (< 5 minutes remaining)
+ */
+export const shouldRefreshToken = (): boolean => {
+  const remainingTime = getTokenRemainingTime();
+  
+  if (remainingTime === null) return false;
+  
+  // Refresh if less than 5 minutes remaining
+  return remainingTime < 300;
+};

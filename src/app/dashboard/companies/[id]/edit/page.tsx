@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/lib/auth';
+import { useAuth } from '@/lib/authExport';
 import { ArrowLeft } from 'lucide-react';
 import EditCompanyForm from '@/components/EditCompanyForm';
 import PageLoader from '@/components/PageLoader';

@@ -3,7 +3,7 @@
 import React from 'react';
 import { useRouter } from 'next/navigation';
 import { User, Settings, Key, HelpCircle, LogOut } from 'lucide-react';
-import { useAuth } from '@/lib/auth';
+import { useAuth } from '@/hooks/useAuth';
 
 const menuItems = [
   {

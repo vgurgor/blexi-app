@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Bed, Hash } from 'lucide-react';
-import { useAuth } from '@/lib/auth';
+import { useAuth } from '@/lib/authExport';
 
 export default function NewBedForm({ onSubmit }: { onSubmit: (data: any) => void }) {
   const { token } = useAuth();

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import StatsSidebar from '@/components/StatsSidebar';
 import ModuleGrid from '@/components/ModuleGrid';
-import { useAuth } from '@/lib/auth';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function DashboardPage() {
   const router = useRouter();

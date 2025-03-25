@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { DoorOpen, Building, Bed, Hash, Plus, Trash2, Tag } from 'lucide-react';
-import { useAuth } from '@/lib/auth';
+import { useAuth } from '@/lib/authExport';
 import RoomFeatures from './RoomFeatures';
 
 interface Apartment {

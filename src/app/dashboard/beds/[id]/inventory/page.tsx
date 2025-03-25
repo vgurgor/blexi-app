@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/lib/auth';
+import { useAuth } from '@/lib/authExport';
 import { ArrowLeft, Plus, Bed as BedIcon, Tag, Package, Trash2, CheckCircle, AlertCircle, Clock } from 'lucide-react';
 import PageLoader from '@/components/PageLoader';
 import DeleteConfirmationModal from '@/components/DeleteConfirmationModal';

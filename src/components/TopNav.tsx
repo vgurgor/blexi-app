@@ -6,14 +6,14 @@ import { useRouter } from 'next/navigation';
 import ThemeToggle from './ThemeToggle';
 import NotificationsDropdown from './NotificationsDropdown';
 import UserProfileDropdown from './UserProfileDropdown';
-import { useAuth } from '@/lib/auth';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function TopNav() {
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const notificationsRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
-  const { tenant } = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
@@ -41,7 +41,7 @@ export default function TopNav() {
               className="hover:opacity-80 transition-opacity"
             >
               <h1 className="text-2xl font-black text-gray-900 dark:text-transparent dark:bg-gradient-to-r dark:from-blue-400 dark:via-cyan-400 dark:to-teal-400 dark:bg-clip-text transition-colors">
-                {tenant?.name || 'BLEXI'}
+                {user?.tenant?.name || 'BLEXI'}
               </h1>
             </button>
           </div>

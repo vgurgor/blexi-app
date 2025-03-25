@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/lib/auth';
+import { useAuth } from '@/lib/authExport';
 import { ArrowLeft } from 'lucide-react';
 import NewApartmentForm from '@/components/NewApartmentForm';
 import PageLoader from '@/components/PageLoader';

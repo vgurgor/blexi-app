@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/lib/auth';
+import { useAuth } from '@/lib/authExport';
 import { Plus, DoorOpen, Bed, ChevronLeft, ChevronRight, Building2, Search, Filter } from 'lucide-react';
 import RoomCard from '@/components/rooms/RoomCard';
 

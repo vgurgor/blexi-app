@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/lib/auth';
+import { useAuth } from '@/lib/authExport';
 import { Plus, Package, Search, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
 import InventoryTable from '@/components/inventory/InventoryTable';
 import InventoryForm from '@/components/inventory/InventoryForm';

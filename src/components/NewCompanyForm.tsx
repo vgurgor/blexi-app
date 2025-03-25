@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Building, MapPin, Phone, Mail, FileText, Briefcase } from 'lucide-react';
-import { useAuth } from '@/lib/auth';
+import { useAuth } from '@/lib/authExport';
 
 export default function NewCompanyForm({ onSubmit }: { onSubmit: (data: any) => void }) {
   const { token } = useAuth();
