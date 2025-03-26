@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/authExport';
+import { roomsApi } from '@/lib/api/rooms';
+import { featuresApi } from '@/lib/api/features';
 import { Plus, X, Wifi, Tv, Bed, Home, Coffee, Utensils, ShowerHead as Shower, Wind, Settings } from 'lucide-react';
 
 interface Feature {
@@ -11,7 +13,7 @@ interface Feature {
 }
 
 interface RoomFeaturesProps {
-  roomId: number;
+  roomId: string;
 }
 
 export default function RoomFeatures({ roomId }: RoomFeaturesProps) {
@@ -43,24 +45,14 @@ export default function RoomFeatures({ roomId }: RoomFeaturesProps) {
   }, [success]);
 
   const fetchRoomFeatures = async () => {
-    if (!token) return;
-    
     setIsLoading(true);
     try {
-      const response = await fetch(`https://api.blexi.co/api/v1/rooms/${roomId}/features`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-      });
-
-      const data = await response.json();
+      const response = await roomsApi.getFeatures(roomId);
       
-      if (response.ok) {
-        setFeatures(data.data);
+      if (response.success) {
+        setFeatures(response.data);
       } else {
-        console.error('Özellik verileri alınamadı:', data);
+        console.error('Özellik verileri alınamadı:', response.error);
         setError('Özellikler yüklenirken bir hata oluştu.');
       }
     } catch (error) {
@@ -72,29 +64,28 @@ export default function RoomFeatures({ roomId }: RoomFeaturesProps) {
   };
 
   const fetchAvailableFeatures = async () => {
-    if (!token) return;
-    
     try {
-      const response = await fetch('https://api.blexi.co/api/v1/features?per_page=100&status=active', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
+      const response = await featuresApi.getAll({
+        status: 'active',
+        per_page: 100
       });
-
-      const data = await response.json();
       
-      if (response.ok) {
+      if (response.success) {
         // Filter out features that are already assigned to the room
         // AND only include features with type 'ROOM'
         const featureIds = features.map(f => f.id);
-        const filtered = data.data.filter((f: Feature) => 
-          !featureIds.includes(f.id) && f.type === 'ROOM'
+        const filtered = response.data.filter((f) => 
+          !featureIds.includes(Number(f.id)) && f.type === 'ROOM'
         );
-        setAvailableFeatures(filtered);
+        setAvailableFeatures(filtered.map(f => ({
+          id: Number(f.id),
+          name: f.name,
+          code: f.code,
+          type: f.type,
+          status: f.status
+        })));
       } else {
-        console.error('Kullanılabilir özellik verileri alınamadı:', data);
+        console.error('Kullanılabilir özellik verileri alınamadı:', response.error);
         setError('Kullanılabilir özellikler yüklenirken bir hata oluştu.');
       }
     } catch (error) {
@@ -104,34 +95,22 @@ export default function RoomFeatures({ roomId }: RoomFeaturesProps) {
   };
 
   const handleAddFeature = async () => {
-    if (!token || !selectedFeature) return;
+    if (!selectedFeature) return;
     
     setIsAdding(true);
     setError('');
     setSuccess('');
     
     try {
-      const response = await fetch(`https://api.blexi.co/api/v1/rooms/${roomId}/features`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: JSON.stringify({
-          feature_id: selectedFeature
-        })
-      });
-
-      const data = await response.json();
+      const response = await roomsApi.addFeature(roomId, selectedFeature);
       
-      if (response.ok) {
+      if (response.success) {
         setSuccess('Özellik başarıyla eklendi.');
         fetchRoomFeatures();
         setShowAddModal(false);
         setSelectedFeature(null);
       } else {
-        throw new Error(data.message || 'Özellik eklenirken bir hata oluştu');
+        throw new Error(response.error || 'Özellik eklenirken bir hata oluştu');
       }
     } catch (error: any) {
       console.error('Özellik ekleme hatası:', error);
@@ -142,29 +121,18 @@ export default function RoomFeatures({ roomId }: RoomFeaturesProps) {
   };
 
   const handleRemoveFeature = async (featureId: number) => {
-    if (!token) return;
-    
     setIsRemoving(true);
     setError('');
     setSuccess('');
     
     try {
-      const response = await fetch(`https://api.blexi.co/api/v1/rooms/${roomId}/features/${featureId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-      });
-
-      const data = await response.json();
+      const response = await roomsApi.removeFeature(roomId, featureId);
       
-      if (response.ok) {
+      if (response.success) {
         setSuccess('Özellik başarıyla kaldırıldı.');
         setFeatures(prev => prev.filter(f => f.id !== featureId));
       } else {
-        throw new Error(data.message || 'Özellik kaldırılırken bir hata oluştu');
+        throw new Error(response.error || 'Özellik kaldırılırken bir hata oluştu');
       }
     } catch (error: any) {
       console.error('Özellik kaldırma hatası:', error);

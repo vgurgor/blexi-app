@@ -77,7 +77,8 @@ export async function fetchApi<T = any>(
     return {
       status: response.status,
       success: true,
-      data: data as T,
+      data: data.data ? data.data : data,
+      meta: data.meta,
     };
   } catch (error) {
     // Clear the timeout

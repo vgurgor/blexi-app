@@ -6,35 +6,26 @@ import { useAuth } from '@/lib/authExport';
 import { ArrowLeft } from 'lucide-react';
 import EditApartmentForm from '@/components/EditApartmentForm';
 import PageLoader from '@/components/PageLoader';
+import { apartsApi, ApartDto } from '@/lib/api/apartments';
 
 export default function EditApartmentPage({ params }: { params: { id: string } }) {
   const router = useRouter();
-  const { isAuthenticated, token } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [apartment, setApartment] = useState<any>(null);
+  const [apartment, setApartment] = useState<ApartDto | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
     const fetchApartment = async () => {
-      if (!token) return;
-      
       setIsLoading(true);
       try {
-        const response = await fetch(`https://api.blexi.co/api/v1/aparts/${params.id}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-        });
-
-        const data = await response.json();
+        const response = await apartsApi.getById(params.id);
         
-        if (response.ok && data.data) {
-          setApartment(data.data);
+        if (response.success && response.data) {
+          setApartment(response.data);
         } else {
-          console.error('Apart detayları alınamadı:', data);
+          console.error('Apart detayları alınamadı:', response.error);
           setError('Apart bilgileri yüklenirken bir hata oluştu.');
         }
       } catch (error) {
@@ -45,10 +36,10 @@ export default function EditApartmentPage({ params }: { params: { id: string } }
       }
     };
 
-    if (isAuthenticated && token) {
+    if (isAuthenticated) {
       fetchApartment();
     }
-  }, [isAuthenticated, token, params.id]);
+  }, [isAuthenticated, params.id]);
 
   if (!isAuthenticated) {
     return null;

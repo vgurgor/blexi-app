@@ -4,14 +4,15 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/authExport';
 import { Plus, Search, Filter } from 'lucide-react';
-import { firmsApi, type Firm, type FirmFilters } from '@/lib/api/firms';
+import { firmsApi, type FirmDto, type FirmFilters } from '@/lib/api/firms';
+import { ICompany } from '@/types/models';
 import CompanyCard from '@/components/companies/CompanyCard';
 
 export default function CompaniesPage() {
   const router = useRouter();
   const { isAuthenticated, checkAuth } = useAuth();
   const [isChecking, setIsChecking] = useState(true);
-  const [companies, setCompanies] = useState<Firm[]>([]);
+  const [companies, setCompanies] = useState<ICompany[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilters, setShowFilters] = useState(false);

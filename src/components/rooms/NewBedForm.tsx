@@ -2,15 +2,18 @@
 
 import { useState } from 'react';
 import { Bed, Hash } from 'lucide-react';
-import { useAuth } from '@/lib/authExport';
+import { IBed } from '@/types/models';
 
-export default function NewBedForm({ onSubmit }: { onSubmit: (data: any) => void }) {
-  const { token } = useAuth();
+interface NewBedFormProps {
+  onSubmit: (data: Partial<IBed>) => void;
+}
+
+export default function NewBedForm({ onSubmit }: NewBedFormProps) {
   const [formData, setFormData] = useState({
     name: '',
     bed_number: '',
-    bed_type: 'SINGLE',
-    status: 'available'
+    bed_type: 'SINGLE' as 'SINGLE' | 'DOUBLE' | 'BUNK',
+    status: 'available' as 'available' | 'occupied' | 'maintenance' | 'reserved'
   });
   const [error, setError] = useState('');
 

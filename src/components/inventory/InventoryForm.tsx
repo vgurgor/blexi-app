@@ -1,13 +1,15 @@
 import { useState } from 'react';
 import { FileText, Tag, Calendar, Briefcase, Hash } from 'lucide-react';
 import { useAuth } from '@/lib/authExport';
+import { IInventoryItem } from '@/types/models';
+import { CreateInventoryRequest, UpdateInventoryRequest } from '@/lib/api/inventory';
 
 interface InventoryFormProps {
-  onSubmit: (data: any) => Promise<void>;
-  initialData?: any;
+  onSubmit: (data: CreateInventoryRequest | UpdateInventoryRequest) => Promise<void>;
+  initialData?: IInventoryItem | null;
   isEditing?: boolean;
   assignableType?: string;
-  assignableId?: number;
+  assignableId?: number | string;
 }
 
 export default function InventoryForm({ 

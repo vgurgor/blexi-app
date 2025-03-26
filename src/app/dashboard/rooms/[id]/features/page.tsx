@@ -6,36 +6,29 @@ import { useAuth } from '@/lib/authExport';
 import { ArrowLeft, Plus, Bed as BedIcon, Tag, Package } from 'lucide-react';
 import PageLoader from '@/components/PageLoader';
 import RoomFeatures from '@/components/rooms/RoomFeatures';
+import { roomsApi } from '@/lib/api/rooms';
+import { IRoom } from '@/types/models';
 
 export default function RoomFeaturesPage({ params }: { params: { id: string } }) {
   const router = useRouter();
-  const { isAuthenticated, token } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
-  const [room, setRoom] = useState<any>(null);
+  const [room, setRoom] = useState<IRoom | null>(null);
   const [error, setError] = useState('');
 
   useEffect(() => {
     const fetchRoom = async () => {
-      if (!token) return;
-      
       setIsLoading(true);
       try {
-        // Fetch room details
-        const roomResponse = await fetch(`https://api.blexi.co/api/v1/rooms/${params.id}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-        });
-
-        const roomData = await roomResponse.json();
+        // Fetch room details using roomsApi service
+        const response = await roomsApi.getById(params.id);
         
-        if (!roomResponse.ok) {
-          throw new Error(roomData.message || 'Oda bilgileri yüklenirken bir hata oluştu.');
+        if (response.success && response.data) {
+          setRoom(response.data);
+        } else {
+          console.error('Oda detayları alınamadı:', response.error);
+          throw new Error(response.error || 'Oda bilgileri yüklenirken bir hata oluştu.');
         }
-        
-        setRoom(roomData.data);
       } catch (error: any) {
         console.error('Veri çekilirken hata oluştu:', error);
         setError(error.message || 'Bilgiler yüklenirken bir hata oluştu.');
@@ -44,10 +37,10 @@ export default function RoomFeaturesPage({ params }: { params: { id: string } })
       }
     };
 
-    if (isAuthenticated && token) {
+    if (isAuthenticated) {
       fetchRoom();
     }
-  }, [isAuthenticated, token, params.id]);
+  }, [isAuthenticated, params.id]);
 
   if (!isAuthenticated) {
     return null;
@@ -159,7 +152,7 @@ export default function RoomFeaturesPage({ params }: { params: { id: string } })
 
         {/* Features Section */}
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-          <RoomFeatures roomId={parseInt(params.id)} />
+          <RoomFeatures roomId={params.id} />
         </div>
       </div>
     </div>

@@ -2,25 +2,15 @@
 
 import { useState } from 'react';
 import { Bed, Hash } from 'lucide-react';
-import { useAuth } from '@/lib/authExport';
-
-interface BedData {
-  id: number;
-  name: string;
-  bed_number: string;
-  bed_type: 'SINGLE' | 'DOUBLE' | 'BUNK';
-  status: 'available' | 'occupied' | 'maintenance' | 'reserved';
-  room_id: number;
-  guest_id: number | null;
-}
+import { IBed } from '@/types/models';
+import { bedsApi } from '@/lib/api/beds';
 
 interface EditBedFormProps {
-  bed: BedData;
-  onSubmit: (data: any) => void;
+  bed: IBed;
+  onSubmit: (data: IBed) => void;
 }
 
 export default function EditBedForm({ bed, onSubmit }: EditBedFormProps) {
-  const { token } = useAuth();
   const [formData, setFormData] = useState({
     name: bed.name,
     bed_number: bed.bed_number,
@@ -36,23 +26,23 @@ export default function EditBedForm({ bed, onSubmit }: EditBedFormProps) {
     setIsSubmitting(true);
     
     try {
-      const response = await fetch(`https://api.blexi.co/api/v1/beds/${bed.id}`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: JSON.stringify(formData)
-      });
+      const updateData: Partial<IBed> = {
+        name: formData.name,
+        bed_number: formData.bed_number,
+        bed_type: formData.bed_type,
+        status: formData.status
+      };
 
-      const data = await response.json();
+      const response = await bedsApi.update(bed.id, updateData);
       
-      if (!response.ok) {
-        throw new Error(data.message || 'Yatak güncellenirken bir hata oluştu');
+      if (!response.success) {
+        throw new Error(response.error || 'Yatak güncellenirken bir hata oluştu');
       }
       
-      onSubmit(data.data);
+      // Güncellenmiş yatak verisi ile callback'i çağır
+      if (response.data) {
+        onSubmit(response.data);
+      }
     } catch (error: any) {
       console.error('Yatak güncelleme hatası:', error);
       setError(error.message || 'Yatak güncellenirken bir hata oluştu');

@@ -1,13 +1,13 @@
 import { useCallback } from 'react';
-import { apartmentsApi, ApartmentFilters } from '../../lib/api/apartments';
+import { apartsApi, ApartFilters, ApartDto } from '../../lib/api/apartments';
 import { useApi } from '../useApi';
 import { IApartment } from '../../types/models';
 
 export function useApartments() {
-  const getAllApi = useApi<IApartment[]>();
-  const getByIdApi = useApi<IApartment>();
-  const createApi = useApi<IApartment>();
-  const updateApi = useApi<IApartment>();
+  const getAllApi = useApi<ApartDto[]>();
+  const getByIdApi = useApi<ApartDto>();
+  const createApi = useApi<ApartDto>();
+  const updateApi = useApi<ApartDto>();
   const deleteApi = useApi<void>();
   const getFeaturesApi = useApi();
   const addFeatureApi = useApi();
@@ -15,64 +15,64 @@ export function useApartments() {
   const getInventoryApi = useApi();
 
   const getAll = useCallback(
-    async (filters?: ApartmentFilters) => {
-      return getAllApi.execute(apartmentsApi.getAll(filters));
+    async (filters?: ApartFilters) => {
+      return getAllApi.execute(apartsApi.getAll(filters));
     },
     [getAllApi]
   );
 
   const getById = useCallback(
     async (id: string) => {
-      return getByIdApi.execute(apartmentsApi.getById(id));
+      return getByIdApi.execute(apartsApi.getById(id));
     },
     [getByIdApi]
   );
 
   const create = useCallback(
     async (data: Partial<IApartment>) => {
-      return createApi.execute(apartmentsApi.create(data));
+      return createApi.execute(apartsApi.create(data));
     },
     [createApi]
   );
 
   const update = useCallback(
     async (id: string, data: Partial<IApartment>) => {
-      return updateApi.execute(apartmentsApi.update(id, data));
+      return updateApi.execute(apartsApi.update(id, data));
     },
     [updateApi]
   );
 
   const remove = useCallback(
     async (id: string) => {
-      return deleteApi.execute(apartmentsApi.delete(id));
+      return deleteApi.execute(apartsApi.delete(id));
     },
     [deleteApi]
   );
 
   const getFeatures = useCallback(
     async (apartmentId: string) => {
-      return getFeaturesApi.execute(apartmentsApi.getFeatures(apartmentId));
+      return getFeaturesApi.execute(apartsApi.getFeatures(apartmentId));
     },
     [getFeaturesApi]
   );
 
   const addFeature = useCallback(
     async (apartmentId: string, featureId: string) => {
-      return addFeatureApi.execute(apartmentsApi.addFeature(apartmentId, featureId));
+      return addFeatureApi.execute(apartsApi.addFeature(apartmentId, featureId));
     },
     [addFeatureApi]
   );
 
   const removeFeature = useCallback(
     async (apartmentId: string, featureId: string) => {
-      return removeFeatureApi.execute(apartmentsApi.removeFeature(apartmentId, featureId));
+      return removeFeatureApi.execute(apartsApi.removeFeature(apartmentId, featureId));
     },
     [removeFeatureApi]
   );
 
   const getInventory = useCallback(
     async (apartmentId: string) => {
-      return getInventoryApi.execute(apartmentsApi.getInventory(apartmentId));
+      return getInventoryApi.execute(apartsApi.getInventory(apartmentId));
     },
     [getInventoryApi]
   );

@@ -29,10 +29,6 @@ export interface ICompany {
   id: string;
   name: string;
   address: string;
-  city: string;
-  zipCode: string;
-  country: string;
-  contactPerson: string;
   email: string;
   phone: string;
   taxNumber: string;
@@ -40,6 +36,18 @@ export interface ICompany {
   status: 'active' | 'inactive';
   createdAt: string;
   updatedAt: string;
+  aparts_count?: number;
+  aparts?: Array<{
+    id: number;
+    firm_id: number;
+    name: string;
+    address: string;
+    gender_type: string;
+    opening_date: string;
+    status: string;
+    created_at: string;
+    updated_at: string;
+  }>;
 }
 
 export interface IApartment {

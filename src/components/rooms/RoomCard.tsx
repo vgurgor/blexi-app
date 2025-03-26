@@ -7,22 +7,13 @@ import MoreActionsDropdown from '../MoreActionsDropdown';
 import { useAuth } from '@/lib/authExport';
 import DeleteConfirmationModal from '../DeleteConfirmationModal';
 
+import { IRoom } from '@/types/models';
+
 interface RoomCardProps {
-  room: {
-    id: number;
-    room_number: string;
-    floor: number;
-    capacity: number;
-    room_type: 'STANDARD' | 'SUITE' | 'DELUXE';
-    status: 'active' | 'inactive' | 'maintenance';
-    apart_id: number;
-    beds_count: number;
-    created_at: string;
-    updated_at: string;
-  };
-  getApartmentName: (id: number) => string;
-  onStatusChange: (id: number, status: 'active' | 'inactive' | 'maintenance') => void;
-  onDelete: (id: number) => void;
+  room: IRoom;
+  getApartmentName: (id: string) => string;
+  onStatusChange: (id: string, status: 'active' | 'inactive' | 'maintenance') => void;
+  onDelete: (id: string) => void;
 }
 
 export default function RoomCard({ room, getApartmentName, onStatusChange, onDelete }: RoomCardProps) {
@@ -39,29 +30,13 @@ export default function RoomCard({ room, getApartmentName, onStatusChange, onDel
   };
 
   const handleDeleteRoom = async () => {
-    if (!token) return;
-    
     setIsDeleting(true);
     setDeleteError('');
     
     try {
-      const response = await fetch(`https://api.blexi.co/api/v1/rooms/${room.id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-      });
-
-      const data = await response.json();
-      
-      if (response.ok) {
-        onDelete(room.id);
-        setShowDeleteModal(false);
-      } else {
-        throw new Error(data.message || 'Oda silinirken bir hata oluştu');
-      }
+      // Use the API service through the callback
+      await onDelete(room.id);
+      setShowDeleteModal(false);
     } catch (error: any) {
       console.error('Oda silme hatası:', error);
       setDeleteError(error.message || 'Oda silinirken bir hata oluştu');
@@ -124,7 +99,7 @@ export default function RoomCard({ room, getApartmentName, onStatusChange, onDel
   ];
 
   // Calculate occupancy rate
-  const occupancyRate = room.capacity > 0 ? Math.round((room.beds_count / room.capacity) * 100) : 0;
+  const occupancyRate = room.capacity > 0 ? Math.round(((room.beds_count || 0) / room.capacity) * 100) : 0;
 
   return (
     <>

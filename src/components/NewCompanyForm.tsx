@@ -3,10 +3,11 @@
 import { useState } from 'react';
 import { Building, MapPin, Phone, Mail, FileText, Briefcase } from 'lucide-react';
 import { useAuth } from '@/lib/authExport';
+import { firmsApi, CreateFirmRequest } from '@/lib/api/firms';
 
 export default function NewCompanyForm({ onSubmit }: { onSubmit: (data: any) => void }) {
   const { token } = useAuth();
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<CreateFirmRequest>({
     name: '',
     tax_number: '',
     address: '',
@@ -22,23 +23,13 @@ export default function NewCompanyForm({ onSubmit }: { onSubmit: (data: any) => 
     setError('');
     
     try {
-      const response = await fetch('https://api.blexi.co/api/v1/firms', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: JSON.stringify(formData)
-      });
-
-      const data = await response.json();
+      const response = await firmsApi.create(formData);
       
-      if (!response.ok) {
-        throw new Error(data.message || 'Firma eklenirken bir hata oluştu');
+      if (!response.success) {
+        throw new Error(response.error || 'Firma eklenirken bir hata oluştu');
       }
       
-      onSubmit(data.data);
+      onSubmit(response.data);
     } catch (error: any) {
       console.error('Firma ekleme hatası:', error);
       setError(error.message || 'Firma eklenirken bir hata oluştu');

@@ -6,32 +6,17 @@ import { useAuth } from '@/lib/authExport';
 import { ArrowLeft, Plus, Bed as BedIcon, Tag, Package, Trash2, CheckCircle, AlertCircle, Clock } from 'lucide-react';
 import PageLoader from '@/components/PageLoader';
 import DeleteConfirmationModal from '@/components/DeleteConfirmationModal';
-
-interface InventoryItem {
-  id: number;
-  tenant_id: number;
-  apart_id: number | null;
-  bed_id: number | null;
-  assignable_type: string | null;
-  assignable_id: number | null;
-  item_type: string;
-  status: string;
-  tracking_number: string;
-  brand: string | null;
-  model: string | null;
-  purchase_date: string;
-  warranty_end: string | null;
-  created_at: string;
-  updated_at: string;
-}
+import { bedsApi } from '@/lib/api/beds';
+import { inventoryApi, InventoryDto } from '@/lib/api/inventory';
+import { IBed, IInventoryItem } from '@/types/models';
 
 export default function BedInventoryPage({ params }: { params: { id: string } }) {
   const router = useRouter();
-  const { isAuthenticated, token } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
-  const [bed, setBed] = useState<any>(null);
-  const [inventory, setInventory] = useState<InventoryItem[]>([]);
-  const [availableInventory, setAvailableInventory] = useState<InventoryItem[]>([]);
+  const [bed, setBed] = useState<IBed | null>(null);
+  const [inventory, setInventory] = useState<InventoryDto[]>([]);
+  const [availableInventory, setAvailableInventory] = useState<InventoryDto[]>([]);
   const [error, setError] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
   const [selectedItem, setSelectedItem] = useState<number | null>(null);
@@ -51,43 +36,25 @@ export default function BedInventoryPage({ params }: { params: { id: string } })
 
   useEffect(() => {
     const fetchBedAndInventory = async () => {
-      if (!token) return;
-      
       setIsLoading(true);
       try {
-        // Fetch bed details
-        const bedResponse = await fetch(`https://api.blexi.co/api/v1/beds/${params.id}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-        });
-
-        const bedData = await bedResponse.json();
+        // Fetch bed details using API service
+        const bedResponse = await bedsApi.getById(params.id);
         
-        if (!bedResponse.ok) {
-          throw new Error(bedData.message || 'Yatak bilgileri yüklenirken bir hata oluştu.');
+        if (!bedResponse.success || !bedResponse.data) {
+          throw new Error(bedResponse.error || 'Yatak bilgileri yüklenirken bir hata oluştu.');
         }
         
-        setBed(bedData.data);
+        setBed(bedResponse.data);
         
-        // Use the dedicated endpoint for bed inventory
-        const inventoryResponse = await fetch(`https://api.blexi.co/api/v1/beds/${params.id}/inventory`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-        });
-
-        const inventoryData = await inventoryResponse.json();
+        // Use bed API service for inventory
+        const inventoryResponse = await bedsApi.getInventory(params.id);
         
-        if (!inventoryResponse.ok) {
-          throw new Error(inventoryData.message || 'Envanter bilgileri yüklenirken bir hata oluştu.');
+        if (!inventoryResponse.success) {
+          throw new Error(inventoryResponse.error || 'Envanter bilgileri yüklenirken bir hata oluştu.');
         }
         
-        setInventory(inventoryData.data);
+        setInventory(inventoryResponse.data);
       } catch (error: any) {
         console.error('Veri çekilirken hata oluştu:', error);
         setError(error.message || 'Bilgiler yüklenirken bir hata oluştu.');
@@ -96,31 +63,22 @@ export default function BedInventoryPage({ params }: { params: { id: string } })
       }
     };
 
-    if (isAuthenticated && token) {
+    if (isAuthenticated) {
       fetchBedAndInventory();
     }
-  }, [isAuthenticated, token, params.id]);
+  }, [isAuthenticated, params.id]);
 
   const fetchAvailableInventory = async () => {
-    if (!token) return;
-    
     try {
       // Get inventory items that are in storage (available to be assigned)
-      const response = await fetch(`https://api.blexi.co/api/v1/inventory?status=in_storage&per_page=100`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-      });
-
-      const data = await response.json();
+      const response = await inventoryApi.getAll({ status: 'in_storage', per_page: 100 });
       
-      if (response.ok) {
-        setAvailableInventory(data.data);
+      if (response.success && response.data) {
+        // Type conversion needed since we need the raw DTO format
+        setAvailableInventory(response.data as unknown as InventoryDto[]);
       } else {
-        console.error('Kullanılabilir envanter verileri alınamadı:', data);
-        setError('Kullanılabilir envanter yüklenirken bir hata oluştu.');
+        console.error('Kullanılabilir envanter verileri alınamadı:', response.error);
+        setError(response.error || 'Kullanılabilir envanter yüklenirken bir hata oluştu.');
       }
     } catch (error) {
       console.error('Kullanılabilir envanter verileri çekilirken hata oluştu:', error);
@@ -129,26 +87,17 @@ export default function BedInventoryPage({ params }: { params: { id: string } })
   };
 
   const handleAssignInventory = async () => {
-    if (!token || !selectedItem) return;
+    if (!selectedItem) return;
     
     setIsSubmitting(true);
     setError('');
     setSuccess('');
     
     try {
-      // Using the dedicated assignment endpoint
-      const response = await fetch(`https://api.blexi.co/api/v1/inventory/${selectedItem}/assign-to-bed/${params.id}`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        }
-      });
-
-      const data = await response.json();
+      // Use inventory API service
+      const response = await inventoryApi.assignToBed(selectedItem, params.id);
       
-      if (response.ok) {
+      if (response.success && response.data) {
         // Get the updated item
         const updatedItem = availableInventory.find(item => item.id === selectedItem);
         if (updatedItem) {
@@ -165,7 +114,7 @@ export default function BedInventoryPage({ params }: { params: { id: string } })
         setShowAddForm(false);
         setSelectedItem(null);
       } else {
-        throw new Error(data.message || 'Envanter atanırken bir hata oluştu');
+        throw new Error(response.error || 'Envanter atanırken bir hata oluştu');
       }
     } catch (error: any) {
       console.error('Envanter atama hatası:', error);
@@ -176,33 +125,24 @@ export default function BedInventoryPage({ params }: { params: { id: string } })
   };
 
   const handleUnassignInventory = async () => {
-    if (!token || !itemToDelete) return;
+    if (!itemToDelete) return;
     
     setIsSubmitting(true);
     setError('');
     setSuccess('');
     
     try {
-      // Using the dedicated unassign endpoint
-      const response = await fetch(`https://api.blexi.co/api/v1/inventory/${itemToDelete}/unassign`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        }
-      });
-
-      const data = await response.json();
+      // Use inventory API service
+      const response = await inventoryApi.unassign(itemToDelete);
       
-      if (response.ok) {
+      if (response.success) {
         // Remove from bed inventory
         setInventory(prev => prev.filter(item => item.id !== itemToDelete));
         setSuccess('Envanter başarıyla yataktan kaldırıldı.');
         setShowDeleteModal(false);
         setItemToDelete(null);
       } else {
-        throw new Error(data.message || 'Envanter kaldırılırken bir hata oluştu');
+        throw new Error(response.error || 'Envanter kaldırılırken bir hata oluştu');
       }
     } catch (error: any) {
       console.error('Envanter kaldırma hatası:', error);
@@ -339,7 +279,7 @@ export default function BedInventoryPage({ params }: { params: { id: string } })
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="flex items-center gap-2">
                     <BedIcon className="w-5 h-5 text-blue-500 dark:text-blue-400" />
-                    <span className="text-gray-700 dark:text-gray-300">Oda No: {bed.room?.room_number}</span>
+                    <span className="text-gray-700 dark:text-gray-300">Yatak No: {bed.bed_number}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Tag className="w-5 h-5 text-purple-500 dark:text-purple-400" />

@@ -3,6 +3,9 @@
 import { useState, useEffect } from 'react';
 import { Building2, MapPin, Wifi, Building, Calendar } from 'lucide-react';
 import { useAuth } from '@/lib/authExport';
+import { apartsApi, CreateApartRequest } from '@/lib/api/apartments';
+import { firmsApi, FirmDto } from '@/lib/api/firms';
+import { IApartment } from '@/types/models';
 
 interface Firm {
   id: number;
@@ -15,11 +18,11 @@ export default function NewApartmentForm({ onSubmit }: { onSubmit: (data: any) =
     firm_id: '',
     name: '',
     address: '',
-    gender_type: 'MIXED',
+    gender_type: 'MIXED' as 'MALE' | 'FEMALE' | 'MIXED',
     opening_date: new Date().toISOString().split('T')[0],
-    status: 'active'
+    status: 'active' as 'active' | 'inactive'
   });
-  const [firms, setFirms] = useState<Firm[]>([]);
+  const [firms, setFirms] = useState<FirmDto[]>([]);
   const [isLoadingFirms, setIsLoadingFirms] = useState(false);
   const [error, setError] = useState('');
   const [newApartmentId, setNewApartmentId] = useState<number | null>(null);
@@ -27,24 +30,14 @@ export default function NewApartmentForm({ onSubmit }: { onSubmit: (data: any) =
 
   useEffect(() => {
     const fetchFirms = async () => {
-      if (!token) return;
-      
       setIsLoadingFirms(true);
       try {
-        const response = await fetch('https://api.blexi.co/api/v1/firms?per_page=100', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-        });
-
-        const data = await response.json();
+        const response = await firmsApi.getAll({ per_page: 100 });
         
-        if (response.ok && data.data) {
-          setFirms(data.data);
+        if (response.success && response.data) {
+          setFirms(response.data);
         } else {
-          console.error('Firma verileri alınamadı:', data);
+          console.error('Firma verileri alınamadı:', response.error);
         }
       } catch (error) {
         console.error('Firma verileri çekilirken hata oluştu:', error);
@@ -54,32 +47,32 @@ export default function NewApartmentForm({ onSubmit }: { onSubmit: (data: any) =
     };
 
     fetchFirms();
-  }, [token]);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     
     try {
-      const response = await fetch('https://api.blexi.co/api/v1/aparts', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: JSON.stringify(formData)
-      });
-
-      const data = await response.json();
+      // Prepare API request data
+      const apartmentData: Partial<IApartment> = {
+        name: formData.name,
+        address: formData.address,
+        companyId: formData.firm_id,
+        genderType: formData.gender_type,
+        openingDate: formData.opening_date,
+        status: formData.status
+      };
       
-      if (!response.ok) {
-        throw new Error(data.message || 'Apart eklenirken bir hata oluştu');
+      const response = await apartsApi.create(apartmentData);
+      
+      if (!response.success) {
+        throw new Error(response.error || 'Apart eklenirken bir hata oluştu');
       }
       
-      setNewApartmentId(data.data.id);
+      setNewApartmentId(parseInt(response.data.id, 10));
       setIsSubmitted(true);
-      onSubmit(data.data);
+      onSubmit(response.data);
     } catch (error: any) {
       console.error('Apart ekleme hatası:', error);
       setError(error.message || 'Apart eklenirken bir hata oluştu');

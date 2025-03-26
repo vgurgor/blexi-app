@@ -6,28 +6,10 @@ import { useRouter } from 'next/navigation';
 import MoreActionsDropdown from '../MoreActionsDropdown';
 import { useAuth } from '@/lib/authExport';
 import DeleteConfirmationModal from '../DeleteConfirmationModal';
+import { ICompany } from '@/types/models';
 
 interface CompanyCardProps {
-  company: {
-    id: number;
-    name: string;
-    address: string | null;
-    phone: string | null;
-    email: string | null;
-    status: 'active' | 'inactive';
-    aparts_count: number;
-    aparts: {
-      id: number;
-      firm_id: number;
-      name: string;
-      address: string;
-      gender_type: string;
-      opening_date: string;
-      status: string;
-      created_at: string;
-      updated_at: string;
-    }[];
-  };
+  company: ICompany;
   onStatusChange: (id: number, status: 'active' | 'inactive') => void;
   onDelete: (id: number) => void;
 }
@@ -46,29 +28,13 @@ export default function CompanyCard({ company, onStatusChange, onDelete }: Compa
   };
 
   const handleDeleteCompany = async () => {
-    if (!token) return;
-    
     setIsDeleting(true);
     setDeleteError('');
     
     try {
-      const response = await fetch(`https://api.blexi.co/api/v1/firms/${company.id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-      });
-
-      const data = await response.json();
-      
-      if (response.ok) {
-        onDelete(company.id);
-        setShowDeleteModal(false);
-      } else {
-        throw new Error(data.message || 'Firma silinirken bir hata oluştu');
-      }
+      // Use the API service instead of direct fetch
+      const response = await onDelete(company.id);
+      setShowDeleteModal(false);
     } catch (error: any) {
       console.error('Firma silme hatası:', error);
       setDeleteError(error.message || 'Firma silinirken bir hata oluştu');
@@ -118,7 +84,7 @@ export default function CompanyCard({ company, onStatusChange, onDelete }: Compa
               </h3>
               <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
                 <Building className="w-4 h-4" />
-                <span className="text-sm">{company.aparts_count} Apart</span>
+                <span className="text-sm">{company.aparts?.length || 0} Apart</span>
               </div>
             </div>
             <div className="flex gap-2">

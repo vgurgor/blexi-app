@@ -1,15 +1,9 @@
 import { Wifi, Tv, Bed, Home, Coffee, Utensils, ShowerHead as Shower, Wind, Settings } from 'lucide-react';
 
-interface Feature {
-  id: number;
-  name: string;
-  code: string;
-  type: 'ROOM' | 'BED' | 'APART' | 'MIXED';
-  status: 'active' | 'inactive';
-}
+import { ApartFeature } from '@/lib/api/apartments';
 
 interface ApartmentFeaturesListProps {
-  features: Feature[];
+  features: ApartFeature[];
   isLoading: boolean;
 }
 

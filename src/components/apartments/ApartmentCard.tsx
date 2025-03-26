@@ -7,17 +7,12 @@ import MoreActionsDropdown from '../MoreActionsDropdown';
 import { useAuth } from '@/lib/authExport';
 import DeleteConfirmationModal from '../DeleteConfirmationModal';
 import ApartmentFeaturesList from './ApartmentFeaturesList';
+import { apartsApi } from '@/lib/api/apartments';
+
+import { ApartDto } from '@/lib/api/apartments';
 
 interface ApartmentCardProps {
-  apartment: {
-    id: number;
-    name: string;
-    address: string;
-    firm_id: number;
-    gender_type: string;
-    opening_date: string;
-    status: 'active' | 'inactive';
-    rooms_count?: number;
+  apartment: ApartDto & {
     total_rooms?: number;
     occupied_rooms?: number;
     internet_speed?: string;
@@ -50,22 +45,13 @@ export default function ApartmentCard({ apartment, getCompanyName, onStatusChang
     setDeleteError('');
     
     try {
-      const response = await fetch(`https://api.blexi.co/api/v1/aparts/${apartment.id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-      });
-
-      const data = await response.json();
+      const response = await apartsApi.delete(apartment.id.toString());
       
-      if (response.ok) {
+      if (response.success) {
         onDelete(apartment.id);
         setShowDeleteModal(false);
       } else {
-        throw new Error(data.message || 'Apart silinirken bir hata oluştu');
+        throw new Error(response.error || 'Apart silinirken bir hata oluştu');
       }
     } catch (error: any) {
       console.error('Apart silme hatası:', error);
@@ -80,20 +66,12 @@ export default function ApartmentCard({ apartment, getCompanyName, onStatusChang
     
     setIsLoadingFeatures(true);
     try {
-      const response = await fetch(`https://api.blexi.co/api/v1/aparts/${apartment.id}/features`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-      });
-
-      const data = await response.json();
+      const response = await apartsApi.getFeatures(apartment.id.toString());
       
-      if (response.ok) {
-        setFeatures(data.data);
+      if (response.success && response.data) {
+        setFeatures(response.data);
       } else {
-        console.error('Özellik verileri alınamadı:', data);
+        console.error('Özellik verileri alınamadı:', response.error);
       }
     } catch (error) {
       console.error('Özellik verileri çekilirken hata oluştu:', error);

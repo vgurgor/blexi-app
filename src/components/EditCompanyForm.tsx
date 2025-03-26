@@ -3,33 +3,23 @@
 import { useState, useEffect } from 'react';
 import { Building, MapPin, Phone, Mail, FileText, Briefcase } from 'lucide-react';
 import { useAuth } from '@/lib/authExport';
-
-interface Company {
-  id: number;
-  name: string;
-  address: string | null;
-  phone: string | null;
-  email: string | null;
-  tax_number: string;
-  tax_office: string | null;
-  status: 'active' | 'inactive';
-}
+import { firmsApi, FirmDto, UpdateFirmRequest } from '@/lib/api/firms';
 
 interface EditCompanyFormProps {
-  company: Company;
+  company: FirmDto;
   onSubmit: (data: any) => void;
 }
 
 export default function EditCompanyForm({ company, onSubmit }: EditCompanyFormProps) {
   const { token } = useAuth();
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<UpdateFirmRequest>({
     name: '',
     tax_number: '',
     address: '',
     phone: '',
     email: '',
     tax_office: '',
-    status: 'active'
+    status: 'active' as 'active' | 'inactive'
   });
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -37,32 +27,22 @@ export default function EditCompanyForm({ company, onSubmit }: EditCompanyFormPr
   useEffect(() => {
     // Fetch company details if not provided completely
     const fetchCompanyDetails = async () => {
-      if (!token) return;
-      
       setIsLoading(true);
       try {
-        const response = await fetch(`https://api.blexi.co/api/v1/firms/${company.id}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-        });
-
-        const data = await response.json();
+        const response = await firmsApi.getById(company.id);
         
-        if (response.ok && data.data) {
+        if (response.success && response.data) {
           setFormData({
-            name: data.data.name || '',
-            tax_number: data.data.tax_number || '',
-            address: data.data.address || '',
-            phone: data.data.phone || '',
-            email: data.data.email || '',
-            tax_office: data.data.tax_office || '',
-            status: data.data.status || 'active'
+            name: response.data.name || '',
+            tax_number: response.data.taxNumber || '',
+            address: response.data.address || '',
+            phone: response.data.phone || '',
+            email: response.data.email || '',
+            tax_office: response.data.taxOffice || '',
+            status: response.data.status || 'active'
           });
         } else {
-          console.error('Firma detayları alınamadı:', data);
+          console.error('Firma detayları alınamadı:', response.error);
           setError('Firma bilgileri yüklenirken bir hata oluştu.');
         }
       } catch (error) {
@@ -84,34 +64,53 @@ export default function EditCompanyForm({ company, onSubmit }: EditCompanyFormPr
       status: company.status || 'active'
     });
 
+    // Log initial data for debugging
+    console.log('Başlangıç firma verisi:', company);
+    console.log('Form verileri:', formData);
+
     // If tax_number is missing, fetch complete details
     if (!company.tax_number) {
       fetchCompanyDetails();
     }
-  }, [company, token]);
+  }, [company]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     
+    console.log('Gönderilecek form verisi:', formData);
+    
+    // Form doğrulaması
+    if (!formData.tax_number || formData.tax_number.trim() === '') {
+      setError('Vergi numarası boş olamaz.');
+      return;
+    }
+    
     try {
-      const response = await fetch(`https://api.blexi.co/api/v1/firms/${company.id}`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: JSON.stringify(formData)
-      });
-
-      const data = await response.json();
+      // FormData'yı direkt API'ye gönder, API dönüşümü yapacak
+      const response = await firmsApi.update(company.id, formData as unknown as FormData);
       
-      if (!response.ok) {
-        throw new Error(data.message || 'Firma güncellenirken bir hata oluştu');
+      if (!response.success) {
+        throw new Error(response.error || 'Firma güncellenirken bir hata oluştu');
       }
       
-      onSubmit(data.data);
+      console.log('Güncellenmiş firma yanıtı:', response);
+      
+      // Eğer data tanımlı değilse veya id yoksa, orijinal company bilgisini kullan
+      const updatedData = (response.data && response.data.id) ? response.data : {
+        ...company,
+        // Formdan gelen değerleri ekle
+        name: formData.name,
+        tax_number: formData.tax_number,
+        tax_office: formData.tax_office || "",
+        address: formData.address || "",
+        phone: formData.phone || "",
+        email: formData.email || "",
+        status: formData.status
+      };
+      
+      console.log('Güncellenmiş firma verisi:', updatedData);
+      onSubmit(updatedData);
     } catch (error: any) {
       console.error('Firma güncelleme hatası:', error);
       setError(error.message || 'Firma güncellenirken bir hata oluştu');
@@ -239,7 +238,7 @@ export default function EditCompanyForm({ company, onSubmit }: EditCompanyFormPr
           </label>
           <select
             value={formData.status}
-            onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+            onChange={(e) => setFormData({ ...formData, status: e.target.value as 'active' | 'inactive' })}
             className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
             required
           >

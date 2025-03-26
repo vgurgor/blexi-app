@@ -6,35 +6,26 @@ import { useAuth } from '@/lib/authExport';
 import { ArrowLeft } from 'lucide-react';
 import EditCompanyForm from '@/components/EditCompanyForm';
 import PageLoader from '@/components/PageLoader';
+import { firmsApi, FirmDto } from '@/lib/api/firms';
 
 export default function EditCompanyPage({ params }: { params: { id: string } }) {
   const router = useRouter();
   const { isAuthenticated, token } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [company, setCompany] = useState<any>(null);
+  const [company, setCompany] = useState<FirmDto | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
     const fetchCompany = async () => {
-      if (!token) return;
-      
       setIsLoading(true);
       try {
-        const response = await fetch(`https://api.blexi.co/api/v1/firms/${params.id}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-        });
-
-        const data = await response.json();
+        const response = await firmsApi.getById(params.id);
         
-        if (response.ok && data.data) {
-          setCompany(data.data);
+        if (response.success && response.data) {
+          setCompany(response.data);
         } else {
-          console.error('Firma detayları alınamadı:', data);
+          console.error('Firma detayları alınamadı:', response.error);
           setError('Firma bilgileri yüklenirken bir hata oluştu.');
         }
       } catch (error) {
@@ -45,10 +36,10 @@ export default function EditCompanyPage({ params }: { params: { id: string } }) 
       }
     };
 
-    if (isAuthenticated && token) {
+    if (isAuthenticated) {
       fetchCompany();
     }
-  }, [isAuthenticated, token, params.id]);
+  }, [isAuthenticated, params.id]);
 
   if (!isAuthenticated) {
     return null;

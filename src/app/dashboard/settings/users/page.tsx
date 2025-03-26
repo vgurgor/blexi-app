@@ -1,26 +1,24 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { WithPermission } from '@/components/auth';
 import { Permission } from '@/lib/roles';
 import { Button } from '@/components/ui/atoms/Button';
 import { useToast } from '@/context/ToastContext';
 import { Modal } from '@/components/ui/molecules/Modal';
 import { PlusCircle, Trash2, Edit, UserPlus } from 'lucide-react';
+import { usersApi } from '@/lib/api/users';
+import { IUser } from '@/types/models';
 
 export default function UsersPage() {
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const toast = useToast();
   
-  // Mock users data
-  const users = [
-    { id: 1, username: 'super-admin', name: 'Super Admin', role: 'super-admin', createdAt: '2023-02-15' },
-    { id: 2, username: 'admin', name: 'Sistem Yöneticisi', role: 'admin', createdAt: '2023-01-01' },
-    { id: 3, username: 'manager1', name: 'Ali Yılmaz', role: 'manager', createdAt: '2023-02-15' },
-    { id: 4, username: 'user1', name: 'Ayşe Demir', role: 'user', createdAt: '2023-03-20' },
-    { id: 5, username: 'user2', name: 'Mehmet Öz', role: 'user', createdAt: '2023-04-10' },
-  ];
+  // State for users data
+  const [users, setUsers] = useState<IUser[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
   
   const getRoleName = (role: string) => {
     switch (role) {
@@ -51,15 +49,57 @@ export default function UsersPage() {
     }).format(date);
   };
   
-  const handleAddUser = () => {
+  // Fetch users data
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const fetchUsers = async () => {
+    setIsLoading(true);
+    setError('');
+    
+    try {
+      const response = await usersApi.getAll();
+      
+      if (response.success) {
+        setUsers(response.data);
+      } else {
+        setError(response.error || 'Kullanıcı verileri yüklenirken bir hata oluştu');
+      }
+    } catch (error: any) {
+      console.error('Kullanıcı verileri çekilirken hata:', error);
+      setError(error.message || 'Kullanıcı verileri yüklenirken bir hata oluştu');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleAddUser = async (userData: {
+    username: string;
+    email: string;
+    name: string;
+    password: string;
+    password_confirmation: string;
+    role: 'super-admin' | 'admin' | 'manager' | 'user';
+  }) => {
     setLoading(true);
     
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      const response = await usersApi.create(userData);
+      
+      if (response.success) {
+        toast.success('Kullanıcı başarıyla eklendi');
+        setIsAddUserModalOpen(false);
+        fetchUsers(); // Refresh the list
+      } else {
+        toast.error(response.error || 'Kullanıcı eklenirken bir hata oluştu');
+      }
+    } catch (error: any) {
+      console.error('Kullanıcı ekleme hatası:', error);
+      toast.error(error.message || 'Kullanıcı eklenirken bir hata oluştu');
+    } finally {
       setLoading(false);
-      setIsAddUserModalOpen(false);
-      toast.success('Kullanıcı başarıyla eklendi');
-    }, 1000);
+    }
   };
   
   return (
@@ -92,72 +132,93 @@ export default function UsersPage() {
           </WithPermission>
         </div>
         
-        <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Kullanıcı Adı
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Ad Soyad
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Rol
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Kayıt Tarihi
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    İşlemler
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                {users.map((user) => (
-                  <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                      {user.username}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
-                      {user.name}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${getRoleColor(user.role)}`}>
-                        {getRoleName(user.role)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
-                      {formatDate(user.createdAt)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div className="flex justify-end space-x-2">
-                        <WithPermission permission={Permission.USER_UPDATE}>
-                          <button 
-                            className="p-1 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
-                            title="Düzenle"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </button>
-                        </WithPermission>
-                        
-                        <WithPermission permission={Permission.USER_DELETE}>
-                          <button 
-                            className="p-1 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 transition-colors"
-                            title="Sil"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </WithPermission>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        {/* Error message */}
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-600 dark:text-red-400">
+            {error}
           </div>
-        </div>
+        )}
+        
+        {isLoading ? (
+          <div className="flex justify-center py-12">
+            <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+          </div>
+        ) : (
+          <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Kullanıcı Adı
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Ad Soyad
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Rol
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Kayıt Tarihi
+                    </th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      İşlemler
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                  {users.length > 0 ? (
+                    users.map((user) => (
+                      <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
+                          {user.username}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
+                          {user.name}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`px-2 py-1 text-xs font-medium rounded-full ${getRoleColor(user.role)}`}>
+                            {getRoleName(user.role)}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
+                          {formatDate(user.createdAt)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                          <div className="flex justify-end space-x-2">
+                            <WithPermission permission={Permission.USER_UPDATE}>
+                              <button 
+                                className="p-1 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+                                title="Düzenle"
+                              >
+                                <Edit className="w-4 h-4" />
+                              </button>
+                            </WithPermission>
+                            
+                            <WithPermission permission={Permission.USER_DELETE}>
+                              <button 
+                                className="p-1 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 transition-colors"
+                                title="Sil"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </WithPermission>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={5} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                        Henüz kullanıcı kaydı bulunmamaktadır.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
         
         {/* Add User Modal */}
         <Modal
@@ -188,6 +249,18 @@ export default function UsersPage() {
                 type="text"
                 className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
                 placeholder="Ad Soyad"
+              />
+            </div>
+            
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                E-posta
+              </label>
+              <input
+                id="email"
+                type="email"
+                className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
+                placeholder="ornek@blexi.co"
               />
             </div>
             
@@ -238,7 +311,26 @@ export default function UsersPage() {
               İptal
             </Button>
             <Button 
-              onClick={handleAddUser}
+              onClick={() => {
+                // Get form data and call handleAddUser
+                const usernameInput = document.getElementById('username') as HTMLInputElement;
+                const nameInput = document.getElementById('name') as HTMLInputElement;
+                const emailInput = document.getElementById('email') as HTMLInputElement;
+                const passwordInput = document.getElementById('password') as HTMLInputElement;
+                const confirmPasswordInput = document.getElementById('confirmPassword') as HTMLInputElement;
+                const roleSelect = document.getElementById('role') as HTMLSelectElement;
+                
+                const userData = {
+                  username: usernameInput?.value || '',
+                  name: nameInput?.value || '',
+                  email: emailInput?.value || '',
+                  password: passwordInput?.value || '',
+                  password_confirmation: confirmPasswordInput?.value || '',
+                  role: (roleSelect?.value || 'user') as 'super-admin' | 'admin' | 'manager' | 'user'
+                };
+                
+                handleAddUser(userData);
+              }}
               isLoading={loading}
               leftIcon={!loading && <PlusCircle className="w-4 h-4" />}
             >

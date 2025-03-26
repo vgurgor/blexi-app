@@ -6,44 +6,48 @@ import { IInventoryItem } from '../../types/models';
 export interface InventoryDto {
   id: number;
   tenant_id: number;
+  apart_id: number | null;
+  bed_id: number | null;
   assignable_type: string | null;
   assignable_id: number | null;
   item_type: 'furniture' | 'appliance' | 'linen' | 'electronic' | 'kitchenware' | 'decoration';
   status: 'in_use' | 'in_storage' | 'maintenance' | 'disposed';
   tracking_number: string;
-  brand: string;
-  model: string;
+  brand: string | null;
+  model: string | null;
   purchase_date: string;
   warranty_end: string | null;
-  created_at?: string;
-  updated_at?: string;
+  created_at: string;
+  updated_at: string;
 }
 
 // API isteklerinde kullanılacak filtreler
 export interface InventoryFilters {
-  bed_id?: number;
-  room_id?: number;
-  apart_id?: number;
   item_type?: 'furniture' | 'appliance' | 'linen' | 'electronic' | 'kitchenware' | 'decoration';
   status?: 'in_use' | 'in_storage' | 'maintenance' | 'disposed';
   warranty_expired?: boolean;
-  tracking_number?: string;
+  assigned?: boolean;
+  apart_id?: number | string;
+  room_id?: number | string;
+  bed_id?: number | string;
   page?: number;
   per_page?: number;
 }
 
-// Yeni envanter öğesi oluşturma isteği için model
+// Yeni envanter oluşturma isteği için model
 export interface CreateInventoryRequest {
   item_type: 'furniture' | 'appliance' | 'linen' | 'electronic' | 'kitchenware' | 'decoration';
   status: 'in_use' | 'in_storage' | 'maintenance' | 'disposed';
   tracking_number: string;
-  brand: string;
-  model: string;
+  brand?: string;
+  model?: string;
   purchase_date: string;
-  warranty_end: string;
+  warranty_end?: string;
+  assignable_type?: string;
+  assignable_id?: number;
 }
 
-// Envanter öğesi güncelleme isteği için model
+// Envanter güncelleme isteği için model
 export interface UpdateInventoryRequest {
   item_type?: 'furniture' | 'appliance' | 'linen' | 'electronic' | 'kitchenware' | 'decoration';
   status?: 'in_use' | 'in_storage' | 'maintenance' | 'disposed';
@@ -52,29 +56,14 @@ export interface UpdateInventoryRequest {
   model?: string;
   purchase_date?: string;
   warranty_end?: string;
+  assignable_type?: string;
+  assignable_id?: number;
 }
 
 /**
  * API DTO'yu iç modele dönüştür
  */
 function mapDtoToModel(dto: InventoryDto): IInventoryItem {
-  // Atama durumuna göre location ve locationId belirle
-  let location: 'apartment' | 'room' | 'bed' | undefined;
-  let locationId: string | undefined;
-  
-  if (dto.assignable_type && dto.assignable_id) {
-    if (dto.assignable_type.includes('Apart')) {
-      location = 'apartment';
-      locationId = dto.assignable_id.toString();
-    } else if (dto.assignable_type.includes('Room')) {
-      location = 'room';
-      locationId = dto.assignable_id.toString();
-    } else if (dto.assignable_type.includes('Bed')) {
-      location = 'bed';
-      locationId = dto.assignable_id.toString();
-    }
-  }
-  
   return {
     id: dto.id.toString(),
     tenant_id: dto.tenant_id.toString(),
@@ -83,14 +72,12 @@ function mapDtoToModel(dto: InventoryDto): IInventoryItem {
     item_type: dto.item_type,
     status: dto.status,
     tracking_number: dto.tracking_number,
-    brand: dto.brand,
-    model: dto.model,
+    brand: dto.brand || '',
+    model: dto.model || '',
     purchase_date: dto.purchase_date,
     warranty_end: dto.warranty_end || undefined,
-    location,
-    locationId,
-    createdAt: dto.created_at || '',
-    updatedAt: dto.updated_at || '',
+    createdAt: dto.created_at,
+    updatedAt: dto.updated_at,
   };
 }
 
@@ -98,15 +85,19 @@ function mapDtoToModel(dto: InventoryDto): IInventoryItem {
  * İç modeli API DTO'ya dönüştür
  */
 function mapModelToDto(model: Partial<IInventoryItem>): Partial<CreateInventoryRequest | UpdateInventoryRequest> {
-  return {
-    item_type: model.item_type,
-    status: model.status,
-    tracking_number: model.tracking_number,
-    brand: model.brand,
-    model: model.model,
-    purchase_date: model.purchase_date,
-    warranty_end: model.warranty_end,
-  };
+  const dto: Partial<CreateInventoryRequest | UpdateInventoryRequest> = {};
+  
+  if (model.item_type !== undefined) dto.item_type = model.item_type;
+  if (model.status !== undefined) dto.status = model.status;
+  if (model.tracking_number !== undefined) dto.tracking_number = model.tracking_number;
+  if (model.brand !== undefined) dto.brand = model.brand;
+  if (model.model !== undefined) dto.model = model.model;
+  if (model.purchase_date !== undefined) dto.purchase_date = model.purchase_date;
+  if (model.warranty_end !== undefined) dto.warranty_end = model.warranty_end;
+  if (model.assignable_type !== undefined) dto.assignable_type = model.assignable_type;
+  if (model.assignable_id !== undefined) dto.assignable_id = Number(model.assignable_id);
+  
+  return dto;
 }
 
 export const inventoryApi = {
@@ -124,130 +115,129 @@ export const inventoryApi = {
       });
     }
     
-    // API yanıt yapısı
-    interface InventoryResponse {
-      success: boolean;
-      data: InventoryDto[];
-      meta?: {
-        current_page: number;
-        last_page: number;
-        per_page: number;
-        total: number;
-      };
-      links?: {
-        first: string;
-        last: string;
-        prev: string | null;
-        next: string | null;
-      };
-      status?: number;
-    }
-    
-    const response = await api.get<InventoryResponse>(`/api/v1/inventory?${params.toString()}`);
-    
-    if (response.success && response.data) {
-      const modelData: IInventoryItem[] = response.data.map(mapDtoToModel);
+    try {
+      const response = await api.get(`/api/v1/inventory?${params.toString()}`);
+      
+      if (response && response.data) {
+        const modelData: IInventoryItem[] = response.data.map(mapDtoToModel);
+        
+        return {
+          success: true,
+          status: 200,
+          data: modelData,
+          meta: response.meta
+        };
+      }
+      
       return {
-        success: response.success,
-        status: 200,
-        data: modelData,
+        success: false,
+        status: 404,
+        error: 'Veri bulunamadı',
+        data: [],
+      };
+    } catch (error) {
+      console.error('Envanter verilerini alma hatası:', error);
+      return {
+        success: false,
+        status: 500,
+        error: 'Envanter verileri alınırken bir hata oluştu',
+        data: [],
       };
     }
-    
-    return {
-      success: false,
-      status: 404,
-      error: 'Veri bulunamadı',
-      data: [],
-    };
   },
 
   /**
    * ID'ye göre envanter öğesi getir
    */
   getById: async (id: string | number): Promise<ApiResponse<IInventoryItem>> => {
-    // API yanıt yapısı
-    interface ItemResponse {
-      success: boolean;
-      data: InventoryDto;
-      status?: number;
-    }
-    
-    const response = await api.get<ItemResponse>(`/api/v1/inventory/${id}`);
-    
-    if (response.success && response.data) {
+    try {
+      const response = await api.get(`/api/v1/inventory/${id}`);
+      
+      if (response && response.data) {
+        return {
+          success: true,
+          status: 200,
+          data: mapDtoToModel(response.data),
+        };
+      }
+      
       return {
-        success: response.success,
-        status: 200,
-        data: mapDtoToModel(response.data),
+        success: false,
+        status: 404,
+        error: 'Envanter öğesi bulunamadı',
+      };
+    } catch (error) {
+      console.error('Envanter verilerini alma hatası:', error);
+      return {
+        success: false,
+        status: 500,
+        error: 'Envanter verisi alınırken bir hata oluştu',
       };
     }
-    
-    return {
-      success: false,
-      status: 404,
-      error: 'Envanter öğesi bulunamadı',
-    };
   },
 
   /**
    * Yeni bir envanter öğesi oluştur
    */
-  create: async (data: Partial<IInventoryItem>): Promise<ApiResponse<IInventoryItem>> => {
-    const dto = mapModelToDto(data) as CreateInventoryRequest;
-    
-    // API yanıt yapısı
-    interface ItemResponse {
-      success: boolean;
-      data: InventoryDto;
-      status?: number;
-    }
-    
-    const response = await api.post<ItemResponse>('/api/v1/inventory', dto);
-    
-    if (response.success && response.data) {
+  create: async (data: Partial<IInventoryItem> | CreateInventoryRequest): Promise<ApiResponse<IInventoryItem>> => {
+    try {
+      const dto = 'tracking_number' in data ? data : mapModelToDto(data as Partial<IInventoryItem>);
+      
+      const response = await api.post('/api/v1/inventory', dto);
+      
+      if (response && response.data) {
+        return {
+          success: true,
+          status: 201,
+          data: mapDtoToModel(response.data),
+        };
+      }
+      
       return {
-        success: response.success,
-        status: 201,
-        data: mapDtoToModel(response.data),
+        success: false,
+        status: 400,
+        error: 'Envanter öğesi oluşturulamadı',
+      };
+    } catch (error) {
+      console.error('Envanter oluşturma hatası:', error);
+      return {
+        success: false,
+        status: 500,
+        error: 'Envanter oluşturulurken bir hata oluştu',
       };
     }
-    
-    return {
-      success: false,
-      status: 400,
-      error: 'Envanter öğesi oluşturulamadı',
-    };
   },
 
   /**
    * Mevcut bir envanter öğesini güncelle
    */
-  update: async (id: string | number, data: Partial<IInventoryItem>): Promise<ApiResponse<IInventoryItem>> => {
-    const dto = mapModelToDto(data) as UpdateInventoryRequest;
-    
-    // API yanıt yapısı
-    interface ItemResponse {
-      success: boolean;
-      data: InventoryDto;
-      status?: number;
-    }
-    
-    const response = await api.put<ItemResponse>(`/api/v1/inventory/${id}`, dto);
-    
-    if (response.success && response.data) {
+  update: async (id: string | number, data: Partial<IInventoryItem> | UpdateInventoryRequest): Promise<ApiResponse<IInventoryItem>> => {
+    try {
+      const dto = 'tracking_number' in data ? data : mapModelToDto(data as Partial<IInventoryItem>);
+      
+      const response = await api.put(`/api/v1/inventory/${id}`, dto);
+      
+      if (response && response.data) {
+        return {
+          success: true,
+          status: 200,
+          data: mapDtoToModel(response.data),
+        };
+      }
+      
       return {
-        success: response.success,
-        status: 200,
-        data: mapDtoToModel(response.data),
+        success: false,
+        status: 400,
+        error: 'Envanter öğesi güncellenemedi',
+      };
+    } catch (error) {
+      console.error('Envanter güncelleme hatası:', error);
+      return {
+        success: false,
+        status: 500,
+        error: 'Envanter güncellenirken bir hata oluştu',
       };
     }
-    
-    return {
-      success: false,
-      status: 400,
-      error: 'Envanter öğesi güncellenemedi',
-    };
   },
 
   /**
@@ -257,135 +247,123 @@ export const inventoryApi = {
     return api.delete(`/api/v1/inventory/${id}`);
   },
 
-  // Atama işlemleri
-  
   /**
-   * Envanter öğesini bir apart'a ata
-   */
-  assignToApart: async (inventoryId: string | number, apartId: string | number): Promise<ApiResponse<IInventoryItem>> => {
-    // API yanıt yapısı
-    interface ItemResponse {
-      success: boolean;
-      data: InventoryDto;
-      message?: string;
-      status?: number;
-    }
-    
-    const response = await api.post<ItemResponse>(`/api/v1/inventory/${inventoryId}/assign-to-apart/${apartId}`, {});
-    
-    if (response.success && response.data) {
-      return {
-        success: response.success,
-        status: 200,
-        data: mapDtoToModel(response.data),
-      };
-    }
-    
-    return {
-      success: false,
-      status: 400,
-      error: response.message || 'Atama işlemi başarısız',
-    };
-  },
-
-  /**
-   * Envanter öğesini bir odaya ata
+   * Envanter öğesini odaya ata
    */
   assignToRoom: async (inventoryId: string | number, roomId: string | number): Promise<ApiResponse<IInventoryItem>> => {
-    // API yanıt yapısı
-    interface ItemResponse {
-      success: boolean;
-      data: InventoryDto;
-      message?: string;
-      status?: number;
-    }
-    
-    const response = await api.post<ItemResponse>(`/api/v1/inventory/${inventoryId}/assign-to-room/${roomId}`, {});
-    
-    if (response.success && response.data) {
+    try {
+      // Dedicated assignment endpoint
+      const response = await api.post(`/api/v1/inventory/${inventoryId}/assign-to-room/${roomId}`, {});
+      
+      if (response && response.data) {
+        return {
+          success: true,
+          status: 200,
+          data: mapDtoToModel(response.data),
+        };
+      }
+
+      // Fallback to general update if dedicated endpoint fails
+      if (response && response.error) {
+        return {
+          success: false,
+          status: response.status || 400,
+          error: response.error || 'Envanter odaya atanamadı',
+        };
+      }
+
+      // Alternative approach using update
+      const updateData = {
+        status: 'in_use' as const,
+        assignable_type: 'App\\Modules\\Room\\Models\\Room',
+        assignable_id: Number(roomId),
+      };
+
+      return inventoryApi.update(inventoryId, updateData);
+    } catch (error) {
+      console.error('Envanter odaya atama hatası:', error);
       return {
-        success: response.success,
-        status: 200,
-        data: mapDtoToModel(response.data),
+        success: false,
+        status: 500,
+        error: 'Envanter odaya atanırken bir hata oluştu',
       };
     }
-    
-    return {
-      success: false,
-      status: 400,
-      error: response.message || 'Atama işlemi başarısız',
-    };
   },
 
   /**
-   * Envanter öğesini bir yatağa ata
-   */
-  assignToBed: async (inventoryId: string | number, bedId: string | number): Promise<ApiResponse<IInventoryItem>> => {
-    // API yanıt yapısı
-    interface ItemResponse {
-      success: boolean;
-      data: InventoryDto;
-      message?: string;
-      status?: number;
-    }
-    
-    const response = await api.post<ItemResponse>(`/api/v1/inventory/${inventoryId}/assign-to-bed/${bedId}`, {});
-    
-    if (response.success && response.data) {
-      return {
-        success: response.success,
-        status: 200,
-        data: mapDtoToModel(response.data),
-      };
-    }
-    
-    return {
-      success: false,
-      status: 400,
-      error: response.message || 'Atama işlemi başarısız',
-    };
-  },
-
-  /**
-   * Envanter öğesinin atamasını kaldır
+   * Envanter öğesinin atamalarını kaldır (depoya geri al)
    */
   unassign: async (inventoryId: string | number): Promise<ApiResponse<IInventoryItem>> => {
-    // API yanıt yapısı
-    interface ItemResponse {
-      success: boolean;
-      data: InventoryDto;
-      message?: string;
-      status?: number;
-    }
-    
-    const response = await api.post<ItemResponse>(`/api/v1/inventory/${inventoryId}/unassign`, {});
-    
-    if (response.success && response.data) {
+    try {
+      // Dedicated unassign endpoint
+      const response = await api.post(`/api/v1/inventory/${inventoryId}/unassign`, {});
+      
+      if (response && response.data) {
+        return {
+          success: true,
+          status: 200,
+          data: mapDtoToModel(response.data),
+        };
+      }
+
+      // Fallback to general update if dedicated endpoint fails
+      if (response && response.error) {
+        return {
+          success: false,
+          status: response.status || 400,
+          error: response.error || 'Envanter ataması kaldırılamadı',
+        };
+      }
+
+      // Alternative approach using update
+      const updateData = {
+        status: 'in_storage' as const,
+        assignable_type: null,
+        assignable_id: null,
+      };
+
+      return inventoryApi.update(inventoryId, updateData);
+    } catch (error) {
+      console.error('Envanter ataması kaldırma hatası:', error);
       return {
-        success: response.success,
-        status: 200,
-        data: mapDtoToModel(response.data),
+        success: false,
+        status: 500,
+        error: 'Envanter ataması kaldırılırken bir hata oluştu',
       };
     }
-    
-    return {
-      success: false,
-      status: 400,
-      error: response.message || 'Atama kaldırma işlemi başarısız',
-    };
   },
-  
+
   /**
-   * Envanter durum seçeneklerini getir
+   * Envanter öğesini yatağa ata
    */
-  getStatusOptions: async (): Promise<ApiResponse<string[]>> => {
-    return api.get<string[]>('/api/v1/inventory/status-options');
-  },
-  
-  /**
-   * Envanter tür seçeneklerini getir
-   */
-  getTypeOptions: async (): Promise<ApiResponse<string[]>> => {
-    return api.get<string[]>('/api/v1/inventory/type-options');
+  assignToBed: async (inventoryId: string | number, bedId: string | number): Promise<ApiResponse<IInventoryItem>> => {
+    try {
+      // Dedicated assignment endpoint
+      const response = await api.post(`/api/v1/inventory/${inventoryId}/assign-to-bed/${bedId}`, {});
+      
+      if (response && response.data) {
+        return {
+          success: true,
+          status: 200,
+          data: mapDtoToModel(response.data),
+        };
+      }
+
+      // Fallback to general update if dedicated endpoint fails
+      const updateData = {
+        status: 'in_use' as const,
+        assignable_type: 'App\\Modules\\Bed\\Models\\Bed',
+        assignable_id: Number(bedId),
+      };
+
+      return inventoryApi.update(inventoryId, updateData);
+    } catch (error) {
+      console.error('Envanter yatağa atama hatası:', error);
+      return {
+        success: false,
+        status: 500,
+        error: 'Envanter yatağa atanırken bir hata oluştu',
+      };
+    }
   },
 };

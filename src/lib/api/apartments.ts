@@ -113,7 +113,7 @@ export const apartsApi = {
   /**
    * Tüm apart'ları opsiyonel filtrelerle getir
    */
-  getAll: async (filters?: ApartFilters): Promise<ApiResponse<IApartment[]>> => {
+  getAll: async (filters?: ApartFilters): Promise<ApiResponse<ApartDto[]>> => {
     const params = new URLSearchParams();
     
     if (filters) {
@@ -127,28 +127,27 @@ export const apartsApi = {
     // API yanıt yapısı
     interface ApartsResponse {
       success: boolean;
-      data: {
-        data: ApartDto[];
-      };
+      data: ApartDto[];
+      meta?: any;
       message?: string;
       status?: number;
     }
     
     const response = await api.get<ApartsResponse>(`/api/v1/aparts?${params.toString()}`);
     
-    if (response.success && response.data?.data?.data) {
-      const modelData: IApartment[] = response.data.data.data.map(mapDtoToModel);
+    if (response.success && response.data) {
       return {
         success: response.success,
-        status: response.data.status || 200,
-        data: modelData,
+        status: response.status || 200,
+        data: response.data,
+        meta: response.meta
       };
     }
     
     return {
       success: false,
-      status: response.data?.status || 404,
-      error: 'Veri bulunamadı',
+      status: response.status || 404,
+      error: response.error || 'Veri bulunamadı',
       data: [],
     };
   },
@@ -156,7 +155,7 @@ export const apartsApi = {
   /**
    * ID'ye göre apart getir
    */
-  getById: async (id: string): Promise<ApiResponse<IApartment>> => {
+  getById: async (id: string): Promise<ApiResponse<ApartDto>> => {
     // API yanıt yapısı
     interface ApartResponse {
       success: boolean;
@@ -167,25 +166,25 @@ export const apartsApi = {
     
     const response = await api.get<ApartResponse>(`/api/v1/aparts/${id}`);
     
-    if (response.success && response.data?.data) {
+    if (response.success && response.data) {
       return {
         success: response.success,
-        status: response.data.status || 200,
-        data: mapDtoToModel(response.data.data),
+        status: response.status || 200,
+        data: response.data,
       };
     }
     
     return {
       success: false,
-      status: response.data?.status || 404,
-      error: 'Apart bulunamadı',
+      status: response.status || 404,
+      error: response.error || 'Apart bulunamadı',
     };
   },
 
   /**
    * Yeni bir apart oluştur
    */
-  create: async (data: Partial<IApartment>): Promise<ApiResponse<IApartment>> => {
+  create: async (data: Partial<IApartment>): Promise<ApiResponse<ApartDto>> => {
     const dto = mapModelToDto(data) as CreateApartRequest;
     
     // API yanıt yapısı
@@ -198,25 +197,25 @@ export const apartsApi = {
     
     const response = await api.post<ApartResponse>('/api/v1/aparts', dto);
     
-    if (response.success && response.data?.data) {
+    if (response.success && response.data) {
       return {
         success: response.success,
-        status: response.data.status || 201,
-        data: mapDtoToModel(response.data.data),
+        status: response.status || 201,
+        data: response.data,
       };
     }
     
     return {
       success: false,
-      status: response.data?.status || 400,
-      error: 'Apart oluşturulamadı',
+      status: response.status || 400,
+      error: response.error || 'Apart oluşturulamadı',
     };
   },
 
   /**
    * Mevcut bir apart'ı güncelle
    */
-  update: async (id: string, data: Partial<IApartment>): Promise<ApiResponse<IApartment>> => {
+  update: async (id: string, data: Partial<IApartment>): Promise<ApiResponse<ApartDto>> => {
     const dto = mapModelToDto(data) as UpdateApartRequest;
     
     // API yanıt yapısı
@@ -229,18 +228,18 @@ export const apartsApi = {
     
     const response = await api.put<ApartResponse>(`/api/v1/aparts/${id}`, dto);
     
-    if (response.success && response.data?.data) {
+    if (response.success && response.data) {
       return {
         success: response.success,
-        status: response.data.status || 200,
-        data: mapDtoToModel(response.data.data),
+        status: response.status || 200,
+        data: response.data,
       };
     }
     
     return {
       success: false,
-      status: response.data?.status || 400,
-      error: 'Apart güncellenemedi',
+      status: response.status || 400,
+      error: response.error || 'Apart güncellenemedi',
     };
   },
 

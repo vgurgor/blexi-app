@@ -4,38 +4,25 @@ import { useState, useEffect } from 'react';
 import { Building2, MapPin, Wifi, Building, Calendar } from 'lucide-react';
 import { useAuth } from '@/lib/authExport';
 import ApartmentFeatures from './ApartmentFeatures';
-
-interface Firm {
-  id: number;
-  name: string;
-}
-
-interface Apartment {
-  id: number;
-  firm_id: number;
-  name: string;
-  address: string;
-  gender_type: string;
-  opening_date: string;
-  status: string;
-}
+import { apartsApi, ApartDto } from '@/lib/api/apartments';
+import { firmsApi, FirmDto } from '@/lib/api/firms';
+import { IApartment } from '@/types/models';
 
 interface EditApartmentFormProps {
-  apartment: Apartment;
+  apartment: ApartDto;
   onSubmit: (data: any) => void;
 }
 
 export default function EditApartmentForm({ apartment, onSubmit }: EditApartmentFormProps) {
-  const { token } = useAuth();
   const [formData, setFormData] = useState({
     firm_id: '',
     name: '',
     address: '',
-    gender_type: 'MIXED',
+    gender_type: 'MIXED' as 'MALE' | 'FEMALE' | 'MIXED',
     opening_date: '',
-    status: 'active'
+    status: 'active' as 'active' | 'inactive'
   });
-  const [firms, setFirms] = useState<Firm[]>([]);
+  const [firms, setFirms] = useState<FirmDto[]>([]);
   const [isLoadingFirms, setIsLoadingFirms] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -43,24 +30,14 @@ export default function EditApartmentForm({ apartment, onSubmit }: EditApartment
 
   useEffect(() => {
     const fetchFirms = async () => {
-      if (!token) return;
-      
       setIsLoadingFirms(true);
       try {
-        const response = await fetch('https://api.blexi.co/api/v1/firms?per_page=100', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-        });
-
-        const data = await response.json();
+        const response = await firmsApi.getAll({ per_page: 100 });
         
-        if (response.ok && data.data) {
-          setFirms(data.data);
+        if (response.success && response.data) {
+          setFirms(response.data);
         } else {
-          console.error('Firma verileri alınamadı:', data);
+          console.error('Firma verileri alınamadı:', response.error);
         }
       } catch (error) {
         console.error('Firma verileri çekilirken hata oluştu:', error);
@@ -70,36 +47,26 @@ export default function EditApartmentForm({ apartment, onSubmit }: EditApartment
     };
 
     fetchFirms();
-  }, [token]);
+  }, []);
 
   useEffect(() => {
     // Fetch apartment details if not provided completely
     const fetchApartmentDetails = async () => {
-      if (!token) return;
-      
       setIsLoading(true);
       try {
-        const response = await fetch(`https://api.blexi.co/api/v1/aparts/${apartment.id}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-        });
-
-        const data = await response.json();
+        const response = await apartsApi.getById(apartment.id.toString());
         
-        if (response.ok && data.data) {
+        if (response.success && response.data) {
           setFormData({
-            firm_id: data.data.firm_id.toString(),
-            name: data.data.name,
-            address: data.data.address,
-            gender_type: data.data.gender_type,
-            opening_date: data.data.opening_date,
-            status: data.data.status
+            firm_id: response.data.firm_id.toString(),
+            name: response.data.name,
+            address: response.data.address,
+            gender_type: response.data.gender_type,
+            opening_date: response.data.opening_date,
+            status: response.data.status
           });
         } else {
-          console.error('Apart detayları alınamadı:', data);
+          console.error('Apart detayları alınamadı:', response.error);
           setError('Apart bilgileri yüklenirken bir hata oluştu.');
         }
       } catch (error) {
@@ -115,39 +82,39 @@ export default function EditApartmentForm({ apartment, onSubmit }: EditApartment
       firm_id: apartment.firm_id.toString(),
       name: apartment.name,
       address: apartment.address,
-      gender_type: apartment.gender_type,
+      gender_type: apartment.gender_type as 'MALE' | 'FEMALE' | 'MIXED',
       opening_date: apartment.opening_date,
-      status: apartment.status
+      status: apartment.status as 'active' | 'inactive'
     });
 
     // If some data is missing, fetch complete details
     if (!apartment.gender_type) {
       fetchApartmentDetails();
     }
-  }, [apartment, token]);
+  }, [apartment]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     
     try {
-      const response = await fetch(`https://api.blexi.co/api/v1/aparts/${apartment.id}`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: JSON.stringify(formData)
-      });
-
-      const data = await response.json();
+      // Prepare apartment data for API
+      const apartmentData: Partial<IApartment> = {
+        name: formData.name,
+        address: formData.address,
+        companyId: formData.firm_id,
+        genderType: formData.gender_type,
+        openingDate: formData.opening_date,
+        status: formData.status
+      };
       
-      if (!response.ok) {
-        throw new Error(data.message || 'Apart güncellenirken bir hata oluştu');
+      const response = await apartsApi.update(apartment.id.toString(), apartmentData);
+      
+      if (!response.success) {
+        throw new Error(response.error || 'Apart güncellenirken bir hata oluştu');
       }
       
-      onSubmit(data.data);
+      onSubmit(response.data);
     } catch (error: any) {
       console.error('Apart güncelleme hatası:', error);
       setError(error.message || 'Apart güncellenirken bir hata oluştu');

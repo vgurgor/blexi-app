@@ -3,28 +3,14 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/authExport';
+import { inventoryApi, type InventoryFilters } from '@/lib/api/inventory';
+import { IInventoryItem } from '@/types/models';
 import { Plus, Package, Search, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
 import InventoryTable from '@/components/inventory/InventoryTable';
 import InventoryForm from '@/components/inventory/InventoryForm';
 import PageLoader from '@/components/PageLoader';
 
-interface InventoryItem {
-  id: number;
-  tenant_id: number;
-  apart_id: number | null;
-  bed_id: number | null;
-  assignable_type: string | null;
-  assignable_id: number | null;
-  item_type: string;
-  status: string;
-  tracking_number: string;
-  brand: string | null;
-  model: string | null;
-  purchase_date: string;
-  warranty_end: string | null;
-  created_at: string;
-  updated_at: string;
-}
+// Using IInventoryItem from models.ts
 
 interface PaginationMeta {
   current_page: number;
@@ -45,7 +31,7 @@ export default function InventoryPage() {
   const router = useRouter();
   const { isAuthenticated, checkAuth, token } = useAuth();
   const [isChecking, setIsChecking] = useState(true);
-  const [inventory, setInventory] = useState<InventoryItem[]>([]);
+  const [inventory, setInventory] = useState<IInventoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilters, setShowFilters] = useState(false);
@@ -61,7 +47,7 @@ export default function InventoryPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [paginationMeta, setPaginationMeta] = useState<PaginationMeta | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
-  const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
+  const [editingItem, setEditingItem] = useState<IInventoryItem | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState('');
 
@@ -100,64 +86,54 @@ export default function InventoryPage() {
   }, [success]);
 
   const fetchInventory = async () => {
-    if (!token) return;
-    
     setIsLoading(true);
     try {
-      let url = 'https://api.blexi.co/api/v1/inventory';
-      let queryParams = new URLSearchParams();
-      
-      queryParams.append('page', currentPage.toString());
-      queryParams.append('per_page', '10');
+      // Prepare filters for API
+      const apiFilters: InventoryFilters = {
+        page: currentPage,
+        per_page: 10
+      };
       
       if (filters.itemType !== 'all') {
-        queryParams.append('item_type', filters.itemType);
+        apiFilters.item_type = filters.itemType as any;
       }
       
       if (filters.status !== 'all') {
-        // Updated to use string literal for status parameter
-        queryParams.append('status', filters.status);
+        apiFilters.status = filters.status as any;
       }
       
       if (filters.warrantyExpired !== 'all') {
-        queryParams.append('warranty_expired', filters.warrantyExpired === 'expired' ? 'true' : 'false');
+        apiFilters.warranty_expired = filters.warrantyExpired === 'expired';
       }
       
       if (filters.assigned !== 'all') {
-        queryParams.append('assigned', filters.assigned === 'assigned' ? 'true' : 'false');
+        apiFilters.assigned = filters.assigned === 'assigned';
       }
       
       if (filters.apartId !== 'all') {
-        queryParams.append('apart_id', filters.apartId);
+        apiFilters.apart_id = filters.apartId;
       }
       
       if (filters.roomId !== 'all') {
-        queryParams.append('room_id', filters.roomId);
+        apiFilters.room_id = filters.roomId;
       }
       
       if (filters.bedId !== 'all') {
-        queryParams.append('bed_id', filters.bedId);
+        apiFilters.bed_id = filters.bedId;
       }
       
-      const response = await fetch(`${url}?${queryParams.toString()}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-      });
-
-      const data = await response.json();
+      // Use the API service instead of direct fetch
+      const response = await inventoryApi.getAll(apiFilters);
       
-      if (response.ok) {
-        setInventory(data.data);
+      if (response.success) {
+        setInventory(response.data);
         
         // Set pagination meta
-        if (data.meta) {
-          setPaginationMeta(data.meta);
+        if (response.meta) {
+          setPaginationMeta(response.meta as PaginationMeta);
         }
       } else {
-        console.error('Veri çekme hatası:', data);
+        console.error('Veri çekme hatası:', response.error);
       }
     } catch (error) {
       console.error('Veri çekilirken hata oluştu:', error);
@@ -167,29 +143,18 @@ export default function InventoryPage() {
   };
 
   const handleCreateInventory = async (formData: any) => {
-    if (!token) throw new Error('Oturum bilgisi bulunamadı');
-    
     setIsSubmitting(true);
     
     try {
-      const response = await fetch('https://api.blexi.co/api/v1/inventory', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: JSON.stringify(formData)
-      });
-
-      const data = await response.json();
+      // Use the API service instead of direct fetch
+      const response = await inventoryApi.create(formData);
       
-      if (!response.ok) {
-        throw new Error(data.message || 'Envanter eklenirken bir hata oluştu');
+      if (!response.success) {
+        throw new Error(response.error || 'Envanter eklenirken bir hata oluştu');
       }
       
       setSuccess('Envanter başarıyla eklendi.');
-      setInventory(prev => [data.data, ...prev]);
+      setInventory(prev => [response.data, ...prev]);
       setShowAddForm(false);
       fetchInventory(); // Refresh the list
     } catch (error: any) {
@@ -201,29 +166,20 @@ export default function InventoryPage() {
   };
 
   const handleUpdateInventory = async (formData: any) => {
-    if (!token || !editingItem) throw new Error('Oturum bilgisi bulunamadı');
+    if (!editingItem) throw new Error('Düzenlenecek öğe bulunamadı');
     
     setIsSubmitting(true);
     
     try {
-      const response = await fetch(`https://api.blexi.co/api/v1/inventory/${editingItem.id}`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: JSON.stringify(formData)
-      });
-
-      const data = await response.json();
+      // Use the API service instead of direct fetch
+      const response = await inventoryApi.update(editingItem.id, formData);
       
-      if (!response.ok) {
-        throw new Error(data.message || 'Envanter güncellenirken bir hata oluştu');
+      if (!response.success) {
+        throw new Error(response.error || 'Envanter güncellenirken bir hata oluştu');
       }
       
       setSuccess('Envanter başarıyla güncellendi.');
-      setInventory(prev => prev.map(item => item.id === editingItem.id ? {...item, ...formData} : item));
+      setInventory(prev => prev.map(item => item.id === editingItem.id ? response.data : item));
       setShowAddForm(false);
       setEditingItem(null);
       fetchInventory(); // Refresh the list
@@ -236,26 +192,16 @@ export default function InventoryPage() {
   };
 
   const handleDeleteInventory = async (id: number) => {
-    if (!token) throw new Error('Oturum bilgisi bulunamadı');
-    
     try {
-      const response = await fetch(`https://api.blexi.co/api/v1/inventory/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        }
-      });
-
-      const data = await response.json();
+      // Use the API service instead of direct fetch
+      const response = await inventoryApi.delete(id);
       
-      if (!response.ok) {
-        throw new Error(data.message || 'Envanter silinirken bir hata oluştu');
+      if (!response.success) {
+        throw new Error(response.error || 'Envanter silinirken bir hata oluştu');
       }
       
       // Remove from inventory
-      setInventory(prev => prev.filter(item => item.id !== id));
+      setInventory(prev => prev.filter(item => item.id !== id.toString()));
       setSuccess('Envanter başarıyla silindi.');
     } catch (error: any) {
       console.error('Envanter silme hatası:', error);
@@ -263,7 +209,7 @@ export default function InventoryPage() {
     }
   };
 
-  const handleEditItem = (item: InventoryItem) => {
+  const handleEditItem = (item: IInventoryItem) => {
     setEditingItem(item);
     setShowAddForm(true);
   };

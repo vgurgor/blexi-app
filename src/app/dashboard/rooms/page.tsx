@@ -5,19 +5,11 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/authExport';
 import { Plus, DoorOpen, Bed, ChevronLeft, ChevronRight, Building2, Search, Filter } from 'lucide-react';
 import RoomCard from '@/components/rooms/RoomCard';
+import { roomsApi, RoomFilters } from '@/lib/api/rooms';
+import { IRoom } from '@/types/models';
 
-interface Room {
-  id: number;
-  room_number: string;
-  floor: number;
-  capacity: number;
-  room_type: 'STANDARD' | 'SUITE' | 'DELUXE';
-  status: 'active' | 'inactive' | 'maintenance';
-  apart_id: number;
-  beds_count: number;
-  created_at: string;
-  updated_at: string;
-}
+// Import API service for apartments
+import { api } from '@/lib/api/base';
 
 interface PaginationMeta {
   current_page: number;
@@ -42,13 +34,19 @@ interface Filters {
   occupancyRange: string;
 }
 
+interface Apartment {
+  id: number;
+  name: string;
+  address: string;
+}
+
 export default function RoomsPage() {
   const router = useRouter();
-  const { isAuthenticated, checkAuth, token } = useAuth();
+  const { isAuthenticated, checkAuth } = useAuth();
   const [isChecking, setIsChecking] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [rooms, setRooms] = useState<Room[]>([]);
-  const [apartments, setApartments] = useState<any[]>([]);
+  const [rooms, setRooms] = useState<IRoom[]>([]);
+  const [apartments, setApartments] = useState<Apartment[]>([]);
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState<Filters>({
     status: [],
@@ -81,66 +79,56 @@ export default function RoomsPage() {
   }, [checkAuth, router]);
 
   useEffect(() => {
-    if (isAuthenticated && token) {
+    if (isAuthenticated) {
       fetchRooms();
       fetchApartments();
     }
-  }, [isAuthenticated, token, currentPage, filters]);
+  }, [isAuthenticated, currentPage, filters]);
 
   const fetchRooms = async () => {
-    if (!token) return;
-    
     setIsLoading(true);
     try {
-      let url = 'https://api.blexi.co/api/v1/rooms';
-      let queryParams = new URLSearchParams();
-      
-      queryParams.append('page', currentPage.toString());
-      queryParams.append('per_page', '9');
+      // Prepare API filters
+      const apiFilters: RoomFilters = {
+        page: currentPage,
+        per_page: 9
+      };
       
       if (filters.roomType !== 'all') {
-        queryParams.append('room_type', filters.roomType);
+        apiFilters.room_type = filters.roomType as any;
       }
       
       if (filters.apartId !== 'all') {
-        queryParams.append('apart_id', filters.apartId);
+        apiFilters.apart_id = parseInt(filters.apartId);
       }
       
       if (filters.floor !== 'all') {
-        queryParams.append('floor', filters.floor);
+        apiFilters.floor = parseInt(filters.floor);
       }
       
-      // Fix: Send status as a single parameter if only one is selected
+      // Add status filter only if a single status is selected
       if (filters.status.length === 1) {
-        queryParams.append('status', filters.status[0]);
+        apiFilters.status = filters.status[0] as any;
       }
       
-      const response = await fetch(`${url}?${queryParams.toString()}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-      });
-
-      const data = await response.json();
+      const response = await roomsApi.getAll(apiFilters);
       
-      if (response.ok) {
+      if (response.success) {
         // If we have multiple status filters, filter client-side
         if (filters.status.length > 1) {
-          setRooms(data.data.filter((room: Room) => 
+          setRooms(response.data.filter(room => 
             filters.status.includes(room.status)
           ));
         } else {
-          setRooms(data.data);
+          setRooms(response.data);
         }
         
-        // Set pagination meta
-        if (data.meta) {
-          setPaginationMeta(data.meta);
+        // Get pagination meta if available
+        if (response.meta) {
+          setPaginationMeta(response.meta);
         }
       } else {
-        console.error('Veri çekme hatası:', data);
+        console.error('Veri çekme hatası:', response.error);
       }
     } catch (error) {
       console.error('Veri çekilirken hata oluştu:', error);
@@ -150,44 +138,24 @@ export default function RoomsPage() {
   };
 
   const fetchApartments = async () => {
-    if (!token) return;
-    
     try {
-      const response = await fetch('https://api.blexi.co/api/v1/aparts?per_page=100', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-      });
-
-      const data = await response.json();
+      const response = await api.get('/api/v1/aparts?per_page=100');
       
-      if (response.ok) {
-        setApartments(data.data);
+      if (response.success && Array.isArray(response.data)) {
+        setApartments(response.data);
       } else {
-        console.error('Apart verileri alınamadı:', data);
+        console.error('Apart verileri alınamadı:', response.error);
       }
     } catch (error) {
       console.error('Apart verileri çekilirken hata oluştu:', error);
     }
   };
 
-  const handleRoomStatusChange = async (id: number, status: 'active' | 'inactive' | 'maintenance') => {
-    if (!token) return;
-    
+  const handleRoomStatusChange = async (id: string, status: 'active' | 'inactive' | 'maintenance') => {
     try {
-      const response = await fetch(`https://api.blexi.co/api/v1/rooms/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: JSON.stringify({ status })
-      });
+      const response = await roomsApi.update(id, { status });
 
-      if (response.ok) {
+      if (response.success) {
         // Update local state
         setRooms(prev => prev.map(r => 
           r.id === id ? { ...r, status } : r
@@ -195,30 +163,25 @@ export default function RoomsPage() {
         // Refresh data from server
         fetchRooms();
       } else {
-        console.error('Durum değiştirme hatası:', await response.json());
+        console.error('Durum değiştirme hatası:', response.error);
       }
     } catch (error) {
       console.error('Durum değiştirme hatası:', error);
     }
   };
 
-  const handleRoomDelete = async (id: number) => {
-    if (!token) return;
-    
+  const handleRoomDelete = async (id: string) => {
     try {
-      await fetch(`https://api.blexi.co/api/v1/rooms/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-      });
+      const response = await roomsApi.delete(id);
       
-      // Update local state
-      setRooms(prev => prev.filter(r => r.id !== id));
-      // Refresh data from server
-      fetchRooms();
+      if (response.success) {
+        // Update local state
+        setRooms(prev => prev.filter(r => r.id !== id));
+        // Refresh data from server
+        fetchRooms();
+      } else {
+        console.error('Silme hatası:', response.error);
+      }
     } catch (error) {
       console.error('Silme hatası:', error);
     }
@@ -229,8 +192,8 @@ export default function RoomsPage() {
     setCurrentPage(page);
   };
 
-  const getApartmentName = (apartId: number) => {
-    const apartment = apartments.find(a => a.id === apartId);
+  const getApartmentName = (apartId: string) => {
+    const apartment = apartments.find(a => a.id.toString() === apartId);
     return apartment ? apartment.name : 'Bilinmiyor';
   };
 

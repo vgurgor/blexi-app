@@ -6,36 +6,28 @@ import { useAuth } from '@/lib/authExport';
 import { ArrowLeft } from 'lucide-react';
 import EditBedForm from '@/components/rooms/EditBedForm';
 import PageLoader from '@/components/PageLoader';
+import { bedsApi } from '@/lib/api/beds';
+import { IBed } from '@/types/models';
 
 export default function EditBedPage({ params }: { params: { id: string } }) {
   const router = useRouter();
-  const { isAuthenticated, token } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [bed, setBed] = useState<any>(null);
+  const [bed, setBed] = useState<IBed | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
     const fetchBed = async () => {
-      if (!token) return;
-      
       setIsLoading(true);
       try {
-        const response = await fetch(`https://api.blexi.co/api/v1/beds/${params.id}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-        });
-
-        const data = await response.json();
+        const response = await bedsApi.getById(params.id);
         
-        if (response.ok && data.data) {
-          setBed(data.data);
+        if (response.success && response.data) {
+          setBed(response.data);
         } else {
-          console.error('Yatak detayları alınamadı:', data);
-          setError('Yatak bilgileri yüklenirken bir hata oluştu.');
+          console.error('Yatak detayları alınamadı:', response.error);
+          setError(response.error || 'Yatak bilgileri yüklenirken bir hata oluştu.');
         }
       } catch (error) {
         console.error('Yatak detayları çekilirken hata oluştu:', error);
@@ -45,22 +37,29 @@ export default function EditBedPage({ params }: { params: { id: string } }) {
       }
     };
 
-    if (isAuthenticated && token) {
+    if (isAuthenticated) {
       fetchBed();
     }
-  }, [isAuthenticated, token, params.id]);
+  }, [isAuthenticated, params.id]);
 
   if (!isAuthenticated) {
     return null;
   }
 
-  const handleSubmit = async (data: any) => {
+  const handleSubmit = async (data: IBed) => {
     setIsSubmitting(true);
     try {
-      // API entegrasyonu EditBedForm içinde yapıldı
-      console.log('Yatak güncellendi:', data);
-      await new Promise(resolve => setTimeout(resolve, 500)); // Kısa bir bekleme
-      router.back();
+      const response = await bedsApi.update(params.id, data);
+      
+      if (response.success && response.data) {
+        console.log('Yatak güncellendi:', response.data);
+        await new Promise(resolve => setTimeout(resolve, 300)); // Kısa bir bekleme
+        router.back();
+      } else {
+        console.error('Yatak güncellenirken hata oluştu:', response.error);
+        setError(response.error || 'Yatak güncellenirken bir hata oluştu.');
+        setIsSubmitting(false);
+      }
     } catch (error) {
       console.error('Hata:', error);
       setIsSubmitting(false);

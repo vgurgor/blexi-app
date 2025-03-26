@@ -6,26 +6,17 @@ import { useRouter } from 'next/navigation';
 import MoreActionsDropdown from '../MoreActionsDropdown';
 import { useAuth } from '@/lib/authExport';
 import DeleteConfirmationModal from '../DeleteConfirmationModal';
+import { IBed } from '@/types/models';
+import { bedsApi } from '@/lib/api/beds';
 
 interface BedCardProps {
-  bed: {
-    id: number;
-    name: string;
-    bed_number: string;
-    bed_type: 'SINGLE' | 'DOUBLE' | 'BUNK';
-    status: 'available' | 'occupied' | 'maintenance' | 'reserved';
-    room_id: number;
-    guest_id: number | null;
-    created_at: string;
-    updated_at: string;
-  };
-  onStatusChange: (id: number, status: 'available' | 'occupied' | 'maintenance' | 'reserved') => void;
-  onDelete: (id: number) => void;
+  bed: IBed;
+  onStatusChange: (id: string, status: 'available' | 'occupied' | 'maintenance' | 'reserved') => void;
+  onDelete: (id: string) => void;
 }
 
 export default function BedCard({ bed, onStatusChange, onDelete }: BedCardProps) {
   const router = useRouter();
-  const { token } = useAuth();
   const [showMoreActions, setShowMoreActions] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -37,28 +28,17 @@ export default function BedCard({ bed, onStatusChange, onDelete }: BedCardProps)
   };
 
   const handleDeleteBed = async () => {
-    if (!token) return;
-    
     setIsDeleting(true);
     setDeleteError('');
     
     try {
-      const response = await fetch(`https://api.blexi.co/api/v1/beds/${bed.id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-      });
-
-      const data = await response.json();
+      const response = await bedsApi.delete(bed.id);
       
-      if (response.ok) {
+      if (response.success) {
         onDelete(bed.id);
         setShowDeleteModal(false);
       } else {
-        throw new Error(data.message || 'Yatak silinirken bir hata oluştu');
+        throw new Error(response.error || 'Yatak silinirken bir hata oluştu');
       }
     } catch (error: any) {
       console.error('Yatak silme hatası:', error);

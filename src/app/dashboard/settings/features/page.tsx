@@ -3,18 +3,14 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/authExport';
+import { featuresApi, type FeatureFilters } from '@/lib/api/features';
+import { IFeature } from '@/types/models';
 import { Settings, Plus, Edit, Trash2, Search, Filter, ArrowLeft, Wifi, Tv, Bed, Home, Coffee, Utensils, ShowerHead as Shower, Wind, Check, X } from 'lucide-react';
 import DeleteConfirmationModal from '@/components/DeleteConfirmationModal';
 
-interface Feature {
-  id: number;
-  name: string;
-  code: string;
-  type: 'ROOM' | 'BED' | 'APART' | 'MIXED';
-  status: 'active' | 'inactive';
+// Interface to extend IFeature with additional properties from API
+interface FeatureWithAssignments extends IFeature {
   assignments_count?: number;
-  created_at: string;
-  updated_at: string;
 }
 
 interface PaginationMeta {
@@ -36,7 +32,7 @@ export default function FeaturesPage() {
   const router = useRouter();
   const { isAuthenticated, checkAuth, token } = useAuth();
   const [isChecking, setIsChecking] = useState(true);
-  const [features, setFeatures] = useState<Feature[]>([]);
+  const [features, setFeatures] = useState<FeatureWithAssignments[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState<string>('all');
@@ -44,12 +40,12 @@ export default function FeaturesPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [paginationMeta, setPaginationMeta] = useState<PaginationMeta | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [featureToDelete, setFeatureToDelete] = useState<Feature | null>(null);
+  const [featureToDelete, setFeatureToDelete] = useState<FeatureWithAssignments | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState('');
   const [showAddEditModal, setShowAddEditModal] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [currentFeature, setCurrentFeature] = useState<Feature | null>(null);
+  const [currentFeature, setCurrentFeature] = useState<FeatureWithAssignments | null>(null);
   const [formData, setFormData] = useState({
     id: 0,
     name: '',
@@ -99,43 +95,40 @@ export default function FeaturesPage() {
   }, [showAddEditModal]);
 
   const fetchFeatures = async () => {
-    if (!token) return;
-    
     setIsLoading(true);
     try {
-      let url = 'https://api.blexi.co/api/v1/features';
-      let queryParams = new URLSearchParams();
-      
-      queryParams.append('page', currentPage.toString());
-      queryParams.append('per_page', '10');
+      // Prepare filters for API
+      const filters: FeatureFilters = {
+        page: currentPage,
+        per_page: 10
+      };
       
       if (selectedType !== 'all') {
-        queryParams.append('type', selectedType);
+        filters.type = selectedType as 'ROOM' | 'BED' | 'APART' | 'MIXED';
       }
       
       if (selectedStatus !== 'all') {
-        queryParams.append('status', selectedStatus);
+        filters.status = selectedStatus as 'active' | 'inactive';
       }
       
-      const response = await fetch(`${url}?${queryParams.toString()}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-      });
-
-      const data = await response.json();
+      // Use the API service instead of direct fetch
+      const response = await featuresApi.getAll(filters);
       
-      if (response.ok) {
-        setFeatures(data.data);
+      if (response.success) {
+        // Add assignments_count if missing (to satisfy our extended interface)
+        const featuresWithAssignments = response.data.map(feature => ({
+          ...feature,
+          assignments_count: (feature as any).assignments_count || 0
+        }));
+        
+        setFeatures(featuresWithAssignments);
         
         // Set pagination meta
-        if (data.meta) {
-          setPaginationMeta(data.meta);
+        if (response.meta) {
+          setPaginationMeta(response.meta as PaginationMeta);
         }
       } else {
-        console.error('Veri çekme hatası:', data);
+        console.error('Veri çekme hatası:', response.error);
       }
     } catch (error) {
       console.error('Veri çekilirken hata oluştu:', error);
@@ -149,34 +142,27 @@ export default function FeaturesPage() {
     setCurrentPage(page);
   };
 
-  const handleDeleteClick = (feature: Feature) => {
+  const handleDeleteClick = (feature: FeatureWithAssignments) => {
     setFeatureToDelete(feature);
     setShowDeleteModal(true);
   };
 
   const handleDeleteFeature = async () => {
-    if (!token || !featureToDelete) return;
+    if (!featureToDelete) return;
     
     setIsDeleting(true);
     setDeleteError('');
     
     try {
-      const response = await fetch(`https://api.blexi.co/api/v1/features/${featureToDelete.id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-      });
+      // Use the API service instead of direct fetch
+      const response = await featuresApi.delete(featureToDelete.id);
 
-      if (response.ok) {
+      if (response.success) {
         setFeatures(prev => prev.filter(f => f.id !== featureToDelete.id));
         setShowDeleteModal(false);
         fetchFeatures(); // Refresh the list
       } else {
-        const data = await response.json();
-        throw new Error(data.message || 'Özellik silinirken bir hata oluştu');
+        throw new Error(response.error || 'Özellik silinirken bir hata oluştu');
       }
     } catch (error: any) {
       console.error('Özellik silme hatası:', error);
@@ -206,13 +192,13 @@ export default function FeaturesPage() {
     setShowAddEditModal(true);
   };
 
-  const handleEditClick = (feature: Feature) => {
+  const handleEditClick = (feature: FeatureWithAssignments) => {
     if (!feature) return;
     
     setIsEditing(true);
     setCurrentFeature(feature);
     setFormData({
-      id: feature.id,
+      id: Number(feature.id),
       name: feature.name,
       code: feature.code,
       type: feature.type,
@@ -271,30 +257,28 @@ export default function FeaturesPage() {
     setSubmitSuccess(false);
     
     try {
-      let url = 'https://api.blexi.co/api/v1/features';
-      let method = 'POST';
-      
       // Create a clean request object without the id field
       const { id, ...requestData } = formData;
       
+      // Map form data to IFeature format
+      const featureData: Partial<IFeature> = {
+        name: requestData.name,
+        code: requestData.code,
+        type: requestData.type as 'ROOM' | 'BED' | 'APART' | 'MIXED',
+        status: requestData.status as 'active' | 'inactive'
+      };
+      
+      let response;
+      
       if (isEditing && currentFeature) {
-        url = `${url}/${currentFeature.id}`;
-        method = 'PUT';
+        // Use update API method
+        response = await featuresApi.update(currentFeature.id, featureData);
+      } else {
+        // Use create API method
+        response = await featuresApi.create(featureData);
       }
       
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: JSON.stringify(requestData)
-      });
-
-      const data = await response.json();
-      
-      if (response.ok) {
+      if (response.success) {
         setSubmitSuccess(true);
         fetchFeatures(); // Refresh the list
         
@@ -303,17 +287,17 @@ export default function FeaturesPage() {
           setShowAddEditModal(false);
         }, 1500);
       } else {
-        // Handle validation errors from the server
-        if (data.errors) {
+        // Handle validation errors
+        if (response.errors) {
           const serverErrors = {
-            name: data.errors.name?.[0] || '',
-            code: data.errors.code?.[0] || '',
-            type: data.errors.type?.[0] || '',
-            status: data.errors.status?.[0] || ''
+            name: response.errors.name?.[0] || '',
+            code: response.errors.code?.[0] || '',
+            type: response.errors.type?.[0] || '',
+            status: response.errors.status?.[0] || ''
           };
           setFormErrors(serverErrors);
         } else {
-          throw new Error(data.message || 'İşlem sırasında bir hata oluştu');
+          throw new Error(response.error || 'İşlem sırasında bir hata oluştu');
         }
       }
     } catch (error: any) {

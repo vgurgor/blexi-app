@@ -2,29 +2,12 @@ import { useState } from 'react';
 import { Trash2, Edit, AlertCircle, CheckCircle, Clock, Package, ExternalLink } from 'lucide-react';
 import DeleteConfirmationModal from '@/components/DeleteConfirmationModal';
 import { useRouter } from 'next/navigation';
-
-interface InventoryItem {
-  id: number;
-  tenant_id: number;
-  apart_id: number | null;
-  bed_id: number | null;
-  assignable_type: string | null;
-  assignable_id: number | null;
-  item_type: string;
-  status: string;
-  tracking_number: string;
-  brand: string | null;
-  model: string | null;
-  purchase_date: string;
-  warranty_end: string | null;
-  created_at: string;
-  updated_at: string;
-}
+import { IInventoryItem } from '@/types/models';
 
 interface InventoryTableProps {
-  items: InventoryItem[];
+  items: IInventoryItem[];
   onDelete: (id: number) => Promise<void>;
-  onEdit?: (item: InventoryItem) => void;
+  onEdit?: (item: IInventoryItem) => void;
   isLoading?: boolean;
 }
 
@@ -40,8 +23,8 @@ export default function InventoryTable({
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState('');
 
-  const handleDeleteClick = (id: number) => {
-    setItemToDelete(id);
+  const handleDeleteClick = (id: string) => {
+    setItemToDelete(Number(id));
     setShowDeleteModal(true);
   };
 
@@ -113,7 +96,7 @@ export default function InventoryTable({
     return new Date(warrantyEnd) < new Date();
   };
 
-  const getAssignmentInfo = (item: InventoryItem) => {
+  const getAssignmentInfo = (item: IInventoryItem) => {
     if (!item.assignable_type || !item.assignable_id) return 'Atanmamış';
 
     const assignable_type = item.assignable_type.split('\\').pop() || '';
@@ -128,7 +111,7 @@ export default function InventoryTable({
     return `${assignable_type} #${item.assignable_id}`;
   };
 
-  const navigateToAssignedItem = (item: InventoryItem) => {
+  const navigateToAssignedItem = (item: IInventoryItem) => {
     if (!item.assignable_type || !item.assignable_id) return;
     
     const assignable_type = item.assignable_type.split('\\').pop() || '';

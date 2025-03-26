@@ -6,38 +6,24 @@ import { useAuth } from '@/lib/authExport';
 import { ArrowLeft, Plus, Bed as BedIcon, Tag, Package, Trash2, CheckCircle, AlertCircle, Clock } from 'lucide-react';
 import PageLoader from '@/components/PageLoader';
 import DeleteConfirmationModal from '@/components/DeleteConfirmationModal';
-
-interface InventoryItem {
-  id: number;
-  tenant_id: number;
-  apart_id: number | null;
-  bed_id: number | null;
-  assignable_type: string | null;
-  assignable_id: number | null;
-  item_type: string;
-  status: string;
-  tracking_number: string;
-  brand: string | null;
-  model: string | null;
-  purchase_date: string;
-  warranty_end: string | null;
-  created_at: string;
-  updated_at: string;
-}
+import { roomsApi } from '@/lib/api/rooms';
+import { inventoryApi } from '@/lib/api/inventory';
+import { IRoom } from '@/types/models';
+import { IInventoryItem } from '@/types/models';
 
 export default function RoomInventoryPage({ params }: { params: { id: string } }) {
   const router = useRouter();
-  const { isAuthenticated, token } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
-  const [room, setRoom] = useState<any>(null);
-  const [inventory, setInventory] = useState<InventoryItem[]>([]);
-  const [availableInventory, setAvailableInventory] = useState<InventoryItem[]>([]);
+  const [room, setRoom] = useState<IRoom | null>(null);
+  const [inventory, setInventory] = useState<IInventoryItem[]>([]);
+  const [availableInventory, setAvailableInventory] = useState<IInventoryItem[]>([]);
   const [error, setError] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<number | null>(null);
+  const [selectedItem, setSelectedItem] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [itemToUnassign, setItemToUnassign] = useState<number | null>(null);
+  const [itemToUnassign, setItemToUnassign] = useState<string | null>(null);
   const [success, setSuccess] = useState('');
 
   useEffect(() => {
@@ -51,43 +37,27 @@ export default function RoomInventoryPage({ params }: { params: { id: string } }
 
   useEffect(() => {
     const fetchRoomAndInventory = async () => {
-      if (!token) return;
-      
       setIsLoading(true);
       try {
         // Fetch room details
-        const roomResponse = await fetch(`https://api.blexi.co/api/v1/rooms/${params.id}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-        });
-
-        const roomData = await roomResponse.json();
+        const roomResponse = await roomsApi.getById(params.id);
         
-        if (!roomResponse.ok) {
-          throw new Error(roomData.message || 'Oda bilgileri yüklenirken bir hata oluştu.');
+        if (roomResponse.success && roomResponse.data) {
+          setRoom(roomResponse.data);
+          
+          // Fetch inventory for this room
+          const inventoryResponse = await roomsApi.getInventory(params.id);
+          
+          if (inventoryResponse.success) {
+            setInventory(inventoryResponse.data);
+          } else {
+            console.error('Envanter bilgileri alınamadı:', inventoryResponse.error);
+            setError('Envanter bilgileri yüklenirken bir hata oluştu.');
+          }
+        } else {
+          console.error('Oda detayları alınamadı:', roomResponse.error);
+          setError('Oda bilgileri yüklenirken bir hata oluştu.');
         }
-        
-        setRoom(roomData.data);
-        
-        // Use the dedicated endpoint for room inventory
-        const inventoryResponse = await fetch(`https://api.blexi.co/api/v1/rooms/${params.id}/inventory`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-        });
-
-        const inventoryData = await inventoryResponse.json();
-        
-        if (!inventoryResponse.ok) {
-          throw new Error(inventoryData.message || 'Envanter bilgileri yüklenirken bir hata oluştu.');
-        }
-        
-        setInventory(inventoryData.data);
       } catch (error: any) {
         console.error('Veri çekilirken hata oluştu:', error);
         setError(error.message || 'Bilgiler yüklenirken bir hata oluştu.');
@@ -96,30 +66,23 @@ export default function RoomInventoryPage({ params }: { params: { id: string } }
       }
     };
 
-    if (isAuthenticated && token) {
+    if (isAuthenticated) {
       fetchRoomAndInventory();
     }
-  }, [isAuthenticated, token, params.id]);
+  }, [isAuthenticated, params.id]);
 
   const fetchAvailableInventory = async () => {
-    if (!token) return;
-    
     try {
       // Get inventory items that are in storage (available to be assigned)
-      const response = await fetch(`https://api.blexi.co/api/v1/inventory?status=in_storage&per_page=100`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
+      const response = await inventoryApi.getAll({ 
+        status: 'in_storage',
+        per_page: 100
       });
-
-      const data = await response.json();
       
-      if (response.ok) {
-        setAvailableInventory(data.data);
+      if (response.success) {
+        setAvailableInventory(response.data);
       } else {
-        console.error('Kullanılabilir envanter verileri alınamadı:', data);
+        console.error('Kullanılabilir envanter verileri alınamadı:', response.error);
         setError('Kullanılabilir envanter yüklenirken bir hata oluştu.');
       }
     } catch (error) {
@@ -129,26 +92,17 @@ export default function RoomInventoryPage({ params }: { params: { id: string } }
   };
 
   const handleAssignInventory = async () => {
-    if (!token || !selectedItem) return;
+    if (!selectedItem) return;
     
     setIsSubmitting(true);
     setError('');
     setSuccess('');
     
     try {
-      // Using the dedicated assignment endpoint
-      const response = await fetch(`https://api.blexi.co/api/v1/inventory/${selectedItem}/assign-to-room/${params.id}`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        }
-      });
-
-      const data = await response.json();
+      // Using the inventory API service to assign to room
+      const response = await inventoryApi.assignToRoom(selectedItem, params.id);
       
-      if (response.ok) {
+      if (response.success) {
         // Get the updated item
         const updatedItem = availableInventory.find(item => item.id === selectedItem);
         if (updatedItem) {
@@ -157,7 +111,7 @@ export default function RoomInventoryPage({ params }: { params: { id: string } }
             ...updatedItem,
             status: 'in_use',
             assignable_type: 'App\\Modules\\Room\\Models\\Room',
-            assignable_id: parseInt(params.id)
+            assignable_id: params.id
           }]);
         }
         
@@ -165,7 +119,7 @@ export default function RoomInventoryPage({ params }: { params: { id: string } }
         setShowAddForm(false);
         setSelectedItem(null);
       } else {
-        throw new Error(data.message || 'Envanter atanırken bir hata oluştu');
+        throw new Error(response.error || 'Envanter atanırken bir hata oluştu');
       }
     } catch (error: any) {
       console.error('Envanter atama hatası:', error);
@@ -176,33 +130,24 @@ export default function RoomInventoryPage({ params }: { params: { id: string } }
   };
 
   const handleUnassignInventory = async () => {
-    if (!token || !itemToUnassign) return;
+    if (!itemToUnassign) return;
     
     setIsSubmitting(true);
     setError('');
     setSuccess('');
     
     try {
-      // Using the dedicated unassign endpoint
-      const response = await fetch(`https://api.blexi.co/api/v1/inventory/${itemToUnassign}/unassign`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        }
-      });
-
-      const data = await response.json();
+      // Using the inventory API service to unassign
+      const response = await inventoryApi.unassign(itemToUnassign);
       
-      if (response.ok) {
+      if (response.success) {
         // Remove from room inventory
         setInventory(prev => prev.filter(item => item.id !== itemToUnassign));
         setSuccess('Envanter başarıyla odadan kaldırıldı.');
         setShowDeleteModal(false);
         setItemToUnassign(null);
       } else {
-        throw new Error(data.message || 'Envanter kaldırılırken bir hata oluştu');
+        throw new Error(response.error || 'Envanter kaldırılırken bir hata oluştu');
       }
     } catch (error: any) {
       console.error('Envanter kaldırma hatası:', error);
@@ -231,7 +176,7 @@ export default function RoomInventoryPage({ params }: { params: { id: string } }
     }
   };
 
-  // Add the missing functions for status display
+  // Functions for status display
   const getStatusLabel = (status: string) => {
     switch (status) {
       case 'in_use': return 'Kullanımda';
@@ -420,7 +365,7 @@ export default function RoomInventoryPage({ params }: { params: { id: string } }
                   </label>
                   <select
                     value={selectedItem || ''}
-                    onChange={(e) => setSelectedItem(Number(e.target.value))}
+                    onChange={(e) => setSelectedItem(e.target.value)}
                     className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
                   >
                     <option value="">Envanter Seçin</option>

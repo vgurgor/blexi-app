@@ -6,6 +6,7 @@ import { useAuth } from '@/lib/authExport';
 import { ArrowLeft, Plus, Building2, Tag, Package, Trash2, CheckCircle, AlertCircle, Clock } from 'lucide-react';
 import PageLoader from '@/components/PageLoader';
 import DeleteConfirmationModal from '@/components/DeleteConfirmationModal';
+import { apartsApi, ApartDto } from '@/lib/api/apartments';
 
 interface InventoryItem {
   id: number;
@@ -29,7 +30,7 @@ export default function ApartmentInventoryPage({ params }: { params: { id: strin
   const router = useRouter();
   const { isAuthenticated, token } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
-  const [apartment, setApartment] = useState<any>(null);
+  const [apartment, setApartment] = useState<ApartDto | null>(null);
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [availableInventory, setAvailableInventory] = useState<InventoryItem[]>([]);
   const [error, setError] = useState('');
@@ -51,43 +52,25 @@ export default function ApartmentInventoryPage({ params }: { params: { id: strin
 
   useEffect(() => {
     const fetchApartmentAndInventory = async () => {
-      if (!token) return;
-      
       setIsLoading(true);
       try {
-        // Fetch apartment details
-        const apartmentResponse = await fetch(`https://api.blexi.co/api/v1/aparts/${params.id}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-        });
-
-        const apartmentData = await apartmentResponse.json();
+        // Fetch apartment details using the API service
+        const apartmentResponse = await apartsApi.getById(params.id);
         
-        if (!apartmentResponse.ok) {
-          throw new Error(apartmentData.message || 'Apart bilgileri yüklenirken bir hata oluştu.');
+        if (!apartmentResponse.success) {
+          throw new Error(apartmentResponse.error || 'Apart bilgileri yüklenirken bir hata oluştu.');
         }
         
-        setApartment(apartmentData.data);
+        setApartment(apartmentResponse.data);
         
         // Use the dedicated endpoint for apartment inventory
-        const inventoryResponse = await fetch(`https://api.blexi.co/api/v1/aparts/${params.id}/inventory`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-        });
-
-        const inventoryData = await inventoryResponse.json();
+        const inventoryResponse = await apartsApi.getInventory(params.id);
         
-        if (!inventoryResponse.ok) {
-          throw new Error(inventoryData.message || 'Envanter bilgileri yüklenirken bir hata oluştu.');
+        if (!inventoryResponse.success) {
+          throw new Error(inventoryResponse.error || 'Envanter bilgileri yüklenirken bir hata oluştu.');
         }
         
-        setInventory(inventoryData.data);
+        setInventory(inventoryResponse.data);
       } catch (error: any) {
         console.error('Veri çekilirken hata oluştu:', error);
         setError(error.message || 'Bilgiler yüklenirken bir hata oluştu.');
@@ -96,7 +79,7 @@ export default function ApartmentInventoryPage({ params }: { params: { id: strin
       }
     };
 
-    if (isAuthenticated && token) {
+    if (isAuthenticated) {
       fetchApartmentAndInventory();
     }
   }, [isAuthenticated, token, params.id]);

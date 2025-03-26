@@ -7,41 +7,10 @@ import { Plus, Building2, Building, ChevronLeft, ChevronRight } from 'lucide-rea
 import ApartmentCard from '@/components/apartments/ApartmentCard';
 import CompanyCard from '@/components/companies/CompanyCard';
 import SearchAndFilters from '@/components/shared/SearchAndFilters';
-
-interface Apartment {
-  id: number;
-  name: string;
-  address: string;
-  firm_id: number;
-  gender_type: string;
-  opening_date: string;
-  status: 'active' | 'inactive';
-  rooms_count?: number;
-  total_rooms?: number;
-  occupied_rooms?: number;
-  internet_speed?: string;
-}
-
-interface Company {
-  id: number;
-  name: string;
-  address: string | null;
-  phone: string | null;
-  email: string | null;
-  status: 'active' | 'inactive';
-  aparts_count: number;
-  aparts: {
-    id: number;
-    firm_id: number;
-    name: string;
-    address: string;
-    gender_type: string;
-    opening_date: string;
-    status: string;
-    created_at: string;
-    updated_at: string;
-  }[];
-}
+import { apartsApi, ApartFilters, ApartDto } from '@/lib/api/apartments';
+import { firmsApi, FirmDto, FirmFilters } from '@/lib/api/firms';
+import { ApiResponse } from '@/types/api';
+import { ICompany } from '@/types/models';
 
 interface PaginationMeta {
   current_page: number;
@@ -68,14 +37,33 @@ interface Filters {
   firmId?: string;
 }
 
+// API'den gelen şirket verisini yerel tipe dönüştürme
+function mapApiToLocal(apiCompany: ICompany): FirmDto {
+  return {
+    id: parseInt(apiCompany.id),
+    tenant_id: 0, // Varsayılan değer
+    name: apiCompany.name,
+    tax_number: apiCompany.taxNumber,
+    tax_office: apiCompany.taxOffice,
+    address: apiCompany.address,
+    phone: apiCompany.phone,
+    email: apiCompany.email,
+    status: apiCompany.status as 'active' | 'inactive',
+    created_at: apiCompany.createdAt,
+    updated_at: apiCompany.updatedAt,
+    aparts_count: 0, // CompanyCard bileşeni number bekliyor
+    aparts: [] // Varsayılan değer
+  };
+}
+
 export default function ApartmentsPage() {
   const router = useRouter();
   const { isAuthenticated, checkAuth, token } = useAuth();
   const [isChecking, setIsChecking] = useState(true);
   const [activeTab, setActiveTab] = useState<TabType>('apartments');
   const [searchTerm, setSearchTerm] = useState('');
-  const [apartments, setApartments] = useState<Apartment[]>([]);
-  const [companies, setCompanies] = useState<Company[]>([]);
+  const [apartments, setApartments] = useState<ApartDto[]>([]);
+  const [companies, setCompanies] = useState<FirmDto[]>([]);
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState<Filters>({
     status: [],
@@ -118,75 +106,81 @@ export default function ApartmentsPage() {
     
     setIsLoading(true);
     try {
-      let url = '';
-      let queryParams = new URLSearchParams();
-      
-      queryParams.append('page', currentPage.toString());
-      queryParams.append('per_page', '9');
-      
       if (activeTab === 'apartments') {
-        url = 'https://api.blexi.co/api/v1/aparts';
+        // Prepare API filters
+        const apiFilters: ApartFilters = {
+          page: currentPage,
+          per_page: 9
+        };
         
         if (filters.genderType && filters.genderType !== 'all') {
-          queryParams.append('gender_type', filters.genderType);
+          apiFilters.gender_type = filters.genderType as 'MALE' | 'FEMALE' | 'MIXED';
         }
         
         if (filters.firmId && filters.firmId !== 'all') {
-          queryParams.append('firm_id', filters.firmId);
+          apiFilters.firm_id = parseInt(filters.firmId, 10);
         }
         
-        // Fix: Send status as a single parameter if only one is selected
+        // Status filter
         if (filters.status.length === 1) {
-          queryParams.append('status', filters.status[0]);
-        } 
-        // If multiple statuses are selected, we'll handle filtering client-side
-      } else {
-        url = 'https://api.blexi.co/api/v1/firms';
-        
-        // Fix: Send status as a single parameter if only one is selected
-        if (filters.status.length === 1) {
-          queryParams.append('status', filters.status[0]);
+          apiFilters.status = filters.status[0] as 'active' | 'inactive';
         }
-        // If multiple statuses are selected, we'll handle filtering client-side
-      }
-      
-      const response = await fetch(`${url}?${queryParams.toString()}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-      });
-
-      const data = await response.json();
-      
-      if (response.ok) {
-        if (activeTab === 'apartments') {
-          // If we have multiple status filters, filter client-side
+        
+        // Get apartments data
+        const response = await apartsApi.getAll(apiFilters);
+        
+        if (response.success && response.data) {
+          // Handle multiple status filters client-side if needed
           if (filters.status.length > 1) {
-            setApartments(data.data.filter((apartment: Apartment) => 
+            setApartments(response.data.filter((apartment: ApartDto) => 
               filters.status.includes(apartment.status)
             ));
           } else {
-            setApartments(data.data);
+            setApartments(response.data);
+          }
+          
+          // Extract pagination meta from response
+          if (response.meta) {
+            setPaginationMeta(response.meta);
           }
         } else {
-          // If we have multiple status filters, filter client-side
+          console.error('Apart verileri alınamadı:', response.error);
+        }
+      } else {
+        // Prepare API filters for firms
+        const apiFilters: FirmFilters = {
+          page: currentPage,
+          per_page: 9
+        };
+        
+        // Status filter
+        if (filters.status.length === 1) {
+          apiFilters.status = filters.status[0] as 'active' | 'inactive';
+        }
+        
+        // Get companies data
+        const response = await firmsApi.getAll(apiFilters);
+        
+        if (response.success && response.data) {
+          // API'den ICompany olarak geleni FirmDto'ya dönüştür
+          const firmDtos = response.data.map(mapApiToLocal);
+          
+          // Handle multiple status filters client-side if needed
           if (filters.status.length > 1) {
-            setCompanies(data.data.filter((company: Company) => 
+            setCompanies(firmDtos.filter(company => 
               filters.status.includes(company.status)
             ));
           } else {
-            setCompanies(data.data);
+            setCompanies(firmDtos);
           }
+          
+          // Extract pagination meta from response
+          if (response.meta) {
+            setPaginationMeta(response.meta);
+          }
+        } else {
+          console.error('Firma verileri alınamadı:', response.error);
         }
-        
-        // Set pagination meta
-        if (data.meta) {
-          setPaginationMeta(data.meta);
-        }
-      } else {
-        console.error('Veri çekme hatası:', data);
       }
     } catch (error) {
       console.error('Veri çekilirken hata oluştu:', error);
@@ -198,33 +192,27 @@ export default function ApartmentsPage() {
   // Also fetch companies for the dropdown when in apartments tab
   useEffect(() => {
     const fetchCompanies = async () => {
-      if (!token || activeTab !== 'apartments') return;
+      if (!isAuthenticated || activeTab !== 'apartments') return;
       
       try {
-        const response = await fetch('https://api.blexi.co/api/v1/firms?per_page=100', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-        });
-
-        const data = await response.json();
+        const response = await firmsApi.getAll({ per_page: 100 });
         
-        if (response.ok) {
-          setCompanies(data.data);
+        if (response.success && response.data) {
+          // API'den ICompany olarak geleni FirmDto'ya dönüştür
+          const firmDtos = response.data.map(mapApiToLocal);
+          setCompanies(firmDtos);
         } else {
-          console.error('Firma verileri alınamadı:', data);
+          console.error('Firma verileri alınamadı:', response.error);
         }
       } catch (error) {
         console.error('Firma verileri çekilirken hata oluştu:', error);
       }
     };
 
-    if (isAuthenticated && token && activeTab === 'apartments') {
+    if (isAuthenticated && activeTab === 'apartments') {
       fetchCompanies();
     }
-  }, [isAuthenticated, token, activeTab]);
+  }, [isAuthenticated, activeTab]);
 
   if (isChecking) {
     return (
@@ -257,20 +245,10 @@ export default function ApartmentsPage() {
   };
 
   const handleApartmentStatusChange = async (id: number, status: 'active' | 'inactive') => {
-    if (!token) return;
-    
     try {
-      const response = await fetch(`https://api.blexi.co/api/v1/aparts/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: JSON.stringify({ status })
-      });
-
-      if (response.ok) {
+      const response = await apartsApi.update(id.toString(), { status });
+      
+      if (response.success) {
         // Update local state
         setApartments(prev => prev.map(a => 
           a.id === id ? { ...a, status } : a
@@ -278,7 +256,7 @@ export default function ApartmentsPage() {
         // Refresh data from server
         fetchData();
       } else {
-        console.error('Durum değiştirme hatası:', await response.json());
+        console.error('Durum değiştirme hatası:', response.error);
       }
     } catch (error) {
       console.error('Durum değiştirme hatası:', error);
@@ -286,20 +264,10 @@ export default function ApartmentsPage() {
   };
 
   const handleCompanyStatusChange = async (id: number, status: 'active' | 'inactive') => {
-    if (!token) return;
-    
     try {
-      const response = await fetch(`https://api.blexi.co/api/v1/firms/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: JSON.stringify({ status })
-      });
-
-      if (response.ok) {
+      const response = await firmsApi.update(id.toString(), { status } as unknown as FormData);
+      
+      if (response.success) {
         // Update local state
         setCompanies(prev => prev.map(c => 
           c.id === id ? { ...c, status } : c
@@ -307,7 +275,7 @@ export default function ApartmentsPage() {
         // Refresh data from server
         fetchData();
       } else {
-        console.error('Durum değiştirme hatası:', await response.json());
+        console.error('Durum değiştirme hatası:', response.error);
       }
     } catch (error) {
       console.error('Durum değiştirme hatası:', error);
@@ -315,44 +283,34 @@ export default function ApartmentsPage() {
   };
 
   const handleApartmentDelete = async (id: number) => {
-    if (!token) return;
-    
     try {
-      await fetch(`https://api.blexi.co/api/v1/aparts/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-      });
+      const response = await apartsApi.delete(id.toString());
       
-      // Update local state
-      setApartments(prev => prev.filter(a => a.id !== id));
-      // Refresh data from server
-      fetchData();
+      if (response.success) {
+        // Update local state
+        setApartments(prev => prev.filter(a => a.id !== id));
+        // Refresh data from server
+        fetchData();
+      } else {
+        console.error('Silme hatası:', response.error);
+      }
     } catch (error) {
       console.error('Silme hatası:', error);
     }
   };
 
   const handleCompanyDelete = async (id: number) => {
-    if (!token) return;
-    
     try {
-      await fetch(`https://api.blexi.co/api/v1/firms/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-      });
+      const response = await firmsApi.delete(id.toString());
       
-      // Update local state
-      setCompanies(prev => prev.filter(c => c.id !== id));
-      // Refresh data from server
-      fetchData();
+      if (response.success) {
+        // Update local state
+        setCompanies(prev => prev.filter(c => c.id !== id));
+        // Refresh data from server
+        fetchData();
+      } else {
+        console.error('Silme hatası:', response.error);
+      }
     } catch (error) {
       console.error('Silme hatası:', error);
     }
@@ -378,6 +336,29 @@ export default function ApartmentsPage() {
     return company.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (company.address && company.address.toLowerCase().includes(searchTerm.toLowerCase()));
   });
+
+  // Şirket kartları için veri hazırla
+  const companyData = companies.map(company => ({
+    id: company.id,
+    name: company.name,
+    address: company.address,
+    phone: company.phone,
+    email: company.email,
+    status: company.status,
+    aparts_count: company.aparts?.length || 0,
+    aparts: company.aparts || [] // CompanyCard bileşeni için zorunlu
+  }));
+  
+  console.log('Şirket verileri:', companyData);
+  // Şirketleri filtrele
+  const filteredCompanyData = companyData.filter(company => {
+    if (!searchTerm) return true;
+    
+    return company.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (company.address && company.address.toLowerCase().includes(searchTerm.toLowerCase()));
+  });
+  
+  console.log('Filtrelenmiş şirket verileri:', filteredCompanyData.length);
 
   return (
     <div className="p-8 pt-24">
@@ -467,18 +448,18 @@ export default function ApartmentsPage() {
                 </div>
               )
             ) : (
-              filteredCompanies.length > 0 ? (
-                filteredCompanies.map(company => (
+              filteredCompanyData.length > 0 ? (
+                filteredCompanyData.map(company => (
                   <CompanyCard
                     key={company.id}
-                    company={company}
+                    company={company as unknown as ICompany}
                     onStatusChange={handleCompanyStatusChange}
                     onDelete={handleCompanyDelete}
                   />
                 ))
               ) : (
                 <div className="col-span-3 py-12 text-center text-gray-500 dark:text-gray-400">
-                  Henüz firma kaydı bulunmamaktadır.
+                  Henüz firma kaydı bulunmamaktadır. (Yüklenen: {companies.length}, Filtrelenen: {filteredCompanies.length})
                 </div>
               )
             )}

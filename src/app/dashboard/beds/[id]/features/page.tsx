@@ -5,36 +5,28 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/authExport';
 import { ArrowLeft, Bed as BedIcon, Tag, Package } from 'lucide-react';
 import BedFeatures from '@/components/rooms/BedFeatures';
+import { bedsApi } from '@/lib/api/beds';
+import { IBed } from '@/types/models';
 
 export default function BedFeaturesPage({ params }: { params: { id: string } }) {
   const router = useRouter();
-  const { isAuthenticated, token } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
-  const [bed, setBed] = useState<any>(null);
+  const [bed, setBed] = useState<IBed | null>(null);
   const [error, setError] = useState('');
 
   useEffect(() => {
     const fetchBed = async () => {
-      if (!token) return;
-      
       setIsLoading(true);
       try {
-        // Fetch bed details
-        const bedResponse = await fetch(`https://api.blexi.co/api/v1/beds/${params.id}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-        });
-
-        const bedData = await bedResponse.json();
+        // Use the bed API service
+        const response = await bedsApi.getById(params.id);
         
-        if (!bedResponse.ok) {
-          throw new Error(bedData.message || 'Yatak bilgileri yüklenirken bir hata oluştu.');
+        if (response.success && response.data) {
+          setBed(response.data);
+        } else {
+          throw new Error(response.error || 'Yatak bilgileri yüklenirken bir hata oluştu.');
         }
-        
-        setBed(bedData.data);
       } catch (error: any) {
         console.error('Veri çekilirken hata oluştu:', error);
         setError(error.message || 'Bilgiler yüklenirken bir hata oluştu.');
@@ -43,10 +35,10 @@ export default function BedFeaturesPage({ params }: { params: { id: string } }) 
       }
     };
 
-    if (isAuthenticated && token) {
+    if (isAuthenticated) {
       fetchBed();
     }
-  }, [isAuthenticated, token, params.id]);
+  }, [isAuthenticated, params.id]);
 
   if (!isAuthenticated) {
     return null;
@@ -123,7 +115,7 @@ export default function BedFeaturesPage({ params }: { params: { id: string } }) 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="flex items-center gap-2">
                   <BedIcon className="w-5 h-5 text-blue-500 dark:text-blue-400" />
-                  <span className="text-gray-700 dark:text-gray-300">Oda No: {bed.room.room_number}</span>
+                  <span className="text-gray-700 dark:text-gray-300">Oda No: {bed.bed_number}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Tag className="w-5 h-5 text-purple-500 dark:text-purple-400" />
@@ -149,7 +141,7 @@ export default function BedFeaturesPage({ params }: { params: { id: string } }) 
 
         {/* Features Section */}
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-          <BedFeatures bedId={parseInt(params.id)} />
+          <BedFeatures bedId={params.id} />
         </div>
       </div>
     </div>

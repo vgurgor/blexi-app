@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/lib/authExport';
 import { Plus, X, Wifi, Tv, Bed, Home, Coffee, Utensils, ShowerHead as Shower, Wind, Settings } from 'lucide-react';
+import { bedsApi } from '@/lib/api/beds';
+import { IFeature } from '@/types/models';
 
 interface Feature {
   id: number;
@@ -11,11 +12,10 @@ interface Feature {
 }
 
 interface BedFeaturesProps {
-  bedId: number;
+  bedId: string;
 }
 
 export default function BedFeatures({ bedId }: BedFeaturesProps) {
-  const { token } = useAuth();
   const [features, setFeatures] = useState<Feature[]>([]);
   const [availableFeatures, setAvailableFeatures] = useState<Feature[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -27,10 +27,10 @@ export default function BedFeatures({ bedId }: BedFeaturesProps) {
   const [success, setSuccess] = useState('');
 
   useEffect(() => {
-    if (bedId && token) {
+    if (bedId) {
       fetchBedFeatures();
     }
-  }, [bedId, token]);
+  }, [bedId]);
 
   // Clear success message after 3 seconds
   useEffect(() => {
@@ -43,25 +43,15 @@ export default function BedFeatures({ bedId }: BedFeaturesProps) {
   }, [success]);
 
   const fetchBedFeatures = async () => {
-    if (!token) return;
-    
     setIsLoading(true);
     try {
-      const response = await fetch(`https://api.blexi.co/api/v1/beds/${bedId}/features`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-      });
-
-      const data = await response.json();
+      const response = await bedsApi.getFeatures(bedId);
       
-      if (response.ok) {
-        setFeatures(data.data);
+      if (response.success && response.data) {
+        setFeatures(response.data);
       } else {
-        console.error('Özellik verileri alınamadı:', data);
-        setError('Özellikler yüklenirken bir hata oluştu.');
+        console.error('Özellik verileri alınamadı:', response.error);
+        setError(response.error || 'Özellikler yüklenirken bir hata oluştu.');
       }
     } catch (error) {
       console.error('Özellik verileri çekilirken hata oluştu:', error);
@@ -72,16 +62,9 @@ export default function BedFeatures({ bedId }: BedFeaturesProps) {
   };
 
   const fetchAvailableFeatures = async () => {
-    if (!token) return;
-    
     try {
-      const response = await fetch('https://api.blexi.co/api/v1/features?per_page=100&status=active', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-      });
+      // This API endpoint should be moved to a features API service in the future
+      const response = await fetch('https://api.blexi.co/api/v1/features?per_page=100&status=active');
 
       const data = await response.json();
       
@@ -104,34 +87,22 @@ export default function BedFeatures({ bedId }: BedFeaturesProps) {
   };
 
   const handleAddFeature = async () => {
-    if (!token || !selectedFeature) return;
+    if (!selectedFeature) return;
     
     setIsAdding(true);
     setError('');
     setSuccess('');
     
     try {
-      const response = await fetch(`https://api.blexi.co/api/v1/beds/${bedId}/features`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: JSON.stringify({
-          feature_id: selectedFeature
-        })
-      });
-
-      const data = await response.json();
+      const response = await bedsApi.addFeature(bedId, selectedFeature);
       
-      if (response.ok) {
+      if (response.success) {
         setSuccess('Özellik başarıyla eklendi.');
         fetchBedFeatures();
         setShowAddModal(false);
         setSelectedFeature(null);
       } else {
-        throw new Error(data.message || 'Özellik eklenirken bir hata oluştu');
+        throw new Error(response.error || 'Özellik eklenirken bir hata oluştu');
       }
     } catch (error: any) {
       console.error('Özellik ekleme hatası:', error);
@@ -142,29 +113,18 @@ export default function BedFeatures({ bedId }: BedFeaturesProps) {
   };
 
   const handleRemoveFeature = async (featureId: number) => {
-    if (!token) return;
-    
     setIsRemoving(true);
     setError('');
     setSuccess('');
     
     try {
-      const response = await fetch(`https://api.blexi.co/api/v1/beds/${bedId}/features/${featureId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-      });
-
-      const data = await response.json();
+      const response = await bedsApi.removeFeature(bedId, featureId);
       
-      if (response.ok) {
+      if (response.success) {
         setSuccess('Özellik başarıyla kaldırıldı.');
         setFeatures(prev => prev.filter(f => f.id !== featureId));
       } else {
-        throw new Error(data.message || 'Özellik kaldırılırken bir hata oluştu');
+        throw new Error(response.error || 'Özellik kaldırılırken bir hata oluştu');
       }
     } catch (error: any) {
       console.error('Özellik kaldırma hatası:', error);

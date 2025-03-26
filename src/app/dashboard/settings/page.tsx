@@ -17,7 +17,8 @@ import {
   Lock, 
   Save,
   Check,
-  Puzzle
+  Puzzle,
+  Users
 } from 'lucide-react';
 import { useTheme } from 'next-themes';
 
@@ -134,7 +135,8 @@ export default function SettingsPage() {
     { id: 'notifications', label: 'Bildirimler', icon: Bell },
     { id: 'security', label: 'Güvenlik', icon: Shield },
     { id: 'appearance', label: 'Görünüm', icon: Palette },
-    { id: 'features', label: 'Özellikler', icon: Puzzle, path: '/dashboard/settings/features' }
+    { id: 'features', label: 'Özellikler', icon: Puzzle, path: '/dashboard/settings/features' },
+    { id: 'users', label: 'Kullanıcılar', icon: Users, path: '/dashboard/settings/users' }
   ];
 
   return (

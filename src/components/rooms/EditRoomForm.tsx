@@ -4,37 +4,28 @@ import { useState, useEffect } from 'react';
 import { DoorOpen, Building, Bed, Hash, Tag } from 'lucide-react';
 import { useAuth } from '@/lib/authExport';
 import RoomFeatures from './RoomFeatures';
+import { roomsApi } from '@/lib/api/rooms';
+import { IRoom } from '@/types/models';
+import { api } from '@/lib/api/base';
 
 interface Apartment {
   id: number;
   name: string;
 }
 
-interface Room {
-  id: number;
-  apart_id: number;
-  room_number: string;
-  floor: number;
-  capacity: number;
-  room_type: 'STANDARD' | 'SUITE' | 'DELUXE';
-  status: 'active' | 'inactive' | 'maintenance';
-  beds_count: number;
-}
-
 interface EditRoomFormProps {
-  room: Room;
-  onSubmit: (data: any) => void;
+  room: IRoom;
+  onSubmit: (data: IRoom) => void;
 }
 
 export default function EditRoomForm({ room, onSubmit }: EditRoomFormProps) {
-  const { token } = useAuth();
   const [formData, setFormData] = useState({
     apart_id: '',
     room_number: '',
     floor: 1,
     capacity: 1,
-    room_type: 'STANDARD',
-    status: 'active'
+    room_type: 'STANDARD' as 'STANDARD' | 'SUITE' | 'DELUXE',
+    status: 'active' as 'active' | 'inactive' | 'maintenance'
   });
   const [apartments, setApartments] = useState<Apartment[]>([]);
   const [isLoadingApartments, setIsLoadingApartments] = useState(false);
@@ -43,24 +34,14 @@ export default function EditRoomForm({ room, onSubmit }: EditRoomFormProps) {
 
   useEffect(() => {
     const fetchApartments = async () => {
-      if (!token) return;
-      
       setIsLoadingApartments(true);
       try {
-        const response = await fetch('https://api.blexi.co/api/v1/aparts?per_page=100', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-        });
-
-        const data = await response.json();
+        const response = await api.get('/api/v1/aparts?per_page=100');
         
-        if (response.ok && data.data) {
-          setApartments(data.data);
+        if (response.success && Array.isArray(response.data)) {
+          setApartments(response.data);
         } else {
-          console.error('Apart verileri alınamadı:', data);
+          console.error('Apart verileri alınamadı:', response.error);
         }
       } catch (error) {
         console.error('Apart verileri çekilirken hata oluştu:', error);
@@ -70,12 +51,12 @@ export default function EditRoomForm({ room, onSubmit }: EditRoomFormProps) {
     };
 
     fetchApartments();
-  }, [token]);
+  }, []);
 
   useEffect(() => {
     // Initialize form with provided room data
     setFormData({
-      apart_id: room.apart_id.toString(),
+      apart_id: room.apart_id,
       room_number: room.room_number,
       floor: room.floor,
       capacity: room.capacity,
@@ -89,23 +70,23 @@ export default function EditRoomForm({ room, onSubmit }: EditRoomFormProps) {
     setError('');
     
     try {
-      const response = await fetch(`https://api.blexi.co/api/v1/rooms/${room.id}`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: JSON.stringify(formData)
-      });
-
-      const data = await response.json();
+      // Convert form data for API
+      const updateData = {
+        apart_id: formData.apart_id,
+        room_number: formData.room_number,
+        floor: formData.floor,
+        capacity: formData.capacity,
+        room_type: formData.room_type,
+        status: formData.status
+      };
       
-      if (!response.ok) {
-        throw new Error(data.message || 'Oda güncellenirken bir hata oluştu');
+      const response = await roomsApi.update(room.id, updateData);
+      
+      if (!response.success) {
+        throw new Error(response.error || 'Oda güncellenirken bir hata oluştu');
       }
       
-      onSubmit(data.data);
+      onSubmit(response.data);
     } catch (error: any) {
       console.error('Oda güncelleme hatası:', error);
       setError(error.message || 'Oda güncellenirken bir hata oluştu');
@@ -162,7 +143,7 @@ export default function EditRoomForm({ room, onSubmit }: EditRoomFormProps) {
                 >
                   <option value="">Apart Seçin</option>
                   {apartments.map((apart) => (
-                    <option key={apart.id} value={apart.id}>
+                    <option key={apart.id} value={apart.id.toString()}>
                       {apart.name}
                     </option>
                   ))}
@@ -233,7 +214,7 @@ export default function EditRoomForm({ room, onSubmit }: EditRoomFormProps) {
               </label>
               <select
                 value={formData.room_type}
-                onChange={(e) => setFormData({ ...formData, room_type: e.target.value })}
+                onChange={(e) => setFormData({ ...formData, room_type: e.target.value as 'STANDARD' | 'SUITE' | 'DELUXE' })}
                 className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
                 required
               >
@@ -249,7 +230,7 @@ export default function EditRoomForm({ room, onSubmit }: EditRoomFormProps) {
               </label>
               <select
                 value={formData.status}
-                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                onChange={(e) => setFormData({ ...formData, status: e.target.value as 'active' | 'inactive' | 'maintenance' })}
                 className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
                 required
               >

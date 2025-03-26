@@ -2,6 +2,29 @@ import { api } from './base';
 import { ApiResponse, PaginatedResponse } from '../../types/api';
 import { ICompany } from '../../types/models';
 
+// API veri yanıt yapısı
+interface ApiDataResponse<T> {
+  data: T;
+  meta?: {
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+  };
+  links?: {
+    first: string;
+    last: string;
+    prev: string | null;
+    next: string | null;
+  };
+}
+
+// API'den firma yanıtı
+export interface FirmResponse {
+  data: FirmDto;
+  message?: string;
+}
+
 // API'de tanımlanan Firm modeli
 export interface FirmDto {
   id: number;
@@ -15,7 +38,7 @@ export interface FirmDto {
   status: 'active' | 'inactive';
   created_at?: string;
   updated_at?: string;
-  aparts_count?: number;
+  aparts_count: number;
   aparts?: {
     id: number;
     firm_id: number;
@@ -67,10 +90,6 @@ function mapDtoToModel(dto: FirmDto): ICompany {
     id: dto.id.toString(),
     name: dto.name,
     address: dto.address || '',
-    city: '', // Adresten çıkarmalıyız
-    zipCode: '', // Adresten çıkarmalıyız
-    country: 'Turkey', // Varsayılan
-    contactPerson: '', // API'de yok
     email: dto.email || '',
     phone: dto.phone || '',
     taxNumber: dto.tax_number,
@@ -78,20 +97,49 @@ function mapDtoToModel(dto: FirmDto): ICompany {
     status: dto.status,
     createdAt: dto.created_at || '',
     updatedAt: dto.updated_at || '',
+    aparts_count: dto.aparts?.length || 0,
+    aparts: dto.aparts || [],
   };
 }
 
 /**
  * İç modeli API DTO'ya dönüştür
  */
-function mapModelToDto(model: Partial<ICompany>): Partial<CreateFirmRequest | UpdateFirmRequest> {
+function mapModelToDto(model: Partial<ICompany> | any): Partial<CreateFirmRequest | UpdateFirmRequest> {
+  // Model ICompany tipindeyse taxNumber ve taxOffice kullan
+  if (model.taxNumber !== undefined || model.taxOffice !== undefined) {
+    return {
+      name: model.name,
+      tax_number: model.taxNumber,
+      address: model.address,
+      phone: model.phone,
+      email: model.email,
+      tax_office: model.taxOffice,
+      status: model.status as 'active' | 'inactive',
+    };
+  }
+  
+  // Model doğrudan form verisi ise (tax_number ve tax_office içeriyorsa)
+  if (model.tax_number !== undefined || model.tax_office !== undefined) {
+    return {
+      name: model.name,
+      tax_number: model.tax_number,
+      address: model.address,
+      phone: model.phone,
+      email: model.email,
+      tax_office: model.tax_office,
+      status: model.status as 'active' | 'inactive',
+    };
+  }
+  
+  // Varsayılan dönüşüm
   return {
     name: model.name,
-    tax_number: model.taxNumber,
+    tax_number: '',
     address: model.address,
     phone: model.phone,
     email: model.email,
-    tax_office: model.taxOffice,
+    tax_office: '',
     status: model.status as 'active' | 'inactive',
   };
 }
@@ -111,70 +159,69 @@ export const firmsApi = {
       });
     }
     
-    // API yanıt yapısı
-    interface FirmsResponse {
-      success: boolean;
-      data: FirmDto[];
-      meta?: {
-        current_page: number;
-        last_page: number;
-        per_page: number;
-        total: number;
-      };
-      links?: {
-        first: string;
-        last: string;
-        prev: string | null;
-        next: string | null;
-      };
-      status?: number;
-    }
-    
-    const response = await api.get<FirmsResponse>(`/api/v1/firms?${params.toString()}`);
-    
-    if (response.success && response.data) {
-      const modelData: ICompany[] = response.data.map(mapDtoToModel);
+    try {
+      // API yanıt yapısı doğrudan { data, links, meta } şeklinde
+      const response = await api.get(`/api/v1/firms?${params.toString()}`);
+      
+      console.log('API firma yanıtı:', response);
+      
+      if (response && response.data) {
+        // API doğrudan data dizisini dönüyor
+        const modelData: ICompany[] = response.data.map(mapDtoToModel);
+        
+        return {
+          success: true,
+          status: 200,
+          data: modelData,
+          meta: response.meta
+        };
+      }
+      
       return {
-        success: response.success,
-        status: 200,
-        data: modelData,
+        success: false,
+        status: 404,
+        error: 'Veri bulunamadı',
+        data: [],
+      };
+    } catch (error) {
+      console.error('Firma verilerini alma hatası:', error);
+      return {
+        success: false,
+        status: 500,
+        error: 'Firma verileri alınırken bir hata oluştu',
+        data: [],
       };
     }
-    
-    return {
-      success: false,
-      status: 404,
-      error: 'Veri bulunamadı',
-      data: [],
-    };
   },
 
   /**
    * ID'ye göre firma getir
    */
   getById: async (id: string | number): Promise<ApiResponse<ICompany>> => {
-    // API yanıt yapısı
-    interface FirmResponse {
-      success: boolean;
-      data: FirmDto;
-      status?: number;
-    }
-    
-    const response = await api.get<FirmResponse>(`/api/v1/firms/${id}`);
-    
-    if (response.success && response.data) {
+    try {
+      const response = await api.get(`/api/v1/firms/${id}`);
+      
+      if (response && response.data) {
+        return {
+          success: true,
+          status: 200,
+          data: mapDtoToModel(response.data),
+        };
+      }
+      
       return {
-        success: response.success,
-        status: 200,
-        data: mapDtoToModel(response.data),
+        success: false,
+        status: 404,
+        error: 'Firma bulunamadı',
+      };
+    } catch (error) {
+      console.error('Firma verilerini alma hatası:', error);
+      return {
+        success: false,
+        status: 500,
+        error: 'Firma verisi alınırken bir hata oluştu',
       };
     }
-    
-    return {
-      success: false,
-      status: 404,
-      error: 'Firma bulunamadı',
-    };
   },
 
   /**
@@ -183,58 +230,125 @@ export const firmsApi = {
   create: async (data: Partial<ICompany>): Promise<ApiResponse<ICompany>> => {
     const dto = mapModelToDto(data) as CreateFirmRequest;
     
-    // API yanıt yapısı
-    interface FirmResponse {
-      success: boolean;
-      data: FirmDto;
-      status?: number;
-    }
-    
-    const response = await api.post<FirmResponse>('/api/v1/firms', dto);
-    
-    if (response.success && response.data) {
+    try {
+      const response = await api.post('/api/v1/firms', dto);
+      
+      if (response && response.data) {
+        return {
+          success: true,
+          status: 201,
+          data: mapDtoToModel(response.data),
+        };
+      }
+      
       return {
-        success: response.success,
-        status: 201,
-        data: mapDtoToModel(response.data),
+        success: false,
+        status: 400,
+        error: 'Firma oluşturulamadı',
+      };
+    } catch (error) {
+      console.error('Firma oluşturma hatası:', error);
+      return {
+        success: false,
+        status: 500,
+        error: 'Firma oluşturulurken bir hata oluştu',
       };
     }
-    
-    return {
-      success: false,
-      status: 400,
-      error: 'Firma oluşturulamadı',
-    };
   },
 
   /**
-   * Mevcut bir firmayı güncelle
+   * Updates an existing company
+   * @param id The ID of the company to update
+   * @param data The updated company data
+   * @returns ApiResponse<ICompany>
    */
-  update: async (id: string | number, data: Partial<ICompany>): Promise<ApiResponse<ICompany>> => {
-    const dto = mapModelToDto(data) as UpdateFirmRequest;
-    
-    // API yanıt yapısı
-    interface FirmResponse {
-      success: boolean;
-      data: FirmDto;
-      status?: number;
-    }
-    
-    const response = await api.put<FirmResponse>(`/api/v1/firms/${id}`, dto);
-    
-    if (response.success && response.data) {
+  update: async <T extends FormData | ICompany>(
+    id: string | number,
+    data: T
+  ): Promise<ApiResponse<ICompany>> => {
+    try {
+      // ID kontrolü
+      if (!id || id === "" || id === "undefined") {
+        console.error("Güncelleme için geçersiz ID:", id);
+        return {
+          success: false,
+          status: 400,
+          error: "Geçersiz firma ID'si"
+        };
+      }
+      
+      console.log(`ID ${id} ile firma güncelleniyor. Veriler:`, data);
+      
+      // Form verileri doğrulaması
+      const updateData = mapModelToDto(data);
+      
+      // Gerekli alanların kontrolü
+      if (!updateData.tax_number || updateData.tax_number.trim() === "") {
+        return {
+          success: false,
+          status: 400,
+          error: "Vergi numarası boş olamaz"
+        };
+      }
+      
+      // API isteği
+      const response = await api.put<FirmResponse>(`/api/v1/firms/${id}`, updateData);
+      
+      if (response.status === 200 && response.data) {
+        console.log("Firma başarıyla güncellendi:", response.data);
+        
+        // API yanıtı kontrolü
+        if (response.data.data) {
+          return {
+            success: true,
+            status: 200,
+            data: mapDtoToModel(response.data.data)
+          };
+        } else {
+          // API yanıtında data yoksa, güncellenmiş veriyi oluştur
+          console.log("API yanıtında data alanı bulunamadı, güncellenmiş veriyi manuel oluşturuyorum");
+          
+          // ID'yi string'e çevir
+          const stringId = id.toString();
+          
+          // Basit bir ICompany nesnesi oluştur (minimum bilgilerle)
+          const updatedCompany: ICompany = {
+            id: stringId,
+            name: updateData.name || "",
+            taxNumber: updateData.tax_number || "",
+            taxOffice: updateData.tax_office || "",
+            address: updateData.address || "",
+            phone: updateData.phone || "",
+            email: updateData.email || "",
+            status: updateData.status || "active",
+            createdAt: "",
+            updatedAt: new Date().toISOString(),
+            aparts_count: 0,
+            aparts: []
+          };
+          
+          return {
+            success: true,
+            status: 200,
+            data: updatedCompany
+          };
+        }
+      }
+      
+      console.error("Firma güncellenirken API hatası:", response.data);
       return {
-        success: response.success,
-        status: 200,
-        data: mapDtoToModel(response.data),
+        success: false,
+        status: response.status || 400,
+        error: response.data?.message || "Bilinmeyen bir hata oluştu"
+      };
+    } catch (error: any) {
+      console.error("Firma güncellenirken hata:", error);
+      return {
+        success: false,
+        status: 500,
+        error: error.message || "Firma güncellenirken bir hata oluştu"
       };
     }
-    
-    return {
-      success: false,
-      status: 400,
-      error: 'Firma güncellenemedi',
-    };
   },
 
   /**

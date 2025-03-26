@@ -7,68 +7,46 @@ import { ArrowLeft, Plus, Bed as BedIcon, User, Tag, Package } from 'lucide-reac
 import BedCard from '@/components/rooms/BedCard';
 import PageLoader from '@/components/PageLoader';
 import NewBedForm from '@/components/rooms/NewBedForm';
-
-interface Bed {
-  id: number;
-  name: string;
-  bed_number: string;
-  bed_type: 'SINGLE' | 'DOUBLE' | 'BUNK';
-  status: 'available' | 'occupied' | 'maintenance' | 'reserved';
-  room_id: number;
-  guest_id: number | null;
-  created_at: string;
-  updated_at: string;
-}
+import { roomsApi } from '@/lib/api/rooms';
+import { bedsApi } from '@/lib/api/beds';
+import { IRoom, IBed } from '@/types/models';
 
 export default function RoomBedsPage({ params }: { params: { id: string } }) {
   const router = useRouter();
-  const { isAuthenticated, token } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
-  const [room, setRoom] = useState<any>(null);
-  const [beds, setBeds] = useState<Bed[]>([]);
+  const [room, setRoom] = useState<IRoom | null>(null);
+  const [beds, setBeds] = useState<IBed[]>([]);
   const [error, setError] = useState('');
   const [showAddBedForm, setShowAddBedForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     const fetchRoomAndBeds = async () => {
-      if (!token) return;
-      
       setIsLoading(true);
       try {
-        // Fetch room details
-        const roomResponse = await fetch(`https://api.blexi.co/api/v1/rooms/${params.id}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-        });
-
-        const roomData = await roomResponse.json();
+        // Fetch room details using roomsApi
+        const roomResponse = await roomsApi.getById(params.id);
         
-        if (!roomResponse.ok) {
-          throw new Error(roomData.message || 'Oda bilgileri yüklenirken bir hata oluştu.');
+        if (roomResponse.success && roomResponse.data) {
+          setRoom(roomResponse.data);
+          
+          // Fetch beds for this room using bedsApi
+          const bedsResponse = await bedsApi.getAll({ 
+            room_id: parseInt(params.id),
+            per_page: 100 
+          });
+          
+          if (bedsResponse.success) {
+            setBeds(bedsResponse.data);
+          } else {
+            console.error('Yatak bilgileri alınamadı:', bedsResponse.error);
+            setError('Yatak bilgileri yüklenirken bir hata oluştu.');
+          }
+        } else {
+          console.error('Oda detayları alınamadı:', roomResponse.error);
+          setError('Oda bilgileri yüklenirken bir hata oluştu.');
         }
-        
-        setRoom(roomData.data);
-        
-        // Fetch beds for this room
-        const bedsResponse = await fetch(`https://api.blexi.co/api/v1/beds?room_id=${params.id}&per_page=100`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-        });
-
-        const bedsData = await bedsResponse.json();
-        
-        if (!bedsResponse.ok) {
-          throw new Error(bedsData.message || 'Yatak bilgileri yüklenirken bir hata oluştu.');
-        }
-        
-        setBeds(bedsData.data);
       } catch (error: any) {
         console.error('Veri çekilirken hata oluştu:', error);
         setError(error.message || 'Bilgiler yüklenirken bir hata oluştu.');
@@ -77,56 +55,37 @@ export default function RoomBedsPage({ params }: { params: { id: string } }) {
       }
     };
 
-    if (isAuthenticated && token) {
+    if (isAuthenticated) {
       fetchRoomAndBeds();
     }
-  }, [isAuthenticated, token, params.id]);
+  }, [isAuthenticated, params.id]);
 
-  const handleBedStatusChange = async (id: number, status: 'available' | 'occupied' | 'maintenance' | 'reserved') => {
-    if (!token) return;
-    
+  const handleBedStatusChange = async (id: string, status: 'available' | 'occupied' | 'maintenance' | 'reserved') => {
     try {
-      const response = await fetch(`https://api.blexi.co/api/v1/beds/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: JSON.stringify({ status })
-      });
+      const response = await bedsApi.update(id, { status });
 
-      if (response.ok) {
+      if (response.success) {
         // Update local state
         setBeds(prev => prev.map(b => 
           b.id === id ? { ...b, status } : b
         ));
       } else {
-        console.error('Durum değiştirme hatası:', await response.json());
+        console.error('Durum değiştirme hatası:', response.error);
       }
     } catch (error) {
       console.error('Durum değiştirme hatası:', error);
     }
   };
 
-  const handleBedDelete = async (id: number) => {
-    if (!token) return;
-    
+  const handleBedDelete = async (id: string) => {
     try {
-      const response = await fetch(`https://api.blexi.co/api/v1/beds/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-      });
+      const response = await bedsApi.delete(id);
 
-      if (response.ok) {
+      if (response.success) {
         // Update local state
         setBeds(prev => prev.filter(b => b.id !== id));
       } else {
-        console.error('Silme hatası:', await response.json());
+        console.error('Silme hatası:', response.error);
       }
     } catch (error) {
       console.error('Silme hatası:', error);
@@ -136,27 +95,20 @@ export default function RoomBedsPage({ params }: { params: { id: string } }) {
   const handleAddBed = async (data: any) => {
     setIsSubmitting(true);
     try {
-      const response = await fetch('https://api.blexi.co/api/v1/beds', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: JSON.stringify({
-          ...data,
-          room_id: parseInt(params.id)
-        })
-      });
-
-      const responseData = await response.json();
+      // Add room_id to the bed data
+      const bedData = {
+        ...data,
+        roomId: params.id
+      };
       
-      if (response.ok) {
+      const response = await bedsApi.create(bedData);
+      
+      if (response.success) {
         // Add new bed to the list
-        setBeds(prev => [...prev, responseData.data]);
+        setBeds(prev => [...prev, response.data]);
         setShowAddBedForm(false);
       } else {
-        throw new Error(responseData.message || 'Yatak eklenirken bir hata oluştu');
+        throw new Error(response.error || 'Yatak eklenirken bir hata oluştu');
       }
     } catch (error: any) {
       console.error('Yatak ekleme hatası:', error);
