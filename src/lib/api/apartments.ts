@@ -113,7 +113,7 @@ export const apartsApi = {
   /**
    * Tüm apart'ları opsiyonel filtrelerle getir
    */
-  getAll: async (filters?: ApartFilters): Promise<ApiResponse<ApartDto[]>> => {
+  getAll: async (filters?: ApartFilters): Promise<ApiResponse<any>> => {
     const params = new URLSearchParams();
     
     if (filters) {
@@ -153,9 +153,9 @@ export const apartsApi = {
   },
 
   /**
-   * ID'ye göre apart getir
+   * id ile bir apart'ı getir
    */
-  getById: async (id: string): Promise<ApiResponse<ApartDto>> => {
+  getById: async (id: string): Promise<ApiResponse<any>> => {
     // API yanıt yapısı
     interface ApartResponse {
       success: boolean;
@@ -182,9 +182,21 @@ export const apartsApi = {
   },
 
   /**
+   * BYK'dan gelen apart verilerini senkronize et
+   */
+  syncFromByk: async (): Promise<ApiResponse<any>> => {
+    const response = await api.post('/api/v1/apartments/sync-from-byk', {});
+    return {
+      success: response.success,
+      data: response.data,
+      status: response.status,
+    };
+  },
+
+  /**
    * Yeni bir apart oluştur
    */
-  create: async (data: Partial<IApartment>): Promise<ApiResponse<ApartDto>> => {
+  create: async (data: CreateApartRequest): Promise<ApiResponse<any>> => {
     const dto = mapModelToDto(data) as CreateApartRequest;
     
     // API yanıt yapısı
@@ -213,9 +225,9 @@ export const apartsApi = {
   },
 
   /**
-   * Mevcut bir apart'ı güncelle
+   * Bir apart'ı güncelle
    */
-  update: async (id: string, data: Partial<IApartment>): Promise<ApiResponse<ApartDto>> => {
+  update: async (id: string, data: UpdateApartRequest): Promise<ApiResponse<any>> => {
     const dto = mapModelToDto(data) as UpdateApartRequest;
     
     // API yanıt yapısı

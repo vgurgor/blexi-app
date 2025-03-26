@@ -171,6 +171,6 @@ export const invoiceTitlesApi = {
    * @param id - Fatura başlığı ID'si
    */
   setAsDefault: async (id: string | number): Promise<ApiResponse<void>> => {
-    return await api.post(`/api/v1/invoice-titles/${id}/set-as-default`);
+    return await api.post(`/api/v1/invoice-titles/${id}/set-as-default`, {});
   },
 }; 

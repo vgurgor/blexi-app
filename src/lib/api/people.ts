@@ -239,7 +239,7 @@ export const peopleApi = {
     const formData = new FormData();
     formData.append('profile_photo', file);
     
-    const response = await api.postFormData<PersonDto>(
+    const response = await api.post<PersonDto>(
       `/api/v1/people/${id}/profile-photo`,
       formData
     );

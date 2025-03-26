@@ -354,7 +354,25 @@ export const pricesApi = {
     params.append('per_page', perPage.toString());
     
     const url = `/api/v1/prices/${priceId}/taxes?${params.toString()}`;
-    return await api.get<any>(url);
+    const response = await api.get<any>(url);
+    
+    if (response.success && response.data) {
+      return {
+        ...response,
+        data: response.data,
+        page,
+        limit: perPage,
+        total: response.meta?.total || 0,
+      };
+    }
+    
+    return {
+      ...response,
+      data: [],
+      page,
+      limit: perPage,
+      total: 0,
+    };
   },
   
   /**

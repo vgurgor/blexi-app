@@ -7,7 +7,7 @@ import { Plus, Building2, Building, ChevronLeft, ChevronRight } from 'lucide-rea
 import ApartmentCard from '@/components/apartments/ApartmentCard';
 import CompanyCard from '@/components/companies/CompanyCard';
 import SearchAndFilters from '@/components/shared/SearchAndFilters';
-import { apartsApi, ApartFilters, ApartDto } from '@/lib/api/apartments';
+import { apartsApi, ApartFilters, ApartDto, UpdateApartRequest } from '@/lib/api/apartments';
 import { firmsApi, FirmDto, FirmFilters } from '@/lib/api/firms';
 import { ApiResponse } from '@/types/api';
 import { ICompany } from '@/types/models';
@@ -246,7 +246,7 @@ export default function ApartmentsPage() {
 
   const handleApartmentStatusChange = async (id: number, status: 'active' | 'inactive') => {
     try {
-      const response = await apartsApi.update(id.toString(), { status });
+      const response = await apartsApi.update(id.toString(), { status } as UpdateApartRequest);
       
       if (response.success) {
         // Update local state

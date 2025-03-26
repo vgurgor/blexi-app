@@ -219,7 +219,7 @@ export const paymentsApi = {
    * @param id - Ödeme ID'si
    */
   cancel: async (id: string | number): Promise<ApiResponse<IPayment>> => {
-    const response = await api.post<PaymentDto>(`/api/v1/payments/${id}/cancel`);
+    const response = await api.post<PaymentDto>(`/api/v1/payments/${id}/cancel`, {});
     
     if (response.success && response.data) {
       return {
@@ -239,7 +239,7 @@ export const paymentsApi = {
    * @param id - Ödeme ID'si
    */
   refund: async (id: string | number): Promise<ApiResponse<IPayment>> => {
-    const response = await api.post<PaymentDto>(`/api/v1/payments/${id}/refund`);
+    const response = await api.post<PaymentDto>(`/api/v1/payments/${id}/refund`, {});
     
     if (response.success && response.data) {
       return {

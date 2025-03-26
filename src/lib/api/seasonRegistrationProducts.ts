@@ -87,7 +87,9 @@ const mapSeasonRegistrationProductDtoToModel = (dto: SeasonRegistrationProductDt
       checkInDate: dto.registration.check_in_date,
       checkOutDate: dto.registration.check_out_date,
       status: dto.registration.status,
-      // Bu alanlar yeterli değilse ISeasonRegistration'ın diğer özelliklerini de ekleyebiliriz
+      tenantId: dto.tenant_id.toString(),
+      createdAt: dto.created_at,
+      updatedAt: dto.updated_at,
     } : undefined,
     product: dto.product ? {
       id: dto.product.id.toString(),

@@ -65,7 +65,12 @@ const mapSeasonRegistrationProductDiscountDtoToModel = (dto: SeasonRegistrationP
       discountType: dto.discount_rule.discount_type,
       discountValue: dto.discount_rule.discount_value,
       status: dto.discount_rule.status,
-      // IDiscountRule'un diğer özellikleri eklenebilir
+      tenantId: dto.tenant_id.toString(),
+      startDate: '',
+      endDate: '',
+      priority: 0,
+      createdAt: dto.created_at,
+      updatedAt: dto.updated_at,
     } : undefined,
     seasonRegistrationProduct: dto.season_registration_product ? {
       id: dto.season_registration_product.id.toString(),
@@ -73,7 +78,10 @@ const mapSeasonRegistrationProductDiscountDtoToModel = (dto: SeasonRegistrationP
       quantity: dto.season_registration_product.quantity,
       unitPrice: dto.season_registration_product.unit_price,
       totalPrice: dto.season_registration_product.total_price,
-      // ISeasonRegistrationProduct'ın diğer özellikleri eklenebilir
+      tenantId: dto.tenant_id.toString(),
+      seasonRegistrationId: dto.season_registration_product_id.toString(),
+      createdAt: dto.created_at,
+      updatedAt: dto.updated_at,
     } : undefined
   };
 };

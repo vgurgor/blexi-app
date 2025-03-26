@@ -318,8 +318,8 @@ export const inventoryApi = {
       // Alternative approach using update
       const updateData = {
         status: 'in_storage' as const,
-        assignable_type: null,
-        assignable_id: null,
+        assignable_type: undefined,
+        assignable_id: undefined,
       };
 
       return inventoryApi.update(inventoryId, updateData);

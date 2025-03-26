@@ -16,6 +16,9 @@ export interface RoomDto {
     id: number;
     room_id: number;
     name: string;
+    bed_number?: string;
+    bed_type?: 'SINGLE' | 'DOUBLE' | 'QUEEN' | 'KING';
+    status?: 'available' | 'occupied' | 'out_of_order';
     // Diğer yatakla ilgili alanlar
   }[];
   features?: {
@@ -74,6 +77,10 @@ function mapDtoToModel(dto: RoomDto): IRoom {
       id: bed.id.toString(),
       name: bed.name,
       roomId: bed.room_id.toString(),
+      bed_number: bed.bed_number || '',
+      bed_type: (bed.bed_type || 'SINGLE') as 'SINGLE' | 'DOUBLE' | 'BUNK',
+      status: (bed.status || 'available') as 'available' | 'occupied' | 'maintenance' | 'reserved',
+      guest_id: null,
       features: [],
       createdAt: '',
       updatedAt: ''
@@ -88,7 +95,7 @@ function mapDtoToModel(dto: RoomDto): IRoom {
  * İç modeli API DTO'ya dönüştür
  */
 function mapModelToDto(model: Partial<IRoom>): Partial<CreateRoomRequest | UpdateRoomRequest> {
-  const dto: Partial<CreateRoomRequest | UpdateRoomRequest> = {};
+  const dto: any = {};
   
   if (model.apart_id) dto.apart_id = parseInt(model.apart_id, 10);
   if (model.room_number) dto.room_number = model.room_number;
@@ -97,7 +104,7 @@ function mapModelToDto(model: Partial<IRoom>): Partial<CreateRoomRequest | Updat
   if (model.room_type) dto.room_type = model.room_type;
   if (model.status) dto.status = model.status;
   
-  return dto;
+  return dto as Partial<CreateRoomRequest | UpdateRoomRequest>;
 }
 
 export const roomsApi = {
@@ -136,7 +143,7 @@ export const roomsApi = {
     
     const response = await api.get<RoomsResponse>(`/api/v1/rooms?${params.toString()}`);
     
-    if (response.success && response.data) {
+    if (response.success && Array.isArray(response.data)) {
       const modelData: IRoom[] = response.data.map(mapDtoToModel);
       return {
         success: response.success,
@@ -170,7 +177,7 @@ export const roomsApi = {
       return {
         success: response.success,
         status: 200,
-        data: mapDtoToModel(response.data),
+        data: mapDtoToModel(response.data as unknown as RoomDto),
       };
     }
     
@@ -200,7 +207,7 @@ export const roomsApi = {
       return {
         success: response.success,
         status: 201,
-        data: mapDtoToModel(response.data),
+        data: mapDtoToModel(response.data as unknown as RoomDto),
       };
     }
     
@@ -230,7 +237,7 @@ export const roomsApi = {
       return {
         success: response.success,
         status: 200,
-        data: mapDtoToModel(response.data),
+        data: mapDtoToModel(response.data as unknown as RoomDto),
       };
     }
     
@@ -267,7 +274,7 @@ export const roomsApi = {
       return {
         success: response.success,
         status: 200,
-        data: response.data,
+        data: response.data.data,
       };
     }
     
@@ -312,7 +319,7 @@ export const roomsApi = {
       return {
         success: response.success,
         status: 200,
-        data: response.data,
+        data: response.data.data,
       };
     }
     

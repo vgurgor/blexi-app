@@ -170,6 +170,12 @@ export const documentsApi = {
    * @param id - Belge ID'si
    */
   download: async (id: string | number): Promise<Blob> => {
-    return await api.getBlob(`/api/v1/documents/${id}/download`);
+    const response = await fetch(`/api/v1/documents/${id}/download`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+      }
+    });
+    return await response.blob();
   },
 }; 
