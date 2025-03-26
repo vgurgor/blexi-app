@@ -7,257 +7,169 @@ export interface UserDto {
   id: number;
   username: string;
   email: string;
-  name: string;
-  role: 'super-admin' | 'admin' | 'manager' | 'user';
   tenant_id: number;
   tenant?: {
     id: number;
     name: string;
-    slug: string;
+    domain: string;
+    settings?: {
+      theme: string;
+      language: string;
+    };
+    status: string;
   };
   person_id?: number;
   person?: {
     id: number;
+    tenant_id: number;
     name: string;
-    email?: string;
+    tc_no?: string;
     phone?: string;
+    email?: string;
+    birth_date?: string;
+    address?: string;
+    city?: string;
+    profile_photo_path?: string;
+    profile_photo_url?: string;
+    status: string;
+    created_at: string;
+    updated_at: string;
   };
+  role: string;
   permissions?: string[];
   last_login?: string;
   email_verified_at?: string;
-  avatar?: string;
-  created_at?: string;
-  updated_at?: string;
+  created_at: string;
+  updated_at: string;
 }
 
-// API isteklerinde kullanılacak filtreler
-export interface UserFilters {
-  role?: 'super-admin' | 'admin' | 'manager' | 'user';
-  search?: string;
-  page?: number;
-  per_page?: number;
+// Kullanıcı rol değiştirme isteği için model
+export interface UpdateUserRoleRequest {
+  role: string;
 }
 
-// Yeni kullanıcı oluşturma isteği için model
-export interface CreateUserRequest {
-  username: string;
-  email: string;
-  name: string;
-  password: string;
-  password_confirmation: string;
-  role: 'super-admin' | 'admin' | 'manager' | 'user';
-}
-
-// Kullanıcı güncelleme isteği için model
-export interface UpdateUserRequest {
-  username?: string;
-  email?: string;
-  name?: string;
-  password?: string;
-  password_confirmation?: string;
-  role?: 'super-admin' | 'admin' | 'manager' | 'user';
-}
-
-/**
- * API DTO'yu iç modele dönüştür
- */
-function mapDtoToModel(dto: UserDto): IUser {
+// UserDto'yu IUser modeline dönüştüren yardımcı fonksiyon
+const mapUserDtoToModel = (dto: UserDto): IUser => {
   return {
     id: dto.id.toString(),
     username: dto.username,
     email: dto.email,
-    name: dto.name,
-    role: dto.role,
+    name: dto.person?.name || '',
+    role: dto.role as 'super-admin' | 'admin' | 'manager' | 'user',
     tenant_id: dto.tenant_id.toString(),
     tenant: dto.tenant ? {
       id: dto.tenant.id.toString(),
       name: dto.tenant.name,
-      slug: dto.tenant.slug
+      slug: dto.tenant.domain,
     } : undefined,
     person_id: dto.person_id?.toString(),
     person: dto.person ? {
       id: dto.person.id.toString(),
       name: dto.person.name,
       email: dto.person.email,
-      phone: dto.person.phone
+      phone: dto.person.phone,
     } : undefined,
-    permissions: dto.permissions || [],
-    last_login: dto.last_login || '',
-    email_verified_at: dto.email_verified_at || '',
-    avatar: dto.avatar || '',
-    createdAt: dto.created_at || '',
-    updatedAt: dto.updated_at || ''
+    permissions: dto.permissions,
+    last_login: dto.last_login,
+    email_verified_at: dto.email_verified_at,
+    avatar: dto.person?.profile_photo_url,
+    createdAt: dto.created_at,
+    updatedAt: dto.updated_at,
   };
-}
+};
 
 /**
- * İç modeli API DTO'ya dönüştür
+ * Kullanıcılar API servisi
  */
-function mapModelToDto(model: Partial<IUser>): Partial<CreateUserRequest | UpdateUserRequest> {
-  const dto: Partial<CreateUserRequest | UpdateUserRequest> = {};
-  
-  if (model.username !== undefined) dto.username = model.username;
-  if (model.email !== undefined) dto.email = model.email;
-  if (model.name !== undefined) dto.name = model.name;
-  if (model.role !== undefined) dto.role = model.role;
-  
-  return dto;
-}
-
 export const usersApi = {
   /**
-   * Tüm kullanıcıları opsiyonel filtrelerle getir
+   * Tüm kullanıcıları listeler
+   * @param page - Sayfa numarası
+   * @param perPage - Sayfa başına öğe sayısı
    */
-  getAll: async (filters?: UserFilters): Promise<ApiResponse<IUser[]>> => {
+  getAll: async (
+    page: number = 1,
+    perPage: number = 15
+  ): Promise<PaginatedResponse<IUser>> => {
     const params = new URLSearchParams();
     
-    if (filters) {
-      Object.entries(filters).forEach(([key, value]) => {
-        if (value !== undefined && value !== null) {
-          params.append(key, value.toString());
-        }
-      });
+    params.append('page', page.toString());
+    params.append('per_page', perPage.toString());
+    
+    const url = `/api/v1/users?${params.toString()}`;
+    const response = await api.get<UserDto[]>(url);
+    
+    if (response.success && response.data) {
+      return {
+        ...response,
+        data: response.data.map(mapUserDtoToModel),
+        page,
+        limit: perPage,
+        total: response.meta?.total || 0,
+      };
     }
     
-    try {
-      const response = await api.get(`/api/v1/users?${params.toString()}`);
-      
-      if (response && response.data) {
-        // API may return user data in different formats depending on the endpoint
-        const userData = Array.isArray(response.data) ? response.data : response.data;
-        const modelData: IUser[] = userData.map(mapDtoToModel);
-        
-        return {
-          success: true,
-          status: 200,
-          data: modelData,
-          meta: response.meta
-        };
-      }
-      
-      return {
-        success: false,
-        status: 404,
-        error: 'Veri bulunamadı',
-        data: [],
-      };
-    } catch (error) {
-      console.error('Kullanıcı verilerini alma hatası:', error);
-      return {
-        success: false,
-        status: 500,
-        error: 'Kullanıcı verileri alınırken bir hata oluştu',
-        data: [],
-      };
-    }
+    return {
+      ...response,
+      data: [],
+      page,
+      limit: perPage,
+      total: 0,
+    };
   },
-
+  
   /**
-   * ID'ye göre kullanıcı getir
+   * ID'ye göre kullanıcı detaylarını getirir
+   * @param id - Kullanıcı ID'si
    */
   getById: async (id: string | number): Promise<ApiResponse<IUser>> => {
-    try {
-      const response = await api.get(`/api/v1/users/${id}`);
-      
-      if (response && response.data) {
-        return {
-          success: true,
-          status: 200,
-          data: mapDtoToModel(response.data),
-        };
-      }
-      
-      return {
-        success: false,
-        status: 404,
-        error: 'Kullanıcı bulunamadı',
-      };
-    } catch (error) {
-      console.error('Kullanıcı verilerini alma hatası:', error);
-      return {
-        success: false,
-        status: 500,
-        error: 'Kullanıcı verisi alınırken bir hata oluştu',
-      };
-    }
-  },
-
-  /**
-   * Yeni bir kullanıcı oluştur
-   */
-  create: async (data: Partial<IUser> & { password: string, password_confirmation: string }): Promise<ApiResponse<IUser>> => {
-    const dto = {
-      ...mapModelToDto(data),
-      password: data.password,
-      password_confirmation: data.password_confirmation
-    } as CreateUserRequest;
+    const response = await api.get<UserDto>(`/api/v1/users/${id}`);
     
-    try {
-      const response = await api.post('/api/v1/users', dto);
-      
-      if (response && response.data) {
-        return {
-          success: true,
-          status: 201,
-          data: mapDtoToModel(response.data),
-        };
-      }
-      
+    if (response.success && response.data) {
       return {
-        success: false,
-        status: 400,
-        error: 'Kullanıcı oluşturulamadı',
-      };
-    } catch (error) {
-      console.error('Kullanıcı oluşturma hatası:', error);
-      return {
-        success: false,
-        status: 500,
-        error: 'Kullanıcı oluşturulurken bir hata oluştu',
+        ...response,
+        data: mapUserDtoToModel(response.data),
       };
     }
-  },
-
-  /**
-   * Mevcut bir kullanıcıyı güncelle
-   */
-  update: async (id: string | number, data: Partial<IUser> & { password?: string, password_confirmation?: string }): Promise<ApiResponse<IUser>> => {
-    const dto = {
-      ...mapModelToDto(data),
-      password: data.password,
-      password_confirmation: data.password_confirmation
-    } as UpdateUserRequest;
     
-    try {
-      const response = await api.put(`/api/v1/users/${id}`, dto);
-      
-      if (response && response.data) {
-        return {
-          success: true,
-          status: 200,
-          data: mapDtoToModel(response.data),
-        };
-      }
-      
-      return {
-        success: false,
-        status: 400,
-        error: 'Kullanıcı güncellenemedi',
-      };
-    } catch (error) {
-      console.error('Kullanıcı güncelleme hatası:', error);
-      return {
-        success: false,
-        status: 500,
-        error: 'Kullanıcı güncellenirken bir hata oluştu',
-      };
-    }
+    return {
+      ...response,
+      data: undefined,
+    };
   },
-
+  
   /**
-   * Bir kullanıcıyı sil
+   * Kullanıcı siler (Sadece Admin)
+   * @param id - Silinecek kullanıcı ID'si
    */
   delete: async (id: string | number): Promise<ApiResponse<void>> => {
-    return api.delete(`/api/v1/users/${id}`);
+    return await api.delete<void>(`/api/v1/users/${id}`);
+  },
+  
+  /**
+   * Kullanıcıya rol atar (Sadece Admin)
+   * @param id - Rolü atanacak kullanıcı ID'si
+   * @param role - Yeni rol
+   */
+  assignRole: async (
+    id: string | number,
+    role: string
+  ): Promise<ApiResponse<IUser>> => {
+    const response = await api.put<UserDto>(
+      `/api/v1/users/${id}/roles`,
+      { role }
+    );
+    
+    if (response.success && response.data) {
+      return {
+        ...response,
+        data: mapUserDtoToModel(response.data),
+      };
+    }
+    
+    return {
+      ...response,
+      data: undefined,
+    };
   },
 };
