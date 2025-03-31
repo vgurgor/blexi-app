@@ -39,7 +39,7 @@ export function useAuth() {
           
           // API yanıtındaki iç içe yapıyı ele al
           // @ts-ignore - API yanıtının gerçek yapısını ele alıyoruz
-          const nestedData = response.data.data;
+          const nestedData = response.data;
           
           if (!nestedData) {
             console.error('API yanıt verisi bulunamadı:', response.data);
