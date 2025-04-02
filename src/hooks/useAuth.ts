@@ -36,25 +36,13 @@ export function useAuth() {
         if (response && response.success === true && response.data) {
           // Debug
           console.log('Login data:', JSON.stringify(response.data, null, 2));
-          
-          // API yanıtındaki iç içe yapıyı ele al
-          // @ts-ignore - API yanıtının gerçek yapısını ele alıyoruz
-          const nestedData = response.data;
-          
-          if (!nestedData) {
-            console.error('API yanıt verisi bulunamadı:', response.data);
-            setError('API yanıt verisi alınamadı');
-            toast.error('Oturum bilgisi alınamadı');
-            return false;
-          }
-          
-          // @ts-ignore - Tip tanımlamasını aşıyoruz çünkü yanıt yapısı beklenenden farklı
-          const tokenValue = nestedData.token;
-          // @ts-ignore
-          const userData = nestedData.user;
+         
+          // Direk response.data'yı kullan, ek bir nested data seviyesi olmadığından
+          const tokenValue = response.data.token;
+          const userData = response.data.user;
           
           if (!tokenValue) {
-            console.error('Token bulunamadı:', nestedData);
+            console.error('Token bulunamadı:', response.data);
             setError('Token alınamadı');
             toast.error('Oturum bilgisi alınamadı');
             return false;
@@ -79,7 +67,7 @@ export function useAuth() {
           const maxAge = 60 * 60 * 24 * 7; // 7 days
           
           // Development ortamında secure flag'i kaldır (localhost için)
-          const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+          const isLocalhost = true;
           const secureFlag = isLocalhost ? '' : 'secure; ';
           
           // Cookie ayarla
@@ -122,13 +110,7 @@ export function useAuth() {
       setError(null);
       
       try {
-        const response = await authApi.register({
-          name,
-          email,
-          password,
-          password_confirmation: password,
-          role: 'user'
-        });
+        const response = await authApi.register(name, email, password);
         
         if (response.success && response.data) {
           storeLogin(response.data.token, response.data.user);
@@ -201,7 +183,7 @@ export function useAuth() {
         const maxAge = 60 * 60 * 24 * 7; // 7 days
         
         // Development ortamında secure flag'i kaldır (localhost için)
-        const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        const isLocalhost = true;
         const secureFlag = isLocalhost ? '' : 'secure; ';
         
         // Cookie ayarla

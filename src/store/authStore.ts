@@ -21,48 +21,39 @@ interface AuthActions {
 
 export type AuthStore = AuthState & AuthActions;
 
-// localStorage'ı güvenli bir şekilde kontrol et
-const isLocalStorageAvailable = () => {
-  try {
-    const testKey = '__storage_test__';
-    localStorage.setItem(testKey, testKey);
-    localStorage.removeItem(testKey);
-    return true;
-  } catch (e) {
-    console.error('localStorage kullanılamıyor:', e);
-    return false;
-  }
-};
+// Check if we're running on the client side
+const isBrowser = typeof window !== 'undefined';
 
-// Güvenli localStorage
-const safeLocalStorage = {
+// Custom storage implementation that safely handles SSR
+const customStorage = {
   getItem: (name: string): string | null => {
-    if (isLocalStorageAvailable()) {
-      try {
-        return localStorage.getItem(name);
-      } catch (e) {
-        console.error(`${name} localStorage'dan alınamadı:`, e);
-      }
+    if (!isBrowser) return null;
+    
+    try {
+      return localStorage.getItem(name);
+    } catch (error) {
+      console.warn(`Error reading ${name} from localStorage:`, error);
+      return null;
     }
-    return null;
   },
+  
   setItem: (name: string, value: string): void => {
-    if (isLocalStorageAvailable()) {
-      try {
-        localStorage.setItem(name, value);
-        console.log(`${name} localStorage'a kaydedildi.`);
-      } catch (e) {
-        console.error(`${name} localStorage'a kaydedilemedi:`, e);
-      }
+    if (!isBrowser) return;
+    
+    try {
+      localStorage.setItem(name, value);
+    } catch (error) {
+      console.warn(`Error writing ${name} to localStorage:`, error);
     }
   },
+  
   removeItem: (name: string): void => {
-    if (isLocalStorageAvailable()) {
-      try {
-        localStorage.removeItem(name);
-      } catch (e) {
-        console.error(`${name} localStorage'dan silinemedi:`, e);
-      }
+    if (!isBrowser) return;
+    
+    try {
+      localStorage.removeItem(name);
+    } catch (error) {
+      console.warn(`Error removing ${name} from localStorage:`, error);
     }
   }
 };
@@ -117,19 +108,13 @@ export const useAuthStore = create<AuthStore>()(
     }),
     {
       name: 'blexi-auth-storage',
-      storage: createJSONStorage(() => safeLocalStorage),
+      storage: createJSONStorage(() => customStorage),
+      skipHydration: true,
       partialize: (state) => ({ 
         token: state.token,
         user: state.user,
         isAuthenticated: state.isAuthenticated,
       }),
-      onRehydrateStorage: () => (state) => {
-        if (state) {
-          console.log('Zustand store hydrated:', state.isAuthenticated ? 'Authenticated' : 'Not authenticated');
-        } else {
-          console.log('Zustand hydration başarısız oldu');
-        }
-      }
     }
   )
 );

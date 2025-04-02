@@ -19,7 +19,7 @@ export default function DashboardLayout({
           <div className="flex flex-col flex-1 w-full overflow-hidden">
             <TopNav />
             
-            <main className="relative z-0 flex-1 overflow-y-auto focus:outline-none">
+            <main className="relative z-0 flex-1 overflow-y-auto focus:outline-none pt-16">
               {children}
             </main>
           </div>

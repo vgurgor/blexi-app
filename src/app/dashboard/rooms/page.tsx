@@ -218,7 +218,7 @@ export default function RoomsPage() {
   }
 
   return (
-    <div className="p-8 pt-24">
+    <div className="p-8">
       {/* Header with New Button */}
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">

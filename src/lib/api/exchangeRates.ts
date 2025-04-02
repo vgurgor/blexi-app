@@ -282,4 +282,4 @@ export const exchangeRatesApi = {
     const data = apiKey ? { api_key: apiKey } : {};
     return await api.post<UpdateRatesFromApiResponse>('/api/v1/exchange-rates/update-from-api', data);
   },
-}; 
+};

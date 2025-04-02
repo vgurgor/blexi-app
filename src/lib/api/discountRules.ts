@@ -90,20 +90,20 @@ const mapDiscountRuleDtoToModel = (dto: DiscountRuleDto): IDiscountRule => {
     discountCategoryId: dto.discount_category_id.toString(),
     discountCategory: dto.discount_category ? {
       id: dto.discount_category.id.toString(),
-      tenantId: '', // API bu değeri dönmüyor
       code: dto.discount_category.code,
       name: dto.discount_category.name,
       description: dto.discount_category.description,
       status: dto.discount_category.status as 'active' | 'inactive',
+      tenantId: dto.tenant_id.toString(), // API bu değeri dönmüyor, varsayılan olarak tenant_id kullanıyoruz
       createdAt: '', // API bu değeri dönmüyor
       updatedAt: '', // API bu değeri dönmüyor
     } : undefined,
     productId: dto.product_id?.toString(),
     product: dto.product ? {
       id: dto.product.id.toString(),
-      categoryId: dto.product.category_id.toString(),
       name: dto.product.name,
       description: dto.product.description,
+      categoryId: dto.product.category_id.toString(),
       status: dto.product.status as 'active' | 'inactive',
       createdAt: '', // API bu değeri dönmüyor
       updatedAt: '', // API bu değeri dönmüyor
@@ -261,7 +261,7 @@ export const discountRulesApi = {
     id: string | number,
     status: 'active' | 'inactive'
   ): Promise<ApiResponse<IDiscountRule>> => {
-    const response = await api.put<DiscountRuleDto>(
+    const response = await api.patch<DiscountRuleDto>(
       `/api/v1/discount-rules/${id}/status`,
       { status }
     );
@@ -302,4 +302,4 @@ export const discountRulesApi = {
       data: [],
     };
   },
-}; 
+};

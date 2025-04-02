@@ -361,7 +361,7 @@ export default function ApartmentsPage() {
   console.log('Filtrelenmiş şirket verileri:', filteredCompanyData.length);
 
   return (
-    <div className="p-8 pt-24">
+    <div className="p-8">
       {/* Enhanced Tabs with New Button */}
       <div className="flex items-center justify-between mb-8">
         <div className="flex bg-white dark:bg-gray-800 rounded-xl p-2 border border-gray-200 dark:border-gray-700 shadow-sm">

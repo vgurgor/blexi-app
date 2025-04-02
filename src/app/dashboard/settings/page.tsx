@@ -140,7 +140,7 @@ export default function SettingsPage() {
   ];
 
   return (
-    <div className="p-8 pt-24 animate-slideLeft">
+    <div className="p-8 animate-slideLeft">
       <div className="max-w-6xl mx-auto">
         <div className="flex items-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
