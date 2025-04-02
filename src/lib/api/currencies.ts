@@ -205,7 +205,7 @@ export const currenciesApi = {
     status: 'active' | 'inactive'
   ): Promise<ApiResponse<ICurrency>> => {
     const data: UpdateCurrencyStatusRequest = { status };
-    const response = await api.put<CurrencyDto>(`/api/v1/currencies/${id}/status`, data);
+    const response = await api.patch<CurrencyDto>(`/api/v1/currencies/${id}/status`, data);
     
     if (response.success && response.data) {
       return {
@@ -225,7 +225,7 @@ export const currenciesApi = {
    * @param id - Varsayılan olarak ayarlanacak para birimi ID'si
    */
   setAsDefault: async (id: string | number): Promise<ApiResponse<ICurrency>> => {
-    const response = await api.put<CurrencyDto>(`/api/v1/currencies/${id}/default`, {});
+    const response = await api.post<CurrencyDto>(`/api/v1/currencies/${id}/default`, {});
     
     if (response.success && response.data) {
       return {
@@ -247,4 +247,4 @@ export const currenciesApi = {
   delete: async (id: string | number): Promise<ApiResponse<void>> => {
     return await api.delete<void>(`/api/v1/currencies/${id}`);
   },
-}; 
+};

@@ -45,7 +45,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="flex gap-8 p-8 pt-24 relative">
+    <div className="flex gap-8 p-8 relative">
       <div className="flex-1">
         <div className="flex justify-between items-center mb-8">
           <div>

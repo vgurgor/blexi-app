@@ -174,7 +174,7 @@ export const productsApi = {
     id: string | number,
     status: 'active' | 'inactive'
   ): Promise<ApiResponse<void>> => {
-    return await api.put<void>(`/api/v1/products/${id}/status`, { status });
+    return await api.patch<void>(`/api/v1/products/${id}/status`, { status });
   },
   
   /**
@@ -228,4 +228,4 @@ export const productsApi = {
       total: 0,
     };
   },
-}; 
+};

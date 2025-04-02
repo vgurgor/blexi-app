@@ -181,7 +181,7 @@ export const discountCategoriesApi = {
     id: string | number,
     status: 'active' | 'inactive'
   ): Promise<ApiResponse<IDiscountCategory>> => {
-    const response = await api.put<DiscountCategoryDto>(
+    const response = await api.patch<DiscountCategoryDto>(
       `/api/v1/discount-categories/${id}/status`,
       { status }
     );
@@ -198,4 +198,4 @@ export const discountCategoriesApi = {
       data: undefined,
     };
   },
-}; 
+};

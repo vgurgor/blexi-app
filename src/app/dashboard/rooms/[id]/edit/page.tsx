@@ -69,7 +69,7 @@ export default function EditRoomPage({ params }: { params: { id: string } }) {
 
   if (error) {
     return (
-      <div className="min-h-screen p-8 pt-24">
+      <div className="min-h-screen p-8">
         <div className="max-w-2xl mx-auto">
           <div className="flex items-center gap-4 mb-8">
             <button
@@ -108,7 +108,7 @@ export default function EditRoomPage({ params }: { params: { id: string } }) {
   return (
     <>
       {isSubmitting && <PageLoader />}
-      <div className="min-h-screen p-8 pt-24 animate-slideLeft">
+      <div className="min-h-screen p-8 animate-slideLeft">
         <div className="max-w-2xl mx-auto">
           <div className="flex items-center gap-4 mb-8">
             <button

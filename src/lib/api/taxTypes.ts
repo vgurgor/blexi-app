@@ -162,7 +162,7 @@ export const taxTypesApi = {
     id: string | number,
     status: 'active' | 'inactive'
   ): Promise<ApiResponse<void>> => {
-    return await api.put<void>(`/api/v1/tax-types/${id}/status`, { status });
+    return await api.patch<void>(`/api/v1/tax-types/${id}/status`, { status });
   },
   
   /**
@@ -172,4 +172,4 @@ export const taxTypesApi = {
   delete: async (id: string | number): Promise<ApiResponse<void>> => {
     return await api.delete<void>(`/api/v1/tax-types/${id}`);
   },
-}; 
+};

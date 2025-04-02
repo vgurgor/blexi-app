@@ -175,7 +175,7 @@ export const paymentTypeCategoriesApi = {
     id: string | number,
     status: 'active' | 'inactive'
   ): Promise<ApiResponse<IPaymentTypeCategory>> => {
-    const response = await api.put<PaymentTypeCategoryDto>(
+    const response = await api.patch<PaymentTypeCategoryDto>(
       `/api/v1/payment-type-categories/${id}/status`,
       { status }
     );
@@ -192,4 +192,4 @@ export const paymentTypeCategoriesApi = {
       data: undefined,
     };
   },
-}; 
+};

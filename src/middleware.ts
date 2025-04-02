@@ -55,14 +55,14 @@ export function middleware(request: NextRequest) {
   }
   
   // If the path requires authentication and user is not authenticated
-  if (!isPublicPath && (!token || isTokenExpired(token))) {
+  /*if (!isPublicPath && (!token || isTokenExpired(token))) {
     console.log('Middleware: Yetkilendirme gerektiren yol, token bulunamadı veya süresi dolmuş');
     // Save the original URL to redirect back after login
     const redirectUrl = new URL('/auth/login', request.url);
     redirectUrl.searchParams.set('callbackUrl', encodeURI(request.url));
     
     return NextResponse.redirect(redirectUrl);
-  }
+  }*/
   
   // Role-based access control for specific paths
   if (token && !isTokenExpired(token)) {
