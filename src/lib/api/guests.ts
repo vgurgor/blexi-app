@@ -18,6 +18,7 @@ export interface GuestDto {
   person?: {
     id: number;
     name: string;
+    surname: string;
     tc_no: string;
     phone: string;
     email?: string;
@@ -39,6 +40,7 @@ export interface GuestDto {
     person?: {
       id: number;
       name: string;
+      surname: string;
       phone?: string;
       email?: string;
     };
@@ -95,6 +97,7 @@ const mapGuestDtoToModel = (dto: GuestDto): IGuest => {
     person: dto.person ? {
       id: dto.person.id.toString(),
       name: dto.person.name,
+      surname: dto.person.surname,
       tcNo: dto.person.tc_no,
       phone: dto.person.phone,
       email: dto.person.email,
@@ -116,17 +119,25 @@ const mapGuestDtoToModel = (dto: GuestDto): IGuest => {
       person: guardian.person ? {
         id: guardian.person.id.toString(),
         name: guardian.person.name,
+        surname: guardian.person.surname,
         phone: guardian.person.phone,
         email: guardian.person.email
       } : undefined
     })),
     documents: dto.documents?.map(document => ({
       id: document.id.toString(),
+      tenantId: dto.tenant_id.toString(),
+      ownerId: dto.id.toString(),
       documentType: document.document_type,
       type: document.type,
       documentName: document.document_name,
       filePath: document.file_path,
-      status: document.status
+      uploadDate: dto.created_at,
+      validUntil: undefined,
+      metadata: {},
+      status: document.status as 'active' | 'verified' | 'expired' | 'invalid',
+      createdAt: dto.created_at,
+      updatedAt: dto.updated_at
     })),
     structuredAddress: dto.structured_address,
     formattedAddress: dto.formatted_address

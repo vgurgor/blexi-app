@@ -20,6 +20,7 @@ export interface LoginParams {
 
 export interface RegisterParams {
   name: string;
+  surname: string;
   email: string;
   username?: string;
   password: string;

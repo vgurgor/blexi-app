@@ -19,6 +19,7 @@ export interface GuardianDto {
   person?: {
     id: number;
     name: string;
+    surname: string;
     phone?: string;
     email?: string;
   };
@@ -66,6 +67,7 @@ const mapGuardianDtoToModel = (dto: GuardianDto): IGuardian => {
     person: dto.person ? {
       id: dto.person.id.toString(),
       name: dto.person.name,
+      surname: dto.person.surname,
       phone: dto.person.phone,
       email: dto.person.email
     } : undefined

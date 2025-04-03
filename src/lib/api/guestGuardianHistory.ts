@@ -21,6 +21,7 @@ export interface GuestGuardianHistoryRecordDto {
     person?: {
       id: number;
       name: string;
+      surname: string;
     };
   };
   guest?: {
@@ -28,6 +29,7 @@ export interface GuestGuardianHistoryRecordDto {
     person_id: number;
     person?: {
       name: string;
+      surname: string;
     };
   };
 }
@@ -58,7 +60,8 @@ const mapGuardianHistoryDtoToModel = (dto: GuestGuardianHistoryRecordDto): IGuar
       id: dto.guest.id.toString(),
       personId: dto.guest.person_id.toString(),
       person: dto.guest.person ? {
-        name: dto.guest.person.name
+        name: dto.guest.person.name,
+        surname: dto.guest.person.surname
       } : undefined
     } : undefined
   };

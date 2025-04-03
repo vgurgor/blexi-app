@@ -7,6 +7,7 @@ export interface PersonDto {
   id: number;
   tenant_id: number;
   name: string;
+  surname: string;
   tc_no: string;
   phone: string;
   email?: string;
@@ -23,6 +24,7 @@ export interface PersonDto {
 // Kişi oluşturma isteği için model
 export interface CreatePersonRequest {
   name: string;
+  surname: string;
   tc_no: string;
   phone: string;
   email?: string;
@@ -35,6 +37,7 @@ export interface CreatePersonRequest {
 // Kişi güncelleme isteği için model
 export interface UpdatePersonRequest {
   name?: string;
+  surname?: string;
   tc_no?: string;
   phone?: string;
   email?: string;
@@ -59,6 +62,7 @@ const mapPersonDtoToModel = (dto: PersonDto): IPerson => {
     id: dto.id.toString(),
     tenantId: dto.tenant_id.toString(),
     name: dto.name,
+    surname: dto.surname,
     tcNo: dto.tc_no,
     phone: dto.phone,
     email: dto.email,
@@ -81,6 +85,7 @@ export const peopleApi = {
    * Tüm kişileri listeler
    * @param status - Filtreleme için durum (isteğe bağlı)
    * @param name - Filtreleme için isim (isteğe bağlı)
+   * @param surname - Filtreleme için soyisim (isteğe bağlı)
    * @param phone - Filtreleme için telefon (isteğe bağlı)
    * @param page - Sayfa numarası
    * @param perPage - Sayfa başına öğe sayısı
@@ -88,6 +93,7 @@ export const peopleApi = {
   getAll: async (
     status?: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED',
     name?: string,
+    surname?: string,
     phone?: string,
     page: number = 1,
     perPage: number = 15
@@ -101,6 +107,10 @@ export const peopleApi = {
     if (name) {
       params.append('name', name);
     }
+    
+    if (surname) {
+      params.append('surname', surname);
+      }
     
     if (phone) {
       params.append('phone', phone);

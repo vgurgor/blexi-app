@@ -3,6 +3,7 @@ export interface IUser {
   username: string;
   email: string;
   name: string;
+  surname: string;
   role: 'super-admin' | 'admin' | 'manager' | 'user';
   tenant_id: string;
   tenant?: {
@@ -14,6 +15,7 @@ export interface IUser {
   person?: {
     id: string;
     name: string;
+    surname: string;
     email?: string;
     phone?: string;
   };
@@ -29,6 +31,7 @@ export interface IPerson {
   id: string;
   tenantId: string;
   name: string;
+  surname: string;
   tcNo: string;
   phone: string;
   email?: string;
@@ -428,6 +431,7 @@ export interface IGuest {
   person?: {
     id: string;
     name: string;
+    surname: string;
     tcNo: string;
     phone: string;
     email?: string;
@@ -455,6 +459,7 @@ export interface IGuardian {
   person?: {
     id: string;
     name: string;
+    surname: string;
     phone?: string;
     email?: string;
   };
@@ -476,6 +481,7 @@ export interface IGuardianHistory {
     personId: string;
     person?: {
       name: string;
+      surname: string;
     };
   };
 }
@@ -489,6 +495,7 @@ export interface IAccessLog {
   person: {
     id: string;
     name: string;
+    surname: string;
     tcNo: string;
     phone: string;
     email?: string;
@@ -501,6 +508,7 @@ export interface IAccessLog {
   createdBy?: {
     id: string;
     name: string;
+    surname: string;
   };
   createdAt: string;
 }
@@ -516,6 +524,7 @@ export interface IAccessMetrics {
   mostActiveGuests?: Array<{
     id: string;
     name: string;
+    surname: string;
     visitCount: number;
   }>;
 }
