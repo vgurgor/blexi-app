@@ -434,6 +434,9 @@ export interface IGuest {
     birthDate: string;
   };
   guardians?: IGuardian[];
+  documents?: IDocument[];
+  structuredAddress?: IAddress | null;
+  formattedAddress?: string | null;
 }
 
 export interface IGuardian {
@@ -562,6 +565,8 @@ export interface IInvoiceTitle {
   phone: string;
   email?: string;
   isDefault: boolean;
+  structuredAddress?: IAddress | null;
+  formattedAddress?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -662,6 +667,69 @@ export interface IInvoiceTaxDetail {
   taxTypeId: string;
   taxRate: number;
   taxAmount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ICountry {
+  id: string;
+  code: string;
+  name: string;
+  phoneCode?: string;
+  flag?: string;
+  status: 'active' | 'inactive';
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface IProvince {
+  id: string;
+  countryId: string;
+  country?: {
+    id: string;
+    code: string;
+    name: string;
+  };
+  code: string;
+  name: string;
+  plateCode?: string;
+  status: 'active' | 'inactive';
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface IDistrict {
+  id: string;
+  provinceId: string;
+  province?: {
+    id: string;
+    code: string;
+    name: string;
+    countryId: string;
+  };
+  code: string;
+  name: string;
+  status: 'active' | 'inactive';
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface IAddress {
+  id: string;
+  districtId: string;
+  district?: {
+    id: string;
+    code: string;
+    name: string;
+    provinceId: string;
+  };
+  name?: string;
+  addressLine: string;
+  postalCode?: string;
+  latitude?: number;
+  longitude?: number;
+  isDefault: boolean;
+  status: 'active' | 'inactive';
   createdAt: string;
   updatedAt: string;
 }

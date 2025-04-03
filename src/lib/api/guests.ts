@@ -43,6 +43,16 @@ export interface GuestDto {
       email?: string;
     };
   }>;
+  documents?: Array<{
+    id: number;
+    document_type: any;
+    type: 'UPLOADED' | 'SYSTEM_GENERATED';
+    document_name: string;
+    file_path: string;
+    status: string;
+  }>;
+  structured_address?: any | null;
+  formatted_address?: string | null;
 }
 
 // Misafir oluşturma isteği modeli
@@ -60,9 +70,10 @@ export interface UpdateGuestRequest {
   profession_department?: string;
   emergency_contact?: string;
   notes?: string;
+  status?: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
 }
 
-// Misafir durum güncelleme isteği modeli
+// Misafir durum güncelleme isteği modeli (geriye dönük uyumluluk için tutuldu)
 export interface UpdateGuestStatusRequest {
   status: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
 }
@@ -108,7 +119,17 @@ const mapGuestDtoToModel = (dto: GuestDto): IGuest => {
         phone: guardian.person.phone,
         email: guardian.person.email
       } : undefined
-    }))
+    })),
+    documents: dto.documents?.map(document => ({
+      id: document.id.toString(),
+      documentType: document.document_type,
+      type: document.type,
+      documentName: document.document_name,
+      filePath: document.file_path,
+      status: document.status
+    })),
+    structuredAddress: dto.structured_address,
+    formattedAddress: dto.formatted_address
   };
 };
 

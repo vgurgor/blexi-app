@@ -363,5 +363,96 @@ export const seasonRegistrationsApi = {
       limit: perPage,
       total: 0,
     };
+  },
+  
+  /**
+   * Sezon kaydını tamamlar (complete)
+   * @param id - Tamamlanacak sezon kaydının ID'si
+   * @param notes - İşleme ait isteğe bağlı notlar
+   */
+  complete: async (
+    id: string | number,
+    notes?: string
+  ): Promise<ApiResponse<ISeasonRegistration>> => {
+    const data = notes ? { notes } : {};
+    const response = await api.post<SeasonRegistrationDto>(`/api/v1/season-registrations/${id}/complete`, data);
+    
+    if (response.success && response.data) {
+      return {
+        ...response,
+        data: mapSeasonRegistrationDtoToModel(response.data),
+      };
+    }
+    
+    return {
+      ...response,
+      data: undefined,
+    };
+  },
+  
+  /**
+   * Tek seferde tam bir sezon kaydı oluşturur (ürünler, ödeme planları, fatura bilgileri ve indirimler dahil)
+   * @param data - Tam sezon kaydı oluşturma verisi
+   */
+  createComplete: async (data: {
+    guest_id: number;
+    apart_id: number;
+    season_code: string;
+    check_in_date: string;
+    check_out_date: string;
+    deposit_amount?: number;
+    notes?: string;
+    products: Array<{
+      product_id: number;
+      quantity: number;
+      unit_price: number;
+    }>;
+    payment_plans: Array<{
+      planned_amount: number;
+      planned_date: string;
+      planned_payment_type_id: number;
+      is_deposit?: boolean;
+    }>;
+    invoice_titles: Array<{
+      title_type: 'individual' | 'corporate';
+      first_name?: string;
+      last_name?: string;
+      identity_number?: string;
+      company_name?: string;
+      tax_office?: string;
+      tax_number?: string;
+      address?: string;
+      phone: string;
+      email?: string;
+      is_default?: boolean;
+      address_data?: {
+        country_id: number;
+        province_id: number;
+        district_id: number;
+        neighborhood?: string;
+        street?: string;
+        building_no?: string;
+        apartment_no?: string;
+        postal_code?: string;
+      };
+    }>;
+    discounts?: Array<{
+      discount_rule_id: number;
+      product_id: number;
+    }>;
+  }): Promise<ApiResponse<ISeasonRegistration>> => {
+    const response = await api.post<SeasonRegistrationDto>('/api/v1/season-registrations/complete', data);
+    
+    if (response.success && response.data) {
+      return {
+        ...response,
+        data: mapSeasonRegistrationDtoToModel(response.data),
+      };
+    }
+    
+    return {
+      ...response,
+      data: undefined,
+    };
   }
 }; 

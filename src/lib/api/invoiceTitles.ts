@@ -18,8 +18,22 @@ export interface InvoiceTitleDto {
   phone: string;
   email?: string;
   is_default: boolean;
+  structured_address?: any | null;
+  formatted_address?: string | null;
   created_at: string;
   updated_at: string;
+}
+
+// Adres veri modeli
+export interface AddressDataRequest {
+  country_id: number;
+  province_id: number;
+  district_id: number;
+  neighborhood?: string;
+  street?: string;
+  building_no?: string;
+  apartment_no?: string;
+  postal_code?: string;
 }
 
 // Fatura başlığı oluşturma isteği için model
@@ -36,6 +50,7 @@ export interface CreateInvoiceTitleRequest {
   phone: string;
   email?: string;
   is_default?: boolean;
+  address_data?: AddressDataRequest;
 }
 
 // Fatura başlığı güncelleme isteği için model
@@ -51,6 +66,7 @@ export interface UpdateInvoiceTitleRequest {
   phone?: string;
   email?: string;
   is_default?: boolean;
+  address_data?: AddressDataRequest;
 }
 
 /**
@@ -72,6 +88,8 @@ const mapInvoiceTitleDtoToModel = (dto: InvoiceTitleDto): IInvoiceTitle => {
     phone: dto.phone,
     email: dto.email,
     isDefault: dto.is_default,
+    structuredAddress: dto.structured_address,
+    formattedAddress: dto.formatted_address,
     createdAt: dto.created_at,
     updatedAt: dto.updated_at,
   };
@@ -171,6 +189,6 @@ export const invoiceTitlesApi = {
    * @param id - Fatura başlığı ID'si
    */
   setAsDefault: async (id: string | number): Promise<ApiResponse<void>> => {
-    return await api.post(`/api/v1/invoice-titles/${id}/set-as-default`, {});
+    return await api.patch(`/api/v1/invoice-titles/${id}/set-default`, {});
   },
 }; 
