@@ -4,6 +4,7 @@ export interface IUser {
   email: string;
   name: string;
   surname: string;
+  gender?: string;
   role: 'super-admin' | 'admin' | 'manager' | 'user';
   tenant_id: string;
   tenant?: {
@@ -18,6 +19,7 @@ export interface IUser {
     surname: string;
     email?: string;
     phone?: string;
+    gender?: string;
   };
   permissions?: string[];
   last_login?: string;
@@ -32,6 +34,7 @@ export interface IPerson {
   tenantId: string;
   name: string;
   surname: string;
+  gender?: string;
   tcNo: string;
   phone: string;
   email?: string;
@@ -432,6 +435,7 @@ export interface IGuest {
     id: string;
     name: string;
     surname: string;
+    gender?: string;
     tcNo: string;
     phone: string;
     email?: string;
@@ -460,6 +464,7 @@ export interface IGuardian {
     id: string;
     name: string;
     surname: string;
+    gender?: string;
     phone?: string;
     email?: string;
   };
@@ -482,6 +487,7 @@ export interface IGuardianHistory {
     person?: {
       name: string;
       surname: string;
+      gender?: string;
     };
   };
 }
@@ -499,6 +505,7 @@ export interface IAccessLog {
     tcNo: string;
     phone: string;
     email?: string;
+    gender?: string;
   };
   guest?: {
     id: string;
