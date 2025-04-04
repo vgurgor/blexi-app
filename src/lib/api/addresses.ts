@@ -25,38 +25,35 @@ export interface AddressDto {
 
 // Adres oluşturma isteği için model
 export interface CreateAddressRequest {
+  country_id: number;
+  province_id: number;
   district_id: number;
-  name?: string;
-  address_line: string;
+  address_type: 'home' | 'work' | 'other';
+  addressable_type: string;
+  addressable_id: number;
+  neighborhood?: string;
+  street?: string;
+  building_no?: string;
+  apartment_no?: string;
   postal_code?: string;
-  latitude?: number;
-  longitude?: number;
   is_default?: boolean;
   status?: 'active' | 'inactive';
 }
 
 // Adres güncelleme isteği için model
 export interface UpdateAddressRequest {
+  country_id?: number;
+  province_id?: number;
   district_id?: number;
-  name?: string;
-  address_line?: string;
+  neighborhood?: string;
+  street?: string;
+  building_no?: string;
+  apartment_no?: string;
   postal_code?: string;
-  latitude?: number;
-  longitude?: number;
+  address_type?: 'home' | 'work' | 'other';
   is_default?: boolean;
   status?: 'active' | 'inactive';
 }
-
-// Adres durumu güncelleme isteği için model
-export interface UpdateAddressStatusRequest {
-  status: 'active' | 'inactive';
-}
-
-// Varlık tipi enum
-export type EntityType = 'user' | 'customer' | 'company' | 'supplier' | 'apartment';
-
-// Adres tipi enum
-export type AddressType = 'billing' | 'shipping' | 'home' | 'work' | 'other';
 
 // AddressDto'yu IAddress modeline dönüştüren yardımcı fonksiyon
 const mapAddressDtoToModel = (dto: AddressDto): IAddress => {
@@ -87,27 +84,38 @@ const mapAddressDtoToModel = (dto: AddressDto): IAddress => {
 export const addressesApi = {
   /**
    * Tüm adresleri listeler
-   * @param page - Sayfa numarası
-   * @param perPage - Sayfa başına öğe sayısı
+   * @param params - Filtreleme parametreleri
    */
-  getAll: async (
-    page: number = 1,
-    perPage: number = 15
-  ): Promise<PaginatedResponse<IAddress>> => {
-    const params = new URLSearchParams();
+  getAll: async (params?: {
+    country_id?: number;
+    province_id?: number;
+    district_id?: number;
+    address_type?: 'home' | 'work' | 'other';
+    status?: 'active' | 'inactive';
+    page?: number;
+    per_page?: number;
+  }): Promise<PaginatedResponse<IAddress>> => {
+    const urlParams = new URLSearchParams();
     
-    params.append('page', page.toString());
-    params.append('per_page', perPage.toString());
+    if (params) {
+      if (params.country_id) urlParams.append('country_id', params.country_id.toString());
+      if (params.province_id) urlParams.append('province_id', params.province_id.toString());
+      if (params.district_id) urlParams.append('district_id', params.district_id.toString());
+      if (params.address_type) urlParams.append('address_type', params.address_type);
+      if (params.status) urlParams.append('status', params.status);
+      if (params.page) urlParams.append('page', params.page.toString());
+      if (params.per_page) urlParams.append('per_page', params.per_page.toString());
+    }
     
-    const url = `/api/v1/addresses?${params.toString()}`;
+    const url = `/api/v1/addresses?${urlParams.toString()}`;
     const response = await api.get<AddressDto[]>(url);
     
     if (response.success && response.data) {
       return {
         ...response,
         data: response.data.map(mapAddressDtoToModel),
-        page,
-        limit: perPage,
+        page: params?.page || 1,
+        limit: params?.per_page || 15,
         total: response.meta?.total || 0,
       };
     }
@@ -115,98 +123,9 @@ export const addressesApi = {
     return {
       ...response,
       data: [],
-      page,
-      limit: perPage,
+      page: params?.page || 1,
+      limit: params?.per_page || 15,
       total: 0,
-    };
-  },
-  
-  /**
-   * Aktif tüm adresleri listeler
-   */
-  getActive: async (): Promise<ApiResponse<IAddress[]>> => {
-    const response = await api.get<AddressDto[]>('/api/v1/addresses/active');
-    
-    if (response.success && response.data) {
-      return {
-        ...response,
-        data: response.data.map(mapAddressDtoToModel),
-      };
-    }
-    
-    return {
-      ...response,
-      data: [],
-    };
-  },
-  
-  /**
-   * Belirli bir ilçeye ait adresleri listeler
-   * @param districtId - İlçe ID'si
-   */
-  getByDistrict: async (districtId: string | number): Promise<ApiResponse<IAddress[]>> => {
-    const response = await api.get<AddressDto[]>(`/api/v1/addresses/district/${districtId}`);
-    
-    if (response.success && response.data) {
-      return {
-        ...response,
-        data: response.data.map(mapAddressDtoToModel),
-      };
-    }
-    
-    return {
-      ...response,
-      data: [],
-    };
-  },
-  
-  /**
-   * Belirli bir varlığa ait adresleri listeler
-   * @param entityType - Varlık tipi
-   * @param entityId - Varlık ID'si
-   */
-  getByEntity: async (
-    entityType: EntityType,
-    entityId: string | number
-  ): Promise<ApiResponse<IAddress[]>> => {
-    const response = await api.get<AddressDto[]>(`/api/v1/addresses/entity/${entityType}/${entityId}`);
-    
-    if (response.success && response.data) {
-      return {
-        ...response,
-        data: response.data.map(mapAddressDtoToModel),
-      };
-    }
-    
-    return {
-      ...response,
-      data: [],
-    };
-  },
-  
-  /**
-   * Belirli bir varlığa ait belirli tip adresleri listeler
-   * @param entityType - Varlık tipi
-   * @param entityId - Varlık ID'si
-   * @param addressType - Adres tipi
-   */
-  getByEntityAndType: async (
-    entityType: EntityType,
-    entityId: string | number,
-    addressType: AddressType
-  ): Promise<ApiResponse<IAddress[]>> => {
-    const response = await api.get<AddressDto[]>(`/api/v1/addresses/entity/${entityType}/${entityId}/type/${addressType}`);
-    
-    if (response.success && response.data) {
-      return {
-        ...response,
-        data: response.data.map(mapAddressDtoToModel),
-      };
-    }
-    
-    return {
-      ...response,
-      data: [],
     };
   },
   
@@ -216,37 +135,6 @@ export const addressesApi = {
    */
   create: async (data: CreateAddressRequest): Promise<ApiResponse<IAddress>> => {
     const response = await api.post<AddressDto>('/api/v1/addresses', data);
-    
-    if (response.success && response.data) {
-      return {
-        ...response,
-        data: mapAddressDtoToModel(response.data),
-      };
-    }
-    
-    return {
-      ...response,
-      data: undefined,
-    };
-  },
-  
-  /**
-   * Bir varlık için adres oluşturur
-   * @param entityType - Varlık tipi
-   * @param entityId - Varlık ID'si
-   * @param addressType - Adres tipi
-   * @param data - Adres oluşturma verileri
-   */
-  createForEntity: async (
-    entityType: EntityType,
-    entityId: string | number,
-    addressType: AddressType,
-    data: CreateAddressRequest
-  ): Promise<ApiResponse<IAddress>> => {
-    const response = await api.post<AddressDto>(
-      `/api/v1/addresses/entity/${entityType}/${entityId}/type/${addressType}`,
-      data
-    );
     
     if (response.success && response.data) {
       return {
@@ -306,22 +194,34 @@ export const addressesApi = {
   },
   
   /**
-   * Adresi varsayılan olarak ayarlar
-   * @param id - Varsayılan yapılacak adres ID'si
+   * Adres siler
+   * @param id - Silinecek adres ID'si
    */
-  setAsDefault: async (id: string | number): Promise<ApiResponse<IAddress>> => {
-    const response = await api.post<AddressDto>(`/api/v1/addresses/${id}/default`, {});
+  delete: async (id: string | number): Promise<ApiResponse<void>> => {
+    return await api.delete<void>(`/api/v1/addresses/${id}`);
+  },
+  
+  /**
+   * Belirli bir varlığa ait adresleri listeler
+   * @param entityType - Varlık tipi
+   * @param entityId - Varlık ID'si
+   */
+  getByEntity: async (
+    entityType: string,
+    entityId: string | number
+  ): Promise<ApiResponse<IAddress[]>> => {
+    const response = await api.get<AddressDto[]>(`/api/v1/addresses/entity/${entityType}/${entityId}`);
     
     if (response.success && response.data) {
       return {
         ...response,
-        data: mapAddressDtoToModel(response.data),
+        data: response.data.map(mapAddressDtoToModel),
       };
     }
     
     return {
       ...response,
-      data: undefined,
+      data: [],
     };
   },
   
@@ -332,60 +232,15 @@ export const addressesApi = {
    * @param entityId - Varlık ID'si
    * @param addressType - Adres tipi
    */
-  setAsDefaultForEntityAndType: async (
+  setAsDefault: async (
     id: string | number,
-    entityType: EntityType,
+    entityType: string,
     entityId: string | number,
-    addressType: AddressType
-  ): Promise<ApiResponse<IAddress>> => {
-    const response = await api.post<AddressDto>(
+    addressType: 'home' | 'work' | 'other'
+  ): Promise<ApiResponse<void>> => {
+    return await api.put<void>(
       `/api/v1/addresses/${id}/default/${entityType}/${entityId}/${addressType}`,
       {}
     );
-    
-    if (response.success && response.data) {
-      return {
-        ...response,
-        data: mapAddressDtoToModel(response.data),
-      };
-    }
-    
-    return {
-      ...response,
-      data: undefined,
-    };
-  },
-  
-  /**
-   * Adres durumunu günceller
-   * @param id - Güncellenecek adres ID'si
-   * @param status - Yeni durum
-   */
-  updateStatus: async (
-    id: string | number,
-    status: 'active' | 'inactive'
-  ): Promise<ApiResponse<IAddress>> => {
-    const data: UpdateAddressStatusRequest = { status };
-    const response = await api.patch<AddressDto>(`/api/v1/addresses/${id}/status`, data);
-    
-    if (response.success && response.data) {
-      return {
-        ...response,
-        data: mapAddressDtoToModel(response.data),
-      };
-    }
-    
-    return {
-      ...response,
-      data: undefined,
-    };
-  },
-  
-  /**
-   * Adres siler
-   * @param id - Silinecek adres ID'si
-   */
-  delete: async (id: string | number): Promise<ApiResponse<void>> => {
-    return await api.delete<void>(`/api/v1/addresses/${id}`);
   },
 }; 

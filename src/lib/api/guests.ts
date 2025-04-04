@@ -23,6 +23,7 @@ export interface GuestDto {
     phone: string;
     email?: string;
     birth_date: string;
+    gender?: string;
   };
   guardians?: Array<{
     id: number;
@@ -43,6 +44,7 @@ export interface GuestDto {
       surname: string;
       phone?: string;
       email?: string;
+      gender?: string;
     };
   }>;
   documents?: Array<{
@@ -98,6 +100,7 @@ const mapGuestDtoToModel = (dto: GuestDto): IGuest => {
       id: dto.person.id.toString(),
       name: dto.person.name,
       surname: dto.person.surname,
+      gender: dto.person.gender,
       tcNo: dto.person.tc_no,
       phone: dto.person.phone,
       email: dto.person.email,
@@ -120,6 +123,7 @@ const mapGuestDtoToModel = (dto: GuestDto): IGuest => {
         id: guardian.person.id.toString(),
         name: guardian.person.name,
         surname: guardian.person.surname,
+        gender: guardian.person.gender,
         phone: guardian.person.phone,
         email: guardian.person.email
       } : undefined

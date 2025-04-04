@@ -24,6 +24,7 @@ export interface UserDto {
     tenant_id: number;
     name: string;
     surname: string;
+    gender?: string;
     tc_no?: string;
     phone?: string;
     email?: string;
@@ -57,6 +58,7 @@ const mapUserDtoToModel = (dto: UserDto): IUser => {
     email: dto.email,
     name: dto.person?.name || '',
     surname: dto.person?.surname || '',
+    gender: dto.person?.gender || '',
     role: dto.role as 'super-admin' | 'admin' | 'manager' | 'user',
     tenant_id: dto.tenant_id.toString(),
     tenant: dto.tenant ? {
@@ -69,6 +71,7 @@ const mapUserDtoToModel = (dto: UserDto): IUser => {
       id: dto.person.id.toString(),
       name: dto.person.name,
       surname: dto.person.surname,
+      gender: dto.person.gender,
       email: dto.person.email,
       phone: dto.person.phone,
     } : undefined,

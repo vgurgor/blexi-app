@@ -41,6 +41,9 @@ export function FormInput<
   defaultValue,
   rules,
   shouldUnregister,
+  type,
+  mask,
+  maskOptions,
   ...props
 }: FormInputProps<TFieldValues, TName>) {
   const { control: formControl } = useFormContext() || { control: undefined };
@@ -65,7 +68,18 @@ export function FormInput<
           label={label}
           description={description}
           error={fieldState.error?.message}
+          type={type}
+          mask={mask}
+          maskOptions={maskOptions}
           {...props}
+          onChange={(e) => {
+            // For number inputs with masking, the value is already handled by the IMaskInput component
+            if (type === 'number' && mask) {
+              field.onChange(e);
+            } else {
+              field.onChange(e);
+            }
+          }}
         />
       )}
     />
