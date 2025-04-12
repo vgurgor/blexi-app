@@ -28,7 +28,12 @@ export default function GuestInfoStep() {
 
   // Search for existing people
   const handleSearch = async () => {
-    if (!searchTerm || searchTerm.length < 3) return;
+    // Clear previous results and reset search state if term is too short
+    if (!searchTerm || searchTerm.length < 3) {
+      setSearchResults([]);
+      if (showResults) setShowResults(false);
+      return;
+    }
     
     setIsSearching(true);
     setShowResults(true);
@@ -40,7 +45,7 @@ export default function GuestInfoStep() {
       
       // Check if searchTerm is a number
       if (/^\d+$/.test(searchTerm)) {
-        name = undefined;
+        name = '';
         phone = searchTerm;
       }
       
@@ -54,6 +59,8 @@ export default function GuestInfoStep() {
     } catch (error) {
       console.error('Search error:', error);
       setSearchResults([]);
+      // Don't show empty results on error
+      setShowResults(false);
     } finally {
       setIsSearching(false);
     }
@@ -85,14 +92,14 @@ export default function GuestInfoStep() {
       // Search for guests with this person ID
       const response = await guestsApi.search(undefined, undefined, 'ACTIVE', 1, 1);
       
-      const existingGuest = response.data.find(guest => guest.personId === personId);
+      const existingGuest = response.data?.find(guest => guest.personId === personId);
       
       if (existingGuest) {
         // If guest exists, set the guest_id
         setValue('guest_id', existingGuest.id);
         setValue('guest_type', existingGuest.guestType);
         setValue('profession_department', existingGuest.professionDepartment || '');
-        setValue('guardian_relationship', existingGuest.guardianRelationship || '');
+        //setValue('guardian_relationship', existingGuest.guardianRelationship || '');
         
         toast.info('Bu kişi zaten misafir olarak kayıtlı. Bilgileri otomatik dolduruldu.');
       } else {
@@ -238,10 +245,16 @@ export default function GuestInfoStep() {
             className="absolute right-1 top-1/2 -translate-y-1/2"
             size="sm"
             isLoading={isSearching}
+            disabled={!searchTerm || searchTerm.length < 3}
           >
             Ara
           </Button>
         </div>
+        {searchTerm && searchTerm.length < 3 && (
+          <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
+            Arama için en az 3 karakter gereklidir
+          </p>
+        )}
 
         {/* Search Results */}
         {showResults && (
