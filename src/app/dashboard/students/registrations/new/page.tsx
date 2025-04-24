@@ -43,8 +43,46 @@ export default function NewStudentRegistrationPage() {
     setRegistrationData(data);
     
     try {
+      // Prepare the data for API submission
+      const apiData = {
+        guest_id: parseInt(data.guest_id),
+        bed_id: parseInt(data.bed_id),
+        season_code: data.season_code,
+        check_in_date: data.check_in_date,
+        check_out_date: data.check_out_date,
+        deposit_amount: data.deposit_amount || 0,
+        notes: data.notes || '',
+        products: data.products.map((product: any) => ({
+          product_id: product.product_id,
+          quantity: product.quantity,
+          unit_price: product.unit_price
+        })),
+        payment_plans: data.payment_plans.map((plan: any) => ({
+          planned_amount: plan.planned_amount,
+          planned_date: plan.planned_date,
+          planned_payment_type_id: plan.planned_payment_type_id,
+          is_deposit: plan.is_deposit || false
+        })),
+        invoice_titles: data.invoice_titles.map((title: any) => ({
+          title_type: title.title_type,
+          first_name: title.first_name || '',
+          last_name: title.last_name || '',
+          identity_number: title.identity_number || '',
+          company_name: title.company_name || '',
+          tax_office: title.tax_office || '',
+          tax_number: title.tax_number || '',
+          address: title.address,
+          phone: title.phone,
+          email: title.email || '',
+          is_default: title.is_default || false,
+          address_data: title.address_data
+        })),
+        discounts: data.discounts || [],
+        guardians: data.guardians || []
+      };
+      
       // Submit the complete registration data to the API
-      const response = await seasonRegistrationsApi.createComplete(data);
+      const response = await seasonRegistrationsApi.createComplete(apiData);
       
       if (response.success && response.data) {
         setIsCompleted(true);

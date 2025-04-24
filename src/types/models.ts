@@ -342,7 +342,7 @@ export interface ISeasonRegistration {
   id: string;
   tenantId: string;
   guestId: string;
-  apartId: string;
+  bedId: string;
   seasonCode: string;
   checkInDate: string;
   checkOutDate: string;
@@ -357,11 +357,12 @@ export interface ISeasonRegistration {
     guestType: string;
     professionDepartment?: string;
   };
-  apart?: {
+  bed?: {
     id: string;
-    name: string;
-    address?: string;
-    genderType: string;
+    roomId: string;
+    bedNumber: string;
+    bedType: string;
+    status: string;
   };
   season?: {
     id: string;

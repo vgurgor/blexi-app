@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { User, Building2, Calendar, Package, CreditCard, FileText, Check, AlertTriangle, Shield } from 'lucide-react';
+import { User, Building2, Calendar, Package, CreditCard, FileText, Check, AlertTriangle, Shield, Bed, DoorOpen } from 'lucide-react';
 import { RegistrationFormData } from '../RegistrationWizard';
 
 interface SummaryStepProps {
@@ -11,7 +11,7 @@ interface SummaryStepProps {
 export default function SummaryStep({ data }: SummaryStepProps) {
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     guest: true,
-    apartment: true,
+    accommodation: true,
     products: true,
     payments: true,
     invoice: true,
@@ -51,13 +51,13 @@ export default function SummaryStep({ data }: SummaryStepProps) {
     return Math.abs(total - plannedTotal) < 0.01; // Allow for small floating point differences
   };
 
-  // Get gender display text
-  const getGenderDisplay = (gender?: string) => {
-    if (!gender) return '-';
-    switch (gender) {
-      case 'MALE': return 'Erkek';
-      case 'FEMALE': return 'Kadın';
-      default: return gender;
+  // Get bed type display text
+  const getBedTypeDisplay = (bedType: string) => {
+    switch (bedType) {
+      case 'SINGLE': return 'Tek Kişilik';
+      case 'DOUBLE': return 'Çift Kişilik';
+      case 'BUNK': return 'Ranza';
+      default: return bedType;
     }
   };
 
@@ -99,10 +99,6 @@ export default function SummaryStep({ data }: SummaryStepProps) {
               <div>
                 <p className="text-sm text-gray-500 dark:text-gray-400">Soyad:</p>
                 <p className="font-medium text-gray-900 dark:text-white">{data.person?.surname}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Cinsiyet:</p>
-                <p className="font-medium text-gray-900 dark:text-white">{getGenderDisplay(data.person?.gender)}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-500 dark:text-gray-400">TC Kimlik No:</p>
@@ -178,29 +174,37 @@ export default function SummaryStep({ data }: SummaryStepProps) {
         )}
       </div>
 
-      {/* Apartment and Season Information */}
+      {/* Accommodation Information */}
       <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
         <div 
           className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 cursor-pointer"
-          onClick={() => toggleSection('apartment')}
+          onClick={() => toggleSection('accommodation')}
         >
           <div className="flex items-center gap-3">
             <Building2 className="w-5 h-5 text-blue-500 dark:text-blue-400" />
-            <h3 className="font-medium text-gray-900 dark:text-white">Apart ve Sezon Bilgileri</h3>
+            <h3 className="font-medium text-gray-900 dark:text-white">Konaklama Bilgileri</h3>
           </div>
-          <div className={`transform transition-transform ${expandedSections.apartment ? 'rotate-180' : ''}`}>
+          <div className={`transform transition-transform ${expandedSections.accommodation ? 'rotate-180' : ''}`}>
             <svg className="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
             </svg>
           </div>
         </div>
         
-        {expandedSections.apartment && (
+        {expandedSections.accommodation && (
           <div className="p-4 border-t border-gray-200 dark:border-gray-700">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <p className="text-sm text-gray-500 dark:text-gray-400">Apart ID:</p>
                 <p className="font-medium text-gray-900 dark:text-white">{data.apart_id}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Oda ID:</p>
+                <p className="font-medium text-gray-900 dark:text-white">{data.room_id}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Yatak ID:</p>
+                <p className="font-medium text-gray-900 dark:text-white">{data.bed_id}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-500 dark:text-gray-400">Sezon Kodu:</p>

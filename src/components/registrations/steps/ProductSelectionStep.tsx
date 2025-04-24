@@ -4,13 +4,12 @@ import { useState, useEffect } from 'react';
 import { useFormContext, useFieldArray, Controller } from 'react-hook-form';
 import { Package, Plus, Trash2, DollarSign, Info } from 'lucide-react';
 import { Button } from '@/components/ui/atoms/Button';
-import { FormInput } from '@/components/ui';
 import { productsApi } from '@/lib/api/products';
 import { pricesApi } from '@/lib/api/prices';
 import { useToast } from '@/hooks/useToast';
 
 export default function ProductSelectionStep() {
-  const { control, watch, setValue, formState: { errors } } = useFormContext();
+  const { control, watch, setValue, formState: { errors }, trigger } = useFormContext();
   const { fields, append, remove } = useFieldArray({
     control,
     name: 'products',
@@ -40,13 +39,32 @@ export default function ProductSelectionStep() {
     let total = 0;
     if (selectedProducts && Array.isArray(selectedProducts)) {
       selectedProducts.forEach((product: any) => {
-        const quantity = Number(product?.quantity || 0);
+        const quantity = Number(product?.quantity || 1);
         const unitPrice = Number(product?.unit_price || 0);
         total += quantity * unitPrice;
       });
     }
     setTotalAmount(total);
   }, [selectedProducts]);
+
+  // Auto-select product if only one is available
+  useEffect(() => {
+    if (prices.length === 1 && fields.length === 0) {
+      const price = prices[0];
+      const product = products.find(p => p.id.toString() === price.productId);
+      
+      if (product) {
+        handleAddProduct(parseInt(price.productId), price.price);
+      }
+    }
+  }, [prices, products, fields.length]);
+
+  // Trigger validation when products change
+  useEffect(() => {
+    if (fields.length > 0) {
+      trigger('products');
+    }
+  }, [fields, trigger]);
 
   // Fetch available products
   const fetchProducts = async () => {
@@ -86,34 +104,35 @@ export default function ProductSelectionStep() {
     }
   };
 
-  // Add a new product to the list
-  const handleAddProduct = (e: React.MouseEvent) => {
-    e.preventDefault(); // Prevent form submission
+  // Add a new product to the list with fixed quantity of 1
+  const handleAddProduct = (productId: number, unitPrice: number) => {
+    // Check if product is already added
+    const existingProductIndex = selectedProducts.findIndex(
+      (p: any) => p.product_id === productId
+    );
     
-    append({
-      product_id: '',
-      quantity: 1,
-      unit_price: 0,
-    });
-  };
-
-  // Update product price when product is selected
-  const handleProductChange = (index: number, productId: number) => {
-    // Find the price for this product
-    const price = prices.find(p => p.productId === productId.toString());
-    
-    if (price) {
-      setValue(`products.${index}.unit_price`, price.price);
-    } else {
-      // If no price is found, set a default price of 0
-      setValue(`products.${index}.unit_price`, 0);
-      toast.warning('Bu ürün için fiyat bulunamadı. Lütfen manuel olarak girin.');
+    if (existingProductIndex >= 0) {
+      // Product already exists, don't add it again
+      toast.info('Bu ürün zaten eklenmiş');
+      return;
     }
+    
+    // Add new product with fixed quantity of 1
+    append({
+      product_id: productId,
+      quantity: 1,
+      unit_price: unitPrice,
+    });
+    
+    // Trigger validation after adding a product
+    setTimeout(() => {
+      trigger('products');
+    }, 0);
   };
 
   // Get product name by ID
-  const getProductName = (productId: string) => {
-    const product = products.find(p => p.id === productId);
+  const getProductName = (productId: string | number) => {
+    const product = products.find(p => p.id.toString() === productId.toString());
     return product ? product.name : 'Bilinmeyen Ürün';
   };
 
@@ -121,10 +140,15 @@ export default function ProductSelectionStep() {
   const calculateLineTotal = (index: number) => {
     if (!selectedProducts || !selectedProducts[index]) return '0.00';
     
-    const quantity = Number(selectedProducts[index]?.quantity || 0);
+    const quantity = Number(selectedProducts[index]?.quantity || 1);
     const unitPrice = Number(selectedProducts[index]?.unit_price || 0);
     
     return (quantity * unitPrice).toFixed(2);
+  };
+
+  // Check if product can be removed (only if there are more than 2 products)
+  const canRemoveProduct = () => {
+    return fields.length > 2;
   };
 
   return (
@@ -138,128 +162,168 @@ export default function ProductSelectionStep() {
         </p>
       </div>
 
-      {/* Product List */}
-      <div className="space-y-4">
-        {fields.map((field, index) => (
-          <div key={field.id} className="p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
-              {/* Product Selection */}
-              <div className="md:col-span-5">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Ürün*
-                </label>
-                <div className="relative">
-                  <Package className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <Controller
-                    name={`products.${index}.product_id`}
-                    control={control}
-                    render={({ field }) => (
-                      <select
-                        {...field}
-                        className={`w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border ${
-                          errors.products?.[index]?.product_id ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'
-                        } rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all`}
-                        disabled={isLoadingProducts}
-                        onChange={(e) => {
-                          field.onChange(parseInt(e.target.value));
-                          handleProductChange(index, parseInt(e.target.value));
+      {/* Available Products */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+        <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+          Kullanılabilir Ürünler
+        </h3>
+        
+        {isLoadingPrices ? (
+          <div className="flex justify-center py-8">
+            <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+          </div>
+        ) : prices.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {prices.map((price) => {
+              const product = products.find(p => p.id.toString() === price.productId);
+              const isSelected = selectedProducts.some((p: any) => p.product_id === parseInt(price.productId));
+              
+              return product ? (
+                <div 
+                  key={price.id} 
+                  className={`p-4 rounded-lg border ${
+                    isSelected 
+                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/10' 
+                      : 'border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-700'
+                  } transition-colors cursor-pointer`}
+                  onClick={() => !isSelected && handleAddProduct(parseInt(price.productId), price.price)}
+                >
+                  <div className="flex justify-between items-start mb-2">
+                    <h4 className="font-medium text-gray-900 dark:text-white">{product.name}</h4>
+                    {isSelected && (
+                      <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300">
+                        Seçildi
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
+                    {product.description || 'Açıklama bulunmuyor'}
+                  </p>
+                  <div className="flex justify-between items-center">
+                    <span className="font-bold text-gray-900 dark:text-white">
+                      {price.price.toLocaleString('tr-TR')} {price.currency}
+                    </span>
+                    {!isSelected && (
+                      <button 
+                        type="button"
+                        className="text-xs px-2 py-1 bg-blue-500 hover:bg-blue-600 text-white rounded transition-colors"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleAddProduct(parseInt(price.productId), price.price);
                         }}
                       >
-                        <option value="">Ürün Seçin</option>
-                        {products.map((product) => (
-                          <option key={product.id} value={product.id}>
-                            {product.name}
-                          </option>
-                        ))}
-                      </select>
+                        Ekle
+                      </button>
                     )}
-                  />
+                  </div>
                 </div>
-                {errors.products?.[index]?.product_id && (
-                  <p className="mt-1 text-sm text-red-600 dark:text-red-400">
-                    {errors.products?.[index]?.product_id?.message as string}
-                  </p>
-                )}
-              </div>
-
-              {/* Quantity */}
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Miktar*
-                </label>
-                <Controller
-                  name={`products.${index}.quantity`}
-                  control={control}
-                  render={({ field }) => (
-                    <input
-                      type="number"
-                      {...field}
-                      onChange={(e) => field.onChange(parseInt(e.target.value))}
-                      min="1"
-                      className={`w-full px-4 py-2 bg-white dark:bg-gray-800 border ${
-                        errors.products?.[index]?.quantity ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'
-                      } rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all`}
-                    />
-                  )}
-                />
-                {errors.products?.[index]?.quantity && (
-                  <p className="mt-1 text-sm text-red-600 dark:text-red-400">
-                    {errors.products?.[index]?.quantity?.message as string}
-                  </p>
-                )}
-              </div>
-
-              {/* Unit Price */}
-              <div className="md:col-span-3">
-                <FormInput
-                  name={`products.${index}.unit_price`}
-                  label="Birim Fiyat*"
-                  type="number"
-                  leftIcon={<DollarSign className="w-5 h-5 text-gray-400" />}
-                  mask={Number}
-                  maskOptions={{
-                    scale: 2,
-                    thousandsSeparator: '.',
-                    padFractionalZeros: false,
-                    normalizeZeros: true,
-                    radix: ',',
-                    mapToRadix: ['.']
-                  }}
-                  value={String(watch(`products.${index}.unit_price`) || '')}
-                  error={errors.products?.[index]?.unit_price?.message as string}
-                />
-              </div>
-
-              {/* Total Price (Calculated) */}
-              <div className="md:col-span-1">
-                <div className="flex items-center h-10 justify-between">
-                  <span className="font-medium text-gray-900 dark:text-white">
-                    {calculateLineTotal(index)} ₺
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => remove(index)}
-                    className="p-1 text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
-                  >
-                    <Trash2 className="w-5 h-5" />
-                  </button>
-                </div>
-              </div>
-            </div>
+              ) : null;
+            })}
           </div>
-        ))}
+        ) : (
+          <div className="p-4 bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 rounded-lg">
+            <p className="text-amber-700 dark:text-amber-300">
+              Seçilen apart ve sezon için ürün fiyatı bulunamadı. Lütfen farklı bir apart veya sezon seçin.
+            </p>
+          </div>
+        )}
+      </div>
 
-        {/* Add Product Button */}
-        <div className="flex justify-center">
-          <Button
-            onClick={handleAddProduct}
-            variant="secondary"
-            leftIcon={<Plus className="w-4 h-4" />}
-            type="button" // Explicitly set type to button
-          >
-            Ürün Ekle
-          </Button>
-        </div>
+      {/* Selected Products */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+        <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+          Seçilen Ürünler
+        </h3>
+        
+        {fields.length > 0 ? (
+          <div className="space-y-4">
+            {fields.map((field, index) => {
+              const productId = watch(`products.${index}.product_id`);
+              return (
+                <div 
+                  key={field.id}
+                  className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700"
+                >
+                  <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+                    {/* Product Name */}
+                    <div className="md:col-span-5">
+                      <div className="flex items-center gap-3">
+                        <Package className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                        <div className="text-sm font-medium text-gray-900 dark:text-white">
+                          {getProductName(productId)}
+                        </div>
+                      </div>
+                      <Controller
+                        name={`products.${index}.product_id`}
+                        control={control}
+                        render={({ field }) => (
+                          <input type="hidden" {...field} />
+                        )}
+                      />
+                    </div>
+
+                    {/* Quantity - Read-only */}
+                    <div className="md:col-span-2">
+                      <div className="text-sm text-gray-700 dark:text-gray-300">
+                        <span className="font-medium">Miktar:</span> 1
+                      </div>
+                      <Controller
+                        name={`products.${index}.quantity`}
+                        control={control}
+                        defaultValue={1}
+                        render={({ field }) => (
+                          <input type="hidden" {...field} value={1} />
+                        )}
+                      />
+                    </div>
+
+                    {/* Unit Price - Read-only */}
+                    <div className="md:col-span-3">
+                      <div className="text-sm text-gray-700 dark:text-gray-300">
+                        <span className="font-medium">Birim Fiyat:</span> {watch(`products.${index}.unit_price`)} ₺
+                      </div>
+                      <Controller
+                        name={`products.${index}.unit_price`}
+                        control={control}
+                        render={({ field }) => (
+                          <input type="hidden" {...field} />
+                        )}
+                      />
+                    </div>
+
+                    {/* Total Price & Remove Button */}
+                    <div className="md:col-span-2 flex items-center justify-between">
+                      <span className="font-medium text-gray-900 dark:text-white">
+                        {calculateLineTotal(index)} ₺
+                      </span>
+                      {canRemoveProduct() && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            remove(index);
+                            // Trigger validation after removing a product
+                            setTimeout(() => {
+                              trigger('products');
+                            }, 0);
+                          }}
+                          className="p-1 text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                        >
+                          <Trash2 className="w-5 h-5" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="p-4 bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-lg text-center">
+            <p className="text-gray-500 dark:text-gray-400">
+              Henüz ürün seçilmedi. Yukarıdaki listeden ürün seçin.
+            </p>
+          </div>
+        )}
 
         {/* Error message if no products */}
         {errors.products && (

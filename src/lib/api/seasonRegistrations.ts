@@ -7,7 +7,7 @@ export interface SeasonRegistrationDto {
   id: number;
   tenant_id: number;
   guest_id: number;
-  apart_id: number;
+  bed_id: number;
   season_code: string;
   check_in_date: string;
   check_out_date: string;
@@ -22,11 +22,12 @@ export interface SeasonRegistrationDto {
     guest_type: string;
     profession_department?: string;
   };
-  apart?: {
+  bed?: {
     id: number;
-    name: string;
-    address?: string;
-    gender_type: string;
+    room_id: number;
+    bed_number: string;
+    bed_type: string;
+    status: string;
   };
   season?: {
     id: number;
@@ -39,18 +40,19 @@ export interface SeasonRegistrationDto {
 // Sezon kaydı oluşturma isteği modeli
 export interface CreateSeasonRegistrationRequest {
   guest_id: number;
-  apart_id: number;
+  bed_id: number;
   season_code: string;
   check_in_date: string;
   check_out_date: string;
   notes?: string;
   deposit_amount?: number;
+  status?: 'active' | 'cancelled' | 'completed';
 }
 
 // Sezon kaydı güncelleme isteği modeli
 export interface UpdateSeasonRegistrationRequest {
   guest_id?: number;
-  apart_id?: number;
+  bed_id?: number;
   season_code?: string;
   check_in_date?: string;
   check_out_date?: string;
@@ -69,7 +71,7 @@ const mapSeasonRegistrationDtoToModel = (dto: SeasonRegistrationDto): ISeasonReg
     id: dto.id.toString(),
     tenantId: dto.tenant_id.toString(),
     guestId: dto.guest_id.toString(),
-    apartId: dto.apart_id.toString(),
+    bedId: dto.bed_id.toString(),
     seasonCode: dto.season_code,
     checkInDate: dto.check_in_date,
     checkOutDate: dto.check_out_date,
@@ -84,11 +86,12 @@ const mapSeasonRegistrationDtoToModel = (dto: SeasonRegistrationDto): ISeasonReg
       guestType: dto.guest.guest_type,
       professionDepartment: dto.guest.profession_department
     } : undefined,
-    apart: dto.apart ? {
-      id: dto.apart.id.toString(),
-      name: dto.apart.name,
-      address: dto.apart.address,
-      genderType: dto.apart.gender_type
+    bed: dto.bed ? {
+      id: dto.bed.id.toString(),
+      roomId: dto.bed.room_id.toString(),
+      bedNumber: dto.bed.bed_number,
+      bedType: dto.bed.bed_type,
+      status: dto.bed.status
     } : undefined,
     season: dto.season ? {
       id: dto.season.id.toString(),
@@ -106,15 +109,21 @@ export const seasonRegistrationsApi = {
   /**
    * Tüm sezon kayıtlarını listeler, filtreleme opsiyonları ile
    * @param guestId - Misafir ID filtresi (isteğe bağlı)
-   * @param apartId - Apart ID filtresi (isteğe bağlı)
+   * @param bedId - Yatak ID filtresi (isteğe bağlı)
    * @param seasonCode - Sezon kodu filtresi (isteğe bağlı)
+   * @param status - Durum filtresi (isteğe bağlı)
+   * @param startDate - Başlangıç tarihi filtresi (isteğe bağlı)
+   * @param endDate - Bitiş tarihi filtresi (isteğe bağlı)
    * @param page - Sayfa numarası
    * @param perPage - Sayfa başına kayıt sayısı
    */
   getAll: async (
     guestId?: string | number,
-    apartId?: string | number,
+    bedId?: string | number,
     seasonCode?: string,
+    status?: 'active' | 'cancelled' | 'completed', 
+    startDate?: string,
+    endDate?: string,
     page: number = 1,
     perPage: number = 15
   ): Promise<PaginatedResponse<ISeasonRegistration>> => {
@@ -124,12 +133,24 @@ export const seasonRegistrationsApi = {
       params.append('guest_id', guestId.toString());
     }
     
-    if (apartId) {
-      params.append('apart_id', apartId.toString());
+    if (bedId) {
+      params.append('bed_id', bedId.toString());
     }
     
     if (seasonCode) {
       params.append('season_code', seasonCode);
+    }
+    
+    if (status) {
+      params.append('status', status);
+    }
+    
+    if (startDate) {
+      params.append('start_date', startDate);
+    }
+    
+    if (endDate) {
+      params.append('end_date', endDate);
     }
     
     params.append('page', page.toString());
@@ -292,13 +313,13 @@ export const seasonRegistrationsApi = {
   },
   
   /**
-   * Belirli bir aparta ait sezon kayıtlarını listeler
-   * @param apartId - Apart ID'si
+   * Belirli bir yatağa ait sezon kayıtlarını listeler
+   * @param bedId - Yatak ID'si
    * @param page - Sayfa numarası
    * @param perPage - Sayfa başına kayıt sayısı
    */
-  getByApartId: async (
-    apartId: string | number,
+  getByBedId: async (
+    bedId: string | number,
     page: number = 1,
     perPage: number = 15
   ): Promise<PaginatedResponse<ISeasonRegistration>> => {
@@ -306,7 +327,7 @@ export const seasonRegistrationsApi = {
     params.append('page', page.toString());
     params.append('per_page', perPage.toString());
     
-    const url = `/api/v1/aparts/${apartId}/season-registrations?${params.toString()}`;
+    const url = `/api/v1/beds/${bedId}/season-registrations?${params.toString()}`;
     const response = await api.get<SeasonRegistrationDto[]>(url);
     
     if (response.success && response.data) {
@@ -366,37 +387,12 @@ export const seasonRegistrationsApi = {
   },
   
   /**
-   * Sezon kaydını tamamlar (complete)
-   * @param id - Tamamlanacak sezon kaydının ID'si
-   * @param notes - İşleme ait isteğe bağlı notlar
-   */
-  complete: async (
-    id: string | number,
-    notes?: string
-  ): Promise<ApiResponse<ISeasonRegistration>> => {
-    const data = notes ? { notes } : {};
-    const response = await api.post<SeasonRegistrationDto>(`/api/v1/season-registrations/${id}/complete`, data);
-    
-    if (response.success && response.data) {
-      return {
-        ...response,
-        data: mapSeasonRegistrationDtoToModel(response.data),
-      };
-    }
-    
-    return {
-      ...response,
-      data: undefined,
-    };
-  },
-  
-  /**
    * Tek seferde tam bir sezon kaydı oluşturur (ürünler, ödeme planları, fatura bilgileri ve indirimler dahil)
    * @param data - Tam sezon kaydı oluşturma verisi
    */
   createComplete: async (data: {
     guest_id: number;
-    apart_id: number;
+    bed_id: number;
     season_code: string;
     check_in_date: string;
     check_out_date: string;

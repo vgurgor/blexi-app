@@ -35,6 +35,12 @@ export default function InvoiceInfoStep() {
     }
   }, []);
 
+  // Convert text to uppercase with Turkish character support
+  const toUpperCase = (text: string): string => {
+    if (!text) return '';
+    return text.toLocaleUpperCase('tr-TR');
+  };
+
   // Fetch countries
   const fetchCountries = async () => {
     setIsLoadingCountries(true);
@@ -171,6 +177,38 @@ export default function InvoiceInfoStep() {
     setValue(`invoice_titles.${index}.address`, formattedAddress);
   };
 
+  // Handle input change with uppercase conversion
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>, fieldName: string) => {
+    const value = e.target.value;
+    setValue(fieldName, toUpperCase(value));
+  };
+
+  // Format phone number
+  const formatPhoneNumber = (value: string) => {
+    // Only allow digits
+    const digits = value.replace(/\D/g, '');
+    
+    // Format the phone number
+    let formattedValue = '';
+    if (digits.length > 0) {
+      formattedValue = '(';
+      if (digits.length > 0) {
+        formattedValue += digits.substring(0, 3);
+      }
+      if (digits.length > 3) {
+        formattedValue += ') ' + digits.substring(3, 6);
+      }
+      if (digits.length > 6) {
+        formattedValue += ' ' + digits.substring(6, 8);
+      }
+      if (digits.length > 8) {
+        formattedValue += ' ' + digits.substring(8, 10);
+      }
+    }
+    
+    return formattedValue;
+  };
+
   return (
     <div className="space-y-8">
       <div className="mb-6">
@@ -248,77 +286,299 @@ export default function InvoiceInfoStep() {
             {/* Individual or Corporate Fields */}
             {watch(`invoice_titles.${index}.title_type`) === 'individual' ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                <FormInput
-                  name={`invoice_titles.${index}.first_name`}
-                  label="Ad*"
-                  placeholder="Ad"
-                  leftIcon={<User className="w-5 h-5 text-gray-400" />}
-                />
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Ad*
+                  </label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <Controller
+                      name={`invoice_titles.${index}.first_name`}
+                      control={control}
+                      render={({ field }) => (
+                        <input
+                          {...field}
+                          type="text"
+                          placeholder="Ad"
+                          className={`w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border ${
+                            errors.invoice_titles?.[index]?.first_name ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'
+                          } rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all`}
+                          onChange={(e) => handleInputChange(e, `invoice_titles.${index}.first_name`)}
+                        />
+                      )}
+                    />
+                    {errors.invoice_titles?.[index]?.first_name && (
+                      <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                        {errors.invoice_titles?.[index]?.first_name?.message as string}
+                      </p>
+                    )}
+                  </div>
+                </div>
                 
-                <FormInput
-                  name={`invoice_titles.${index}.last_name`}
-                  label="Soyad*"
-                  placeholder="Soyad"
-                  leftIcon={<User className="w-5 h-5 text-gray-400" />}
-                />
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Soyad*
+                  </label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <Controller
+                      name={`invoice_titles.${index}.last_name`}
+                      control={control}
+                      render={({ field }) => (
+                        <input
+                          {...field}
+                          type="text"
+                          placeholder="Soyad"
+                          className={`w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border ${
+                            errors.invoice_titles?.[index]?.last_name ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'
+                          } rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all`}
+                          onChange={(e) => handleInputChange(e, `invoice_titles.${index}.last_name`)}
+                        />
+                      )}
+                    />
+                    {errors.invoice_titles?.[index]?.last_name && (
+                      <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                        {errors.invoice_titles?.[index]?.last_name?.message as string}
+                      </p>
+                    )}
+                  </div>
+                </div>
                 
-                <FormInput
-                  name={`invoice_titles.${index}.identity_number`}
-                  label="TC Kimlik No*"
-                  placeholder="TC Kimlik No"
-                  leftIcon={<User className="w-5 h-5 text-gray-400" />}
-                />
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    TC Kimlik No*
+                  </label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <Controller
+                      name={`invoice_titles.${index}.identity_number`}
+                      control={control}
+                      render={({ field }) => (
+                        <input
+                          {...field}
+                          type="text"
+                          placeholder="TC Kimlik No"
+                          className={`w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border ${
+                            errors.invoice_titles?.[index]?.identity_number ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'
+                          } rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all`}
+                        />
+                      )}
+                    />
+                    {errors.invoice_titles?.[index]?.identity_number && (
+                      <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                        {errors.invoice_titles?.[index]?.identity_number?.message as string}
+                      </p>
+                    )}
+                  </div>
+                </div>
                 
-                <FormInput
-                  name={`invoice_titles.${index}.phone`}
-                  label="Telefon*"
-                  placeholder="Telefon"
-                  leftIcon={<Phone className="w-5 h-5 text-gray-400" />}
-                />
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Telefon*
+                  </label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <Controller
+                      name={`invoice_titles.${index}.phone`}
+                      control={control}
+                      render={({ field }) => (
+                        <input
+                          {...field}
+                          type="tel"
+                          placeholder="(5XX) XXX XX XX"
+                          className={`w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border ${
+                            errors.invoice_titles?.[index]?.phone ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'
+                          } rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all`}
+                          onChange={(e) => {
+                            // Format phone number
+                            field.onChange(formatPhoneNumber(e.target.value));
+                          }}
+                        />
+                      )}
+                    />
+                    {errors.invoice_titles?.[index]?.phone && (
+                      <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                        {errors.invoice_titles?.[index]?.phone?.message as string}
+                      </p>
+                    )}
+                  </div>
+                </div>
                 
-                <FormInput
-                  name={`invoice_titles.${index}.email`}
-                  label="E-posta"
-                  placeholder="E-posta"
-                  leftIcon={<Mail className="w-5 h-5 text-gray-400" />}
-                />
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    E-posta
+                  </label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <Controller
+                      name={`invoice_titles.${index}.email`}
+                      control={control}
+                      render={({ field }) => (
+                        <input
+                          {...field}
+                          type="email"
+                          placeholder="E-posta"
+                          className={`w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border ${
+                            errors.invoice_titles?.[index]?.email ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'
+                          } rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all`}
+                        />
+                      )}
+                    />
+                    {errors.invoice_titles?.[index]?.email && (
+                      <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                        {errors.invoice_titles?.[index]?.email?.message as string}
+                      </p>
+                    )}
+                  </div>
+                </div>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                <FormInput
-                  name={`invoice_titles.${index}.company_name`}
-                  label="Şirket Adı*"
-                  placeholder="Şirket Adı"
-                  leftIcon={<Building className="w-5 h-5 text-gray-400" />}
-                />
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Şirket Adı*
+                  </label>
+                  <div className="relative">
+                    <Building className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <Controller
+                      name={`invoice_titles.${index}.company_name`}
+                      control={control}
+                      render={({ field }) => (
+                        <input
+                          {...field}
+                          type="text"
+                          placeholder="Şirket Adı"
+                          className={`w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border ${
+                            errors.invoice_titles?.[index]?.company_name ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'
+                          } rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all`}
+                          onChange={(e) => handleInputChange(e, `invoice_titles.${index}.company_name`)}
+                        />
+                      )}
+                    />
+                    {errors.invoice_titles?.[index]?.company_name && (
+                      <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                        {errors.invoice_titles?.[index]?.company_name?.message as string}
+                      </p>
+                    )}
+                  </div>
+                </div>
                 
-                <FormInput
-                  name={`invoice_titles.${index}.tax_office`}
-                  label="Vergi Dairesi*"
-                  placeholder="Vergi Dairesi"
-                  leftIcon={<Building className="w-5 h-5 text-gray-400" />}
-                />
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Vergi Dairesi*
+                  </label>
+                  <div className="relative">
+                    <Building className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <Controller
+                      name={`invoice_titles.${index}.tax_office`}
+                      control={control}
+                      render={({ field }) => (
+                        <input
+                          {...field}
+                          type="text"
+                          placeholder="Vergi Dairesi"
+                          className={`w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border ${
+                            errors.invoice_titles?.[index]?.tax_office ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'
+                          } rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all`}
+                          onChange={(e) => handleInputChange(e, `invoice_titles.${index}.tax_office`)}
+                        />
+                      )}
+                    />
+                    {errors.invoice_titles?.[index]?.tax_office && (
+                      <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                        {errors.invoice_titles?.[index]?.tax_office?.message as string}
+                      </p>
+                    )}
+                  </div>
+                </div>
                 
-                <FormInput
-                  name={`invoice_titles.${index}.tax_number`}
-                  label="Vergi Numarası*"
-                  placeholder="Vergi Numarası"
-                  leftIcon={<FileText className="w-5 h-5 text-gray-400" />}
-                />
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Vergi Numarası*
+                  </label>
+                  <div className="relative">
+                    <FileText className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <Controller
+                      name={`invoice_titles.${index}.tax_number`}
+                      control={control}
+                      render={({ field }) => (
+                        <input
+                          {...field}
+                          type="text"
+                          placeholder="Vergi Numarası"
+                          className={`w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border ${
+                            errors.invoice_titles?.[index]?.tax_number ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'
+                          } rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all`}
+                        />
+                      )}
+                    />
+                    {errors.invoice_titles?.[index]?.tax_number && (
+                      <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                        {errors.invoice_titles?.[index]?.tax_number?.message as string}
+                      </p>
+                    )}
+                  </div>
+                </div>
                 
-                <FormInput
-                  name={`invoice_titles.${index}.phone`}
-                  label="Telefon*"
-                  placeholder="Telefon"
-                  leftIcon={<Phone className="w-5 h-5 text-gray-400" />}
-                />
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Telefon*
+                  </label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <Controller
+                      name={`invoice_titles.${index}.phone`}
+                      control={control}
+                      render={({ field }) => (
+                        <input
+                          {...field}
+                          type="tel"
+                          placeholder="(5XX) XXX XX XX"
+                          className={`w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border ${
+                            errors.invoice_titles?.[index]?.phone ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'
+                          } rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all`}
+                          onChange={(e) => {
+                            // Format phone number
+                            field.onChange(formatPhoneNumber(e.target.value));
+                          }}
+                        />
+                      )}
+                    />
+                    {errors.invoice_titles?.[index]?.phone && (
+                      <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                        {errors.invoice_titles?.[index]?.phone?.message as string}
+                      </p>
+                    )}
+                  </div>
+                </div>
                 
-                <FormInput
-                  name={`invoice_titles.${index}.email`}
-                  label="E-posta"
-                  placeholder="E-posta"
-                  leftIcon={<Mail className="w-5 h-5 text-gray-400" />}
-                />
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    E-posta
+                  </label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <Controller
+                      name={`invoice_titles.${index}.email`}
+                      control={control}
+                      render={({ field }) => (
+                        <input
+                          {...field}
+                          type="email"
+                          placeholder="E-posta"
+                          className={`w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border ${
+                            errors.invoice_titles?.[index]?.email ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'
+                          } rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all`}
+                        />
+                      )}
+                    />
+                    {errors.invoice_titles?.[index]?.email && (
+                      <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                        {errors.invoice_titles?.[index]?.email?.message as string}
+                      </p>
+                    )}
+                  </div>
+                </div>
               </div>
             )}
 
@@ -422,46 +682,121 @@ export default function InvoiceInfoStep() {
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 {/* Neighborhood */}
-                <FormInput
-                  name={`invoice_titles.${index}.address_data.neighborhood`}
-                  label="Mahalle"
-                  placeholder="Mahalle"
-                  onChange={() => updateFormattedAddress(index)}
-                />
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Mahalle
+                  </label>
+                  <Controller
+                    name={`invoice_titles.${index}.address_data.neighborhood`}
+                    control={control}
+                    render={({ field }) => (
+                      <input
+                        {...field}
+                        type="text"
+                        placeholder="Mahalle"
+                        className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
+                        onChange={(e) => {
+                          handleInputChange(e, `invoice_titles.${index}.address_data.neighborhood`);
+                          updateFormattedAddress(index);
+                        }}
+                      />
+                    )}
+                  />
+                </div>
                 
                 {/* Street */}
-                <FormInput
-                  name={`invoice_titles.${index}.address_data.street`}
-                  label="Cadde/Sokak"
-                  placeholder="Cadde/Sokak"
-                  onChange={() => updateFormattedAddress(index)}
-                />
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Cadde/Sokak
+                  </label>
+                  <Controller
+                    name={`invoice_titles.${index}.address_data.street`}
+                    control={control}
+                    render={({ field }) => (
+                      <input
+                        {...field}
+                        type="text"
+                        placeholder="Cadde/Sokak"
+                        className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
+                        onChange={(e) => {
+                          handleInputChange(e, `invoice_titles.${index}.address_data.street`);
+                          updateFormattedAddress(index);
+                        }}
+                      />
+                    )}
+                  />
+                </div>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {/* Building No */}
-                <FormInput
-                  name={`invoice_titles.${index}.address_data.building_no`}
-                  label="Bina No"
-                  placeholder="Bina No"
-                  onChange={() => updateFormattedAddress(index)}
-                />
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Bina No
+                  </label>
+                  <Controller
+                    name={`invoice_titles.${index}.address_data.building_no`}
+                    control={control}
+                    render={({ field }) => (
+                      <input
+                        {...field}
+                        type="text"
+                        placeholder="Bina No"
+                        className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
+                        onChange={(e) => {
+                          field.onChange(e.target.value);
+                          updateFormattedAddress(index);
+                        }}
+                      />
+                    )}
+                  />
+                </div>
                 
                 {/* Apartment No */}
-                <FormInput
-                  name={`invoice_titles.${index}.address_data.apartment_no`}
-                  label="Daire No"
-                  placeholder="Daire No"
-                  onChange={() => updateFormattedAddress(index)}
-                />
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Daire No
+                  </label>
+                  <Controller
+                    name={`invoice_titles.${index}.address_data.apartment_no`}
+                    control={control}
+                    render={({ field }) => (
+                      <input
+                        {...field}
+                        type="text"
+                        placeholder="Daire No"
+                        className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
+                        onChange={(e) => {
+                          field.onChange(e.target.value);
+                          updateFormattedAddress(index);
+                        }}
+                      />
+                    )}
+                  />
+                </div>
                 
                 {/* Postal Code */}
-                <FormInput
-                  name={`invoice_titles.${index}.address_data.postal_code`}
-                  label="Posta Kodu"
-                  placeholder="Posta Kodu"
-                  onChange={() => updateFormattedAddress(index)}
-                />
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Posta Kodu
+                  </label>
+                  <Controller
+                    name={`invoice_titles.${index}.address_data.postal_code`}
+                    control={control}
+                    render={({ field }) => (
+                      <input
+                        {...field}
+                        type="text"
+                        placeholder="Posta Kodu"
+                        className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
+                        onChange={(e) => {
+                          field.onChange(e.target.value);
+                          updateFormattedAddress(index);
+                        }}
+                      />
+                    )}
+                  />
+                </div>
               </div>
             </div>
 
@@ -477,8 +812,7 @@ export default function InvoiceInfoStep() {
                   <textarea
                     {...field}
                     className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
-                    rows={2}
-                    readOnly
+                    rows={3}
                   />
                 )}
               />
@@ -517,6 +851,7 @@ export default function InvoiceInfoStep() {
             onClick={handleAddInvoiceTitle}
             variant="secondary"
             leftIcon={<Plus className="w-4 h-4" />}
+            type="button"
           >
             Fatura Başlığı Ekle
           </Button>

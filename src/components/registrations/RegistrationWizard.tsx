@@ -18,7 +18,7 @@ import WizardProgress from './WizardProgress';
 // Define the steps of the wizard
 const STEPS = [
   { id: 'guest-info', title: 'Misafir Bilgileri' },
-  { id: 'apartment-selection', title: 'Apart ve Sezon Seçimi' },
+  { id: 'apartment-selection', title: 'Konaklama Seçimi' },
   { id: 'product-selection', title: 'Ürün Seçimi' },
   { id: 'payment-plan', title: 'Ödeme Planı' },
   { id: 'invoice-info', title: 'Fatura Bilgileri' },
@@ -30,26 +30,29 @@ const registrationSchema = z.object({
   // Guest Info
   guest_id: z.string().optional(),
   person: z.object({
+    id: z.string().optional(),
     name: z.string().min(3, 'Ad en az 3 karakter olmalıdır'),
     surname: z.string().min(2, 'Soyad en az 2 karakter olmalıdır'),
     gender: z.enum(['MALE', 'FEMALE'], { 
       required_error: 'Cinsiyet seçimi zorunludur',
       invalid_type_error: 'Cinsiyet MALE veya FEMALE olmalıdır'
-    }),
+    }).optional(),
     tc_no: z.string().min(11, 'TC Kimlik No 11 karakter olmalıdır').max(11),
     phone: z.string().min(10, 'Telefon numarası en az 10 karakter olmalıdır'),
     email: z.string().email('Geçerli bir e-posta adresi giriniz').optional().or(z.literal('')),
     birth_date: z.string().min(1, 'Doğum tarihi zorunludur'),
-    address: z.string().optional(),
-    city: z.string().optional(),
+    address: z.string().optional().or(z.literal('')),
+    city: z.string().optional().or(z.literal('')),
   }).optional(),
   guest_type: z.enum(['STUDENT', 'EMPLOYEE', 'OTHER']),
-  profession_department: z.string().optional(),
+  profession_department: z.string().optional().or(z.literal('')),
   is_self_guardian: z.boolean().optional(),
-  guardian_relationship: z.string().optional(),
+  guardian_relationship: z.string().optional().or(z.literal('')),
   
-  // Apartment Selection
+  // Accommodation Selection
   apart_id: z.string().min(1, 'Lütfen bir apart seçin'),
+  room_id: z.string().min(1, 'Lütfen bir oda seçin'),
+  bed_id: z.string().min(1, 'Lütfen bir yatak seçin'),
   season_code: z.string().min(1, 'Lütfen bir sezon seçin'),
   check_in_date: z.string().min(1, 'Giriş tarihi zorunludur'),
   check_out_date: z.string().min(1, 'Çıkış tarihi zorunludur'),
@@ -57,17 +60,19 @@ const registrationSchema = z.object({
   notes: z.string().optional(),
   
   // Product Selection
-  products: z.array(z.object({
-    product_id: z.number(),
-    quantity: z.number().min(1, 'Miktar en az 1 olmalıdır'),
-    unit_price: z.number().min(0, 'Birim fiyat 0 veya daha büyük olmalıdır'),
-  })).min(1, 'En az bir ürün seçmelisiniz'),
+  products: z.array(
+    z.object({
+      product_id: z.number().or(z.string().transform(val => Number(val))),
+      quantity: z.number().min(1, 'Miktar en az 1 olmalıdır').or(z.string().transform(val => Number(val))),
+      unit_price: z.number().min(0, 'Birim fiyat 0 veya daha büyük olmalıdır').or(z.string().transform(val => Number(val))),
+    })
+  ).min(1, 'En az bir ürün seçmelisiniz'),
   
   // Payment Plan
   payment_plans: z.array(z.object({
-    planned_amount: z.number().min(1, 'Planlanan tutar en az 1 olmalıdır'),
+    planned_amount: z.number().min(1, 'Planlanan tutar en az 1 olmalıdır').or(z.string().transform(val => Number(val))),
     planned_date: z.string().min(1, 'Planlanan tarih zorunludur'),
-    planned_payment_type_id: z.number(),
+    planned_payment_type_id: z.number().or(z.string().transform(val => Number(val))),
     is_deposit: z.boolean().optional(),
   })).min(1, 'En az bir ödeme planı oluşturmalısınız'),
   
@@ -85,9 +90,9 @@ const registrationSchema = z.object({
     email: z.string().email('Geçerli bir e-posta adresi giriniz').optional().or(z.literal('')),
     is_default: z.boolean().optional(),
     address_data: z.object({
-      country_id: z.number(),
-      province_id: z.number(),
-      district_id: z.number(),
+      country_id: z.number().or(z.string().transform(val => Number(val))),
+      province_id: z.number().or(z.string().transform(val => Number(val))),
+      district_id: z.number().or(z.string().transform(val => Number(val))),
       neighborhood: z.string().optional(),
       street: z.string().optional(),
       building_no: z.string().optional(),
@@ -98,13 +103,13 @@ const registrationSchema = z.object({
   
   // Discounts (optional)
   discounts: z.array(z.object({
-    discount_rule_id: z.number(),
-    product_id: z.number(),
+    discount_rule_id: z.number().or(z.string().transform(val => Number(val))),
+    product_id: z.number().or(z.string().transform(val => Number(val))),
   })).optional(),
   
   // Guardians (optional)
   guardians: z.array(z.object({
-    person_id: z.number(),
+    person_id: z.number().or(z.string().transform(val => Number(val))),
     relationship: z.string(),
     is_self: z.boolean().optional(),
     is_emergency_contact: z.boolean().optional(),
@@ -208,9 +213,9 @@ export default function RegistrationWizard({ onSubmit }: RegistrationWizardProps
   const getFieldsForStep = (step: number): string[] => {
     switch (step) {
       case 0: // Guest Info
-        return ['guest_id', 'person.name', 'person.surname', 'person.gender', 'person.tc_no', 'person.phone', 'person.birth_date', 'guest_type'];
-      case 1: // Apartment Selection
-        return ['apart_id', 'season_code', 'check_in_date', 'check_out_date'];
+        return ['guest_id', 'person.name', 'person.surname', 'person.tc_no', 'person.phone', 'person.birth_date', 'guest_type'];
+      case 1: // Accommodation Selection
+        return ['apart_id', 'room_id', 'bed_id', 'season_code', 'check_in_date', 'check_out_date'];
       case 2: // Product Selection
         return ['products'];
       case 3: // Payment Plan
