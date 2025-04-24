@@ -12,6 +12,9 @@ import { Button } from '@/components/ui/atoms/Button';
 import { peopleApi } from '@/lib/api/people';
 import { guestsApi } from '@/lib/api/guests';
 import { guardiansApi } from '@/lib/api/guardians';
+import { countriesApi } from '@/lib/api/countries';
+import { provincesApi } from '@/lib/api/provinces';
+import { districtsApi } from '@/lib/api/districts';
 import { useToast } from '@/hooks/useToast';
 import PageLoader from '@/components/PageLoader';
 
@@ -28,7 +31,14 @@ const studentSchema = z.object({
   email: z.string().email('Geçerli bir e-posta adresi giriniz').optional().or(z.literal('')),
   birth_date: z.string().min(1, 'Doğum tarihi zorunludur'),
   address: z.string().optional().or(z.literal('')),
-  city: z.string().optional().or(z.literal('')),
+  country_id: z.string().min(1, 'Ülke seçimi zorunludur'),
+  province_id: z.string().min(1, 'İl seçimi zorunludur'),
+  district_id: z.string().min(1, 'İlçe seçimi zorunludur'),
+  neighborhood: z.string().optional().or(z.literal('')),
+  street: z.string().optional().or(z.literal('')),
+  building_no: z.string().optional().or(z.literal('')),
+  apartment_no: z.string().optional().or(z.literal('')),
+  postal_code: z.string().optional().or(z.literal('')),
   guest_type: z.enum(['STUDENT', 'EMPLOYEE', 'OTHER']).default('STUDENT'),
   profession_department: z.string().optional().or(z.literal('')),
   is_self_guardian: z.boolean().default(false),
@@ -43,6 +53,14 @@ export default function NewStudentPage() {
   const [isChecking, setIsChecking] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const toast = useToast();
+  
+  // Address selection state
+  const [countries, setCountries] = useState<any[]>([]);
+  const [provinces, setProvinces] = useState<any[]>([]);
+  const [districts, setDistricts] = useState<any[]>([]);
+  const [isLoadingCountries, setIsLoadingCountries] = useState(false);
+  const [isLoadingProvinces, setIsLoadingProvinces] = useState(false);
+  const [isLoadingDistricts, setIsLoadingDistricts] = useState(false);
 
   const { register, handleSubmit, formState: { errors }, watch, setValue, control } = useForm<StudentFormData>({
     resolver: zodResolver(studentSchema),
@@ -52,6 +70,9 @@ export default function NewStudentPage() {
       gender: 'MALE',
     }
   });
+
+  const countryId = watch('country_id');
+  const provinceId = watch('province_id');
 
   useEffect(() => {
     const init = async () => {
@@ -72,10 +93,131 @@ export default function NewStudentPage() {
     init();
   }, [checkAuth, router]);
 
+  // Fetch countries on component mount
+  useEffect(() => {
+    fetchCountries();
+  }, []);
+
+  // Fetch provinces when country changes
+  useEffect(() => {
+    if (countryId) {
+      fetchProvinces(countryId);
+      // Reset province and district when country changes
+      setValue('province_id', '');
+      setValue('district_id', '');
+      setDistricts([]);
+    }
+  }, [countryId, setValue]);
+
+  // Fetch districts when province changes
+  useEffect(() => {
+    if (provinceId) {
+      fetchDistricts(provinceId);
+      // Reset district when province changes
+      setValue('district_id', '');
+    }
+  }, [provinceId, setValue]);
+
+  // Fetch countries
+  const fetchCountries = async () => {
+    setIsLoadingCountries(true);
+    try {
+      const response = await countriesApi.getAll();
+      
+      if (response.success && response.data) {
+        setCountries(response.data);
+        
+        // Set default country (Turkey)
+        const turkey = response.data.find(country => country.code === 'TR');
+        if (turkey) {
+          setValue('country_id', turkey.id);
+        }
+      } else {
+        toast.error('Ülkeler yüklenirken bir hata oluştu');
+      }
+    } catch (error) {
+      console.error('Error fetching countries:', error);
+      toast.error('Ülkeler yüklenirken bir hata oluştu');
+    } finally {
+      setIsLoadingCountries(false);
+    }
+  };
+
+  // Fetch provinces for a country
+  const fetchProvinces = async (countryId: string) => {
+    setIsLoadingProvinces(true);
+    try {
+      const response = await countriesApi.getProvinces(countryId);
+      
+      if (response.success && response.data) {
+        setProvinces(response.data);
+      } else {
+        toast.error('İller yüklenirken bir hata oluştu');
+      }
+    } catch (error) {
+      console.error('Error fetching provinces:', error);
+      toast.error('İller yüklenirken bir hata oluştu');
+    } finally {
+      setIsLoadingProvinces(false);
+    }
+  };
+
+  // Fetch districts for a province
+  const fetchDistricts = async (provinceId: string) => {
+    setIsLoadingDistricts(true);
+    try {
+      const response = await provincesApi.getDistricts(provinceId);
+      
+      if (response.success && response.data) {
+        setDistricts(response.data);
+      } else {
+        toast.error('İlçeler yüklenirken bir hata oluştu');
+      }
+    } catch (error) {
+      console.error('Error fetching districts:', error);
+      toast.error('İlçeler yüklenirken bir hata oluştu');
+    } finally {
+      setIsLoadingDistricts(false);
+    }
+  };
+
+  // Update formatted address when address components change
+  const updateFormattedAddress = () => {
+    const countryId = watch('country_id');
+    const provinceId = watch('province_id');
+    const districtId = watch('district_id');
+    const neighborhood = watch('neighborhood');
+    const street = watch('street');
+    const buildingNo = watch('building_no');
+    const apartmentNo = watch('apartment_no');
+    
+    // Get district, province and country names
+    const district = districts.find(d => d.id === districtId)?.name || '';
+    const province = provinces.find(p => p.id === provinceId)?.name || '';
+    const country = countries.find(c => c.id === countryId)?.name || '';
+    
+    // Build formatted address
+    let formattedAddress = '';
+    
+    if (street) formattedAddress += street;
+    if (buildingNo) formattedAddress += ` No:${buildingNo}`;
+    if (apartmentNo) formattedAddress += ` Daire:${apartmentNo}`;
+    if (neighborhood) formattedAddress += `, ${neighborhood}`;
+    if (district) formattedAddress += `, ${district}`;
+    if (province) formattedAddress += `, ${province}`;
+    if (country) formattedAddress += `, ${country}`;
+    
+    // Update address field
+    setValue('address', formattedAddress);
+  };
+
   const onSubmit = async (data: StudentFormData) => {
     setIsSubmitting(true);
     
     try {
+      // Update formatted address before submission
+      updateFormattedAddress();
+      
       // First create the person
       const personData = {
         name: data.name,
@@ -86,7 +228,7 @@ export default function NewStudentPage() {
         email: data.email,
         birth_date: data.birth_date,
         address: data.address,
-        city: data.city,
+        city: '',
       };
       
       const personResponse = await peopleApi.create(personData);
@@ -335,35 +477,211 @@ export default function NewStudentPage() {
                     />
                   </div>
                 </div>
+              </div>
+
+              {/* Address Information */}
+              <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                <div className="flex items-center gap-3 mb-4">
+                  <MapPin className="w-5 h-5 text-blue-500 dark:text-blue-400" />
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white">Adres Bilgileri</h3>
+                </div>
                 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Adres
-                  </label>
-                  <div className="relative">
-                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                  {/* Country */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Ülke*
+                    </label>
+                    <select
+                      {...register('country_id')}
+                      className={`w-full px-4 py-2 bg-white dark:bg-gray-800 border ${
+                        errors.country_id ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'
+                      } rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all`}
+                      disabled={isLoadingCountries}
+                      onChange={(e) => {
+                        setValue('country_id', e.target.value);
+                        updateFormattedAddress();
+                      }}
+                    >
+                      <option value="">Ülke Seçin</option>
+                      {countries.map((country) => (
+                        <option key={country.id} value={country.id}>
+                          {country.name}
+                        </option>
+                      ))}
+                    </select>
+                    {errors.country_id && (
+                      <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.country_id.message}</p>
+                    )}
+                  </div>
+                  
+                  {/* Province */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      İl*
+                    </label>
+                    <select
+                      {...register('province_id')}
+                      className={`w-full px-4 py-2 bg-white dark:bg-gray-800 border ${
+                        errors.province_id ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'
+                      } rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all`}
+                      disabled={isLoadingProvinces || !countryId}
+                      onChange={(e) => {
+                        setValue('province_id', e.target.value);
+                        updateFormattedAddress();
+                      }}
+                    >
+                      <option value="">İl Seçin</option>
+                      {provinces.map((province) => (
+                        <option key={province.id} value={province.id}>
+                          {province.name}
+                        </option>
+                      ))}
+                    </select>
+                    {errors.province_id && (
+                      <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.province_id.message}</p>
+                    )}
+                    {!countryId && (
+                      <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
+                        Önce bir ülke seçmelisiniz
+                      </p>
+                    )}
+                  </div>
+                  
+                  {/* District */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      İlçe*
+                    </label>
+                    <select
+                      {...register('district_id')}
+                      className={`w-full px-4 py-2 bg-white dark:bg-gray-800 border ${
+                        errors.district_id ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'
+                      } rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all`}
+                      disabled={isLoadingDistricts || !provinceId}
+                      onChange={(e) => {
+                        setValue('district_id', e.target.value);
+                        updateFormattedAddress();
+                      }}
+                    >
+                      <option value="">İlçe Seçin</option>
+                      {districts.map((district) => (
+                        <option key={district.id} value={district.id}>
+                          {district.name}
+                        </option>
+                      ))}
+                    </select>
+                    {errors.district_id && (
+                      <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.district_id.message}</p>
+                    )}
+                    {!provinceId && (
+                      <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
+                        Önce bir il seçmelisiniz
+                      </p>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  {/* Neighborhood */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Mahalle
+                    </label>
                     <input
-                      {...register('address')}
+                      {...register('neighborhood')}
                       type="text"
-                      placeholder="Adres"
-                      className="w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
+                      placeholder="Mahalle"
+                      className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
+                      onChange={(e) => {
+                        setValue('neighborhood', e.target.value);
+                        updateFormattedAddress();
+                      }}
+                    />
+                  </div>
+                  
+                  {/* Street */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Cadde/Sokak
+                    </label>
+                    <input
+                      {...register('street')}
+                      type="text"
+                      placeholder="Cadde/Sokak"
+                      className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
+                      onChange={(e) => {
+                        setValue('street', e.target.value);
+                        updateFormattedAddress();
+                      }}
                     />
                   </div>
                 </div>
                 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Şehir
-                  </label>
-                  <div className="relative">
-                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                  {/* Building No */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Bina No
+                    </label>
                     <input
-                      {...register('city')}
+                      {...register('building_no')}
                       type="text"
-                      placeholder="Şehir"
-                      className="w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
+                      placeholder="Bina No"
+                      className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
+                      onChange={(e) => {
+                        setValue('building_no', e.target.value);
+                        updateFormattedAddress();
+                      }}
                     />
                   </div>
+                  
+                  {/* Apartment No */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Daire No
+                    </label>
+                    <input
+                      {...register('apartment_no')}
+                      type="text"
+                      placeholder="Daire No"
+                      className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
+                      onChange={(e) => {
+                        setValue('apartment_no', e.target.value);
+                        updateFormattedAddress();
+                      }}
+                    />
+                  </div>
+                  
+                  {/* Postal Code */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Posta Kodu
+                    </label>
+                    <input
+                      {...register('postal_code')}
+                      type="text"
+                      placeholder="Posta Kodu"
+                      className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
+                      onChange={(e) => {
+                        setValue('postal_code', e.target.value);
+                        updateFormattedAddress();
+                      }}
+                    />
+                  </div>
+                </div>
+                
+                {/* Formatted Address (Read-only) */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Tam Adres
+                  </label>
+                  <textarea
+                    {...register('address')}
+                    className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
+                    rows={3}
+                    readOnly
+                  />
                 </div>
               </div>
 
