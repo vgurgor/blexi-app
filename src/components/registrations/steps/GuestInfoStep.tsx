@@ -32,15 +32,23 @@ export default function GuestInfoStep() {
   useEffect(() => {
     if (countryId) {
       fetchProvinces(countryId);
+      // Clear province and district selection when country changes
+      setValue('guest.province_id', '');
+      setValue('guest.district_id', '');
+      setProvinces([]);
+      setDistricts([]);
     }
-  }, [countryId]);
+  }, [countryId, setValue]);
 
   // Fetch districts when province changes
   useEffect(() => {
     if (provinceId) {
       fetchDistricts(provinceId);
+      // Clear district selection when province changes
+      setValue('guest.district_id', '');
+      setDistricts([]);
     }
-  }, [provinceId]);
+  }, [provinceId, setValue]);
 
   // Fetch countries
   const fetchCountries = async () => {
@@ -51,11 +59,12 @@ export default function GuestInfoStep() {
       if (response.success && response.data) {
         setCountries(response.data);
         
-        // Set default country (Turkey)
-        const turkey = response.data.find(country => country.code === 'TR');
-        if (turkey) {
-          setValue('guest.country_id', parseInt(turkey.id));
-          fetchProvinces(turkey.id);
+        // Set default country (Turkey) if not already set
+        if (!watch('guest.country_id')) {
+          const turkey = response.data.find(country => country.code === 'TR');
+          if (turkey) {
+            setValue('guest.country_id', turkey.id);
+          }
         }
       } else {
         toast.error('Ülkeler yüklenirken bir hata oluştu');
@@ -76,14 +85,6 @@ export default function GuestInfoStep() {
       
       if (response.success && response.data) {
         setProvinces(response.data);
-        
-        // Set default province if none selected
-        if (!watch('guest.province_id') && response.data.length > 0) {
-          // Try to find Istanbul (34) or use the first province
-          const istanbul = response.data.find(province => province.id === 34);
-          setValue('guest.province_id', parseInt(istanbul ? istanbul.id : response.data[0].id));
-          fetchDistricts(istanbul ? istanbul.id : response.data[0].id);
-        }
       } else {
         toast.error('İller yüklenirken bir hata oluştu');
       }
@@ -103,11 +104,6 @@ export default function GuestInfoStep() {
       
       if (response.success && response.data) {
         setDistricts(response.data);
-        
-        // Set default district if none selected
-        if (!watch('guest.district_id') && response.data.length > 0) {
-          setValue('guest.district_id', parseInt(response.data[0].id));
-        }
       } else {
         toast.error('İlçeler yüklenirken bir hata oluştu');
       }
@@ -334,7 +330,6 @@ export default function GuestInfoStep() {
                   {...field}
                   className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
                   disabled={isLoadingCountries}
-                  onChange={(e) => field.onChange(parseInt(e.target.value))}
                 >
                   <option value="">Ülke Seçin</option>
                   {countries.map((country) => (
@@ -360,7 +355,6 @@ export default function GuestInfoStep() {
                   {...field}
                   className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
                   disabled={isLoadingProvinces || !countryId}
-                  onChange={(e) => field.onChange(parseInt(e.target.value))}
                 >
                   <option value="">İl Seçin</option>
                   {provinces.map((province) => (
@@ -386,7 +380,6 @@ export default function GuestInfoStep() {
                   {...field}
                   className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
                   disabled={isLoadingDistricts || !provinceId}
-                  onChange={(e) => field.onChange(parseInt(e.target.value))}
                 >
                   <option value="">İlçe Seçin</option>
                   {districts.map((district) => (

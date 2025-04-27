@@ -5,26 +5,25 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { 
   ArrowLeft, 
-  User, 
   CheckCircle, 
   XCircle, 
   Edit
 } from 'lucide-react';
 import { seasonRegistrationsApi } from '@/lib/api/seasonRegistrations';
+import { seasonRegistrationProductsApi } from '@/lib/api/seasonRegistrationProducts';
 import { useToast } from '@/hooks/useToast';
 import { Button } from '@/components/ui/atoms/Button';
 import DeleteConfirmationModal from '@/components/DeleteConfirmationModal';
 import RegistrationTabs from '@/components/registrations/details/RegistrationTabs';
 import RegistrationHeader from '@/components/registrations/details/RegistrationHeader';
-import RegistrationDetailsContent from '@/components/registrations/details/RegistrationDetailsContent';
+import RegistrationProductsContent from '@/components/registrations/details/RegistrationProductsContent';
 
-export default function RegistrationDetailsPage({ params }: { params: { id: string } }) {
+export default function RegistrationProductsPage({ params }: { params: { id: string } }) {
   const router = useRouter();
   const { isAuthenticated, checkAuth } = useAuth();
   const [isChecking, setIsChecking] = useState(true);
   const [registration, setRegistration] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('details');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState('');
@@ -113,7 +112,7 @@ export default function RegistrationDetailsPage({ params }: { params: { id: stri
   };
 
   const handleTabChange = (tab: string) => {
-    if (tab === activeTab) return;
+    if (tab === 'products') return;
     
     // Navigate to the appropriate tab page
     if (tab === 'details') {
@@ -223,11 +222,11 @@ export default function RegistrationDetailsPage({ params }: { params: { id: stri
         <RegistrationHeader registration={registration} />
 
         {/* Tabs */}
-        <RegistrationTabs activeTab={activeTab} setActiveTab={handleTabChange} />
+        <RegistrationTabs activeTab="products" setActiveTab={handleTabChange} />
 
         {/* Tab Content */}
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-          <RegistrationDetailsContent registration={registration} />
+          <RegistrationProductsContent registrationId={registration.id} />
         </div>
       </div>
 

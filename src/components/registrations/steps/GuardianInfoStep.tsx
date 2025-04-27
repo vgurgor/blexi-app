@@ -33,15 +33,23 @@ export default function GuardianInfoStep() {
   useEffect(() => {
     if (guardianCountryId) {
       fetchProvinces(guardianCountryId);
+      // Clear province and district selection when country changes
+      setValue('guardian.province_id', '');
+      setValue('guardian.district_id', '');
+      setProvinces([]);
+      setDistricts([]);
     }
-  }, [guardianCountryId]);
+  }, [guardianCountryId, setValue]);
 
   // Fetch districts when province changes
   useEffect(() => {
     if (guardianProvinceId) {
       fetchDistricts(guardianProvinceId);
+      // Clear district selection when province changes
+      setValue('guardian.district_id', '');
+      setDistricts([]);
     }
-  }, [guardianProvinceId]);
+  }, [guardianProvinceId, setValue]);
 
   // Auto-fill guardian info with guest info when self-guardian is selected
   useEffect(() => {
@@ -59,11 +67,12 @@ export default function GuardianInfoStep() {
       if (response.success && response.data) {
         setCountries(response.data);
         
-        // Set default country (Turkey)
-        const turkey = response.data.find(country => country.code === 'TR');
-        if (turkey) {
-          setValue('guardian.country_id', parseInt(turkey.id));
-          fetchProvinces(turkey.id);
+        // Set default country (Turkey) if not already set
+        if (!watch('guardian.country_id')) {
+          const turkey = response.data.find(country => country.code === 'TR');
+          if (turkey) {
+            setValue('guardian.country_id', turkey.id);
+          }
         }
       } else {
         toast.error('Ülkeler yüklenirken bir hata oluştu');
@@ -84,14 +93,6 @@ export default function GuardianInfoStep() {
       
       if (response.success && response.data) {
         setProvinces(response.data);
-        
-        // Set default province if none selected
-        if (!watch('guardian.province_id') && response.data.length > 0) {
-          // Try to find Istanbul (34) or use the first province
-          const istanbul = response.data.find(province => province.id === 34);
-          setValue('guardian.province_id', parseInt(istanbul ? istanbul.id : response.data[0].id));
-          fetchDistricts(istanbul ? istanbul.id : response.data[0].id);
-        }
       } else {
         toast.error('İller yüklenirken bir hata oluştu');
       }
@@ -111,11 +112,6 @@ export default function GuardianInfoStep() {
       
       if (response.success && response.data) {
         setDistricts(response.data);
-        
-        // Set default district if none selected
-        if (!watch('guardian.district_id') && response.data.length > 0) {
-          setValue('guardian.district_id', parseInt(response.data[0].id));
-        }
       } else {
         toast.error('İlçeler yüklenirken bir hata oluştu');
       }
@@ -335,7 +331,6 @@ export default function GuardianInfoStep() {
                       {...field}
                       className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
                       disabled={isLoadingCountries}
-                      onChange={(e) => field.onChange(parseInt(e.target.value))}
                     >
                       <option value="">Ülke Seçin</option>
                       {countries.map((country) => (
@@ -361,7 +356,6 @@ export default function GuardianInfoStep() {
                       {...field}
                       className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
                       disabled={isLoadingProvinces || !guardianCountryId}
-                      onChange={(e) => field.onChange(parseInt(e.target.value))}
                     >
                       <option value="">İl Seçin</option>
                       {provinces.map((province) => (
@@ -387,7 +381,6 @@ export default function GuardianInfoStep() {
                       {...field}
                       className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
                       disabled={isLoadingDistricts || !guardianProvinceId}
-                      onChange={(e) => field.onChange(parseInt(e.target.value))}
                     >
                       <option value="">İlçe Seçin</option>
                       {districts.map((district) => (

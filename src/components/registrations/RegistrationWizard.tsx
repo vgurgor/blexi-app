@@ -45,7 +45,7 @@ const registrationSchema = z.object({
     emergency_contact_phone: z.string().min(10, 'Acil durum kişisi telefonu zorunludur'),
     emergency_contact_relationship: z.string().optional().or(z.literal('')),
     // Address fields
-    country_id: z.number().or(z.string().transform(val => Number(val))).default(223), // Turkey
+    country_id: z.number().or(z.string().transform(val => Number(val))), // Turkey
     province_id: z.number().or(z.string().transform(val => Number(val))).optional(),
     district_id: z.number().or(z.string().transform(val => Number(val))).optional(),
     neighborhood: z.string().optional().or(z.literal('')),
@@ -69,7 +69,7 @@ const registrationSchema = z.object({
     occupation: z.string().optional().or(z.literal('')),
     workplace: z.string().optional().or(z.literal('')),
     // Address fields
-    country_id: z.number().or(z.string().transform(val => Number(val))).default(223).optional(), // Turkey
+    country_id: z.number().or(z.string().transform(val => Number(val))).optional(), // Turkey
     province_id: z.number().or(z.string().transform(val => Number(val))).optional(),
     district_id: z.number().or(z.string().transform(val => Number(val))).optional(),
     neighborhood: z.string().optional().or(z.literal('')),
@@ -162,7 +162,7 @@ export default function RegistrationWizard({ onSubmit }: RegistrationWizardProps
       emergency_contact_name: '',
       emergency_contact_phone: '',
       emergency_contact_relationship: '',
-      country_id: 223, // Turkey
+      country_id: '', // Turkey
     },
     is_self_guardian: false,
     guardian: {
@@ -176,7 +176,7 @@ export default function RegistrationWizard({ onSubmit }: RegistrationWizardProps
       birth_date: '',
       occupation: '',
       workplace: '',
-      country_id: 223, // Turkey
+      country_id: '', // Turkey
     },
     products: [],
     invoice_titles: [],
