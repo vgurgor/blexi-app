@@ -39,7 +39,38 @@ export interface IPerson {
   phone: string;
   email?: string;
   birthDate: string;
-  address?: string;
+  address?: {
+    id?: string;
+    countryId: string;
+    provinceId: string;
+    districtId: string;
+    neighborhood?: string;
+    street?: string;
+    buildingNo?: string;
+    apartmentNo?: string;
+    postalCode?: string;
+    addressType: 'home' | 'work' | 'other';
+    isDefault?: boolean;
+    status?: 'active' | 'inactive';
+    formattedAddress?: string;
+    country?: {
+      id: string;
+      code: string;
+      name: string;
+      phoneCode: string;
+    };
+    province?: {
+      id: string;
+      countryId: string;
+      code: string;
+      name: string;
+    };
+    district?: {
+      id: string;
+      provinceId: string;
+      name: string;
+    };
+  };
   city?: string;
   profilePhotoPath?: string;
   profilePhotoUrl?: string;

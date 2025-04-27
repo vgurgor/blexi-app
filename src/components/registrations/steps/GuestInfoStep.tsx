@@ -8,10 +8,13 @@ import { Button } from '@/components/ui/atoms/Button';
 import { peopleApi } from '@/lib/api/people';
 import { guestsApi } from '@/lib/api/guests';
 import { guardiansApi } from '@/lib/api/guardians';
+import { countriesApi } from '@/lib/api/countries';
+import { provincesApi } from '@/lib/api/provinces';
+import { districtsApi } from '@/lib/api/districts';
 import { useToast } from '@/hooks/useToast';
 
 export default function GuestInfoStep() {
-  const { control, setValue, watch, formState: { errors } } = useFormContext();
+  const { control, setValue, watch, formState: { errors }, trigger } = useFormContext();
   const [searchTerm, setSearchTerm] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [searchResults, setSearchResults] = useState<any[]>([]);
@@ -20,7 +23,6 @@ export default function GuestInfoStep() {
   const [isCreatingGuest, setIsCreatingGuest] = useState(false);
   const [isCreatingGuardian, setIsCreatingGuardian] = useState(false);
   const [selectedPerson, setSelectedPerson] = useState<any>(null);
-  const [showGuardianForm, setShowGuardianForm] = useState(false);
   const [guardianSearchTerm, setGuardianSearchTerm] = useState('');
   const [guardianSearchResults, setGuardianSearchResults] = useState<any[]>([]);
   const [showGuardianResults, setShowGuardianResults] = useState(false);
@@ -28,14 +30,222 @@ export default function GuestInfoStep() {
   const [selectedGuardian, setSelectedGuardian] = useState<any>(null);
   const toast = useToast();
 
+  // Address related states
+  const [countries, setCountries] = useState<any[]>([]);
+  const [provinces, setProvinces] = useState<any[]>([]);
+  const [districts, setDistricts] = useState<any[]>([]);
+  const [isLoadingCountries, setIsLoadingCountries] = useState(false);
+  const [isLoadingProvinces, setIsLoadingProvinces] = useState(false);
+  const [isLoadingDistricts, setIsLoadingDistricts] = useState(false);
+
+  // Guardian address states
+  const [guardianCountries, setGuardianCountries] = useState<any[]>([]);
+  const [guardianProvinces, setGuardianProvinces] = useState<any[]>([]);
+  const [guardianDistricts, setGuardianDistricts] = useState<any[]>([]);
+
   const guestId = watch('guest_id');
   const guestType = watch('guest_type');
   const isSelfGuardian = watch('is_self_guardian') || false;
+  
+  // Address fields
+  const countryId = watch('person.address_data.country_id');
+  const provinceId = watch('person.address_data.province_id');
+  const guardianCountryId = watch('guardian.address_data.country_id');
+  const guardianProvinceId = watch('guardian.address_data.province_id');
+
+  // Fetch countries on component mount
+  useEffect(() => {
+    fetchCountries();
+  }, []);
+
+  // Fetch provinces when country changes
+  useEffect(() => {
+    if (countryId) {
+      fetchProvinces(countryId);
+      // Clear province and district when country changes
+      setValue('person.address_data.province_id', '');
+      setValue('person.address_data.district_id', '');
+      setDistricts([]);
+    }
+  }, [countryId]);
+
+  // Fetch districts when province changes
+  useEffect(() => {
+    if (provinceId) {
+      fetchDistricts(provinceId);
+      // Clear district when province changes
+      setValue('person.address_data.district_id', '');
+    }
+  }, [provinceId]);
+
+  // Guardian address dependencies
+  useEffect(() => {
+    if (guardianCountryId) {
+      fetchGuardianProvinces(guardianCountryId);
+      setValue('guardian.address_data.province_id', '');
+      setValue('guardian.address_data.district_id', '');
+      setGuardianDistricts([]);
+    }
+  }, [guardianCountryId]);
+
+  useEffect(() => {
+    if (guardianProvinceId) {
+      fetchGuardianDistricts(guardianProvinceId);
+      setValue('guardian.address_data.district_id', '');
+    }
+  }, [guardianProvinceId]);
 
   // Convert text to uppercase with Turkish character support
   const toUpperCase = (text: string): string => {
     if (!text) return '';
     return text.toLocaleUpperCase('tr-TR');
+  };
+
+  // Fetch countries
+  const fetchCountries = async () => {
+    setIsLoadingCountries(true);
+    try {
+      const response = await countriesApi.getAll();
+      
+      if (response.success && response.data) {
+        setCountries(response.data);
+        setGuardianCountries(response.data);
+        
+        // Set default country (Turkey)
+        const turkey = response.data.find(country => country.code === 'TR');
+        if (turkey) {
+          setValue('person.address_data.country_id', turkey.id);
+          setValue('guardian.address_data.country_id', turkey.id);
+        }
+      } else {
+        toast.error('Ülkeler yüklenirken bir hata oluştu');
+      }
+    } catch (error) {
+      console.error('Error fetching countries:', error);
+      toast.error('Ülkeler yüklenirken bir hata oluştu');
+    } finally {
+      setIsLoadingCountries(false);
+    }
+  };
+
+  // Fetch provinces for a country
+  const fetchProvinces = async (countryId: string) => {
+    setIsLoadingProvinces(true);
+    try {
+      const response = await countriesApi.getProvinces(countryId);
+      
+      if (response.success && response.data) {
+        setProvinces(response.data);
+      } else {
+        toast.error('İller yüklenirken bir hata oluştu');
+      }
+    } catch (error) {
+      console.error('Error fetching provinces:', error);
+      toast.error('İller yüklenirken bir hata oluştu');
+    } finally {
+      setIsLoadingProvinces(false);
+    }
+  };
+
+  // Fetch districts for a province
+  const fetchDistricts = async (provinceId: string) => {
+    setIsLoadingDistricts(true);
+    try {
+      const response = await provincesApi.getDistricts(provinceId);
+      
+      if (response.success && response.data) {
+        setDistricts(response.data);
+      } else {
+        toast.error('İlçeler yüklenirken bir hata oluştu');
+      }
+    } catch (error) {
+      console.error('Error fetching districts:', error);
+      toast.error('İlçeler yüklenirken bir hata oluştu');
+    } finally {
+      setIsLoadingDistricts(false);
+    }
+  };
+
+  // Fetch provinces for guardian
+  const fetchGuardianProvinces = async (countryId: string) => {
+    try {
+      const response = await countriesApi.getProvinces(countryId);
+      
+      if (response.success && response.data) {
+        setGuardianProvinces(response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching guardian provinces:', error);
+    }
+  };
+
+  // Fetch districts for guardian
+  const fetchGuardianDistricts = async (provinceId: string) => {
+    try {
+      const response = await provincesApi.getDistricts(provinceId);
+      
+      if (response.success && response.data) {
+        setGuardianDistricts(response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching guardian districts:', error);
+    }
+  };
+
+  // Update formatted address when address components change
+  const updateFormattedAddress = () => {
+    const addressData = watch('person.address_data');
+    
+    if (!addressData) return;
+    
+    const { neighborhood, street, building_no, apartment_no } = addressData;
+    
+    // Get district, province and country names
+    const district = districts.find(d => d.id === addressData.district_id?.toString())?.name || '';
+    const province = provinces.find(p => p.id === addressData.province_id?.toString())?.name || '';
+    const country = countries.find(c => c.id === addressData.country_id?.toString())?.name || '';
+    
+    // Build formatted address
+    let formattedAddress = '';
+    
+    if (street) formattedAddress += street;
+    if (building_no) formattedAddress += ` No:${building_no}`;
+    if (apartment_no) formattedAddress += ` Daire:${apartment_no}`;
+    if (neighborhood) formattedAddress += `, ${neighborhood}`;
+    if (district) formattedAddress += `, ${district}`;
+    if (province) formattedAddress += `, ${province}`;
+    if (country) formattedAddress += `, ${country}`;
+    
+    // Update address field
+    setValue('person.address', formattedAddress);
+  };
+
+  // Update guardian formatted address
+  const updateGuardianFormattedAddress = () => {
+    const addressData = watch('guardian.address_data');
+    
+    if (!addressData) return;
+    
+    const { neighborhood, street, building_no, apartment_no } = addressData;
+    
+    // Get district, province and country names
+    const district = guardianDistricts.find(d => d.id === addressData.district_id?.toString())?.name || '';
+    const province = guardianProvinces.find(p => p.id === addressData.province_id?.toString())?.name || '';
+    const country = guardianCountries.find(c => c.id === addressData.country_id?.toString())?.name || '';
+    
+    // Build formatted address
+    let formattedAddress = '';
+    
+    if (street) formattedAddress += street;
+    if (building_no) formattedAddress += ` No:${building_no}`;
+    if (apartment_no) formattedAddress += ` Daire:${apartment_no}`;
+    if (neighborhood) formattedAddress += `, ${neighborhood}`;
+    if (district) formattedAddress += `, ${district}`;
+    if (province) formattedAddress += `, ${province}`;
+    if (country) formattedAddress += `, ${country}`;
+    
+    // Update address field
+    setValue('guardian.address', formattedAddress);
   };
 
   // Search for existing people
@@ -61,7 +271,7 @@ export default function GuestInfoStep() {
         phone = searchTerm;
       }
       
-      const response = await peopleApi.getAll(undefined, name, undefined, undefined, phone, 1, 10);
+      const response = await peopleApi.getAll(undefined, name, phone, undefined, undefined, undefined, 1, 10);
       
       if (response.success && response.data) {
         setSearchResults(response.data);
@@ -100,7 +310,7 @@ export default function GuestInfoStep() {
         phone = guardianSearchTerm;
       }
       
-      const response = await peopleApi.getAll(undefined, name, undefined, undefined, phone, 1, 10);
+      const response = await peopleApi.getAll(undefined, name, undefined, undefined, phone, undefined, 1, 10);
       
       if (response.success && response.data) {
         setGuardianSearchResults(response.data);
@@ -133,7 +343,32 @@ export default function GuestInfoStep() {
     setValue('person.phone', person.phone);
     setValue('person.email', person.email || '');
     setValue('person.birth_date', person.birthDate);
-    setValue('person.address', person.address || '');
+    
+    // Set address data if available
+    if (person.address) {
+      setValue('person.address', person.address.formattedAddress || '');
+      
+      if (person.address.countryId) {
+        setValue('person.address_data.country_id', person.address.countryId);
+        fetchProvinces(person.address.countryId);
+      }
+      
+      if (person.address.provinceId) {
+        setValue('person.address_data.province_id', person.address.provinceId);
+        fetchDistricts(person.address.provinceId);
+      }
+      
+      if (person.address.districtId) {
+        setValue('person.address_data.district_id', person.address.districtId);
+      }
+      
+      setValue('person.address_data.neighborhood', person.address.neighborhood || '');
+      setValue('person.address_data.street', person.address.street || '');
+      setValue('person.address_data.building_no', person.address.buildingNo || '');
+      setValue('person.address_data.apartment_no', person.address.apartmentNo || '');
+      setValue('person.address_data.postal_code', person.address.postalCode || '');
+    }
+    
     setValue('person.city', toUpperCase(person.city || ''));
   };
 
@@ -148,6 +383,31 @@ export default function GuestInfoStep() {
     setValue('guardian.surname', toUpperCase(person.surname));
     setValue('guardian.phone', person.phone);
     setValue('guardian.email', person.email || '');
+    
+    // Set address data if available
+    if (person.address) {
+      setValue('guardian.address', person.address.formattedAddress || '');
+      
+      if (person.address.countryId) {
+        setValue('guardian.address_data.country_id', person.address.countryId);
+        fetchGuardianProvinces(person.address.countryId);
+      }
+      
+      if (person.address.provinceId) {
+        setValue('guardian.address_data.province_id', person.address.provinceId);
+        fetchGuardianDistricts(person.address.provinceId);
+      }
+      
+      if (person.address.districtId) {
+        setValue('guardian.address_data.district_id', person.address.districtId);
+      }
+      
+      setValue('guardian.address_data.neighborhood', person.address.neighborhood || '');
+      setValue('guardian.address_data.street', person.address.street || '');
+      setValue('guardian.address_data.building_no', person.address.buildingNo || '');
+      setValue('guardian.address_data.apartment_no', person.address.apartmentNo || '');
+      setValue('guardian.address_data.postal_code', person.address.postalCode || '');
+    }
   };
 
   // Check if a person is already registered as a guest
@@ -176,6 +436,9 @@ export default function GuestInfoStep() {
 
   // Create a new person
   const handleCreatePerson = async () => {
+    // Ensure address data is updated
+    updateFormattedAddress();
+    
     const personData = {
       name: toUpperCase(watch('person.name')),
       surname: toUpperCase(watch('person.surname')),
@@ -184,13 +447,30 @@ export default function GuestInfoStep() {
       phone: watch('person.phone'),
       email: watch('person.email'),
       birth_date: watch('person.birth_date'),
-      address: watch('person.address'),
       city: toUpperCase(watch('person.city')),
+      address: {
+        country_id: parseInt(watch('person.address_data.country_id')),
+        province_id: parseInt(watch('person.address_data.province_id')),
+        district_id: parseInt(watch('person.address_data.district_id')),
+        neighborhood: watch('person.address_data.neighborhood'),
+        street: watch('person.address_data.street'),
+        building_no: watch('person.address_data.building_no'),
+        apartment_no: watch('person.address_data.apartment_no'),
+        postal_code: watch('person.address_data.postal_code'),
+        address_type: 'home',
+        is_default: true
+      }
     };
     
     // Validate required fields
     if (!personData.name || !personData.surname || !personData.gender || !personData.tc_no || !personData.phone || !personData.birth_date) {
       toast.error('Lütfen tüm zorunlu alanları doldurun');
+      return;
+    }
+    
+    // Validate address fields
+    if (!personData.address.country_id || !personData.address.province_id || !personData.address.district_id) {
+      toast.error('Lütfen adres bilgilerini eksiksiz doldurun (ülke, il ve ilçe zorunludur)');
       return;
     }
     
@@ -347,7 +627,6 @@ export default function GuestInfoStep() {
         setValue('guardian.is_emergency_contact', false);
         setValue('guardian.notes', '');
         setGuardianSearchTerm('');
-        setShowGuardianForm(false);
       } else {
         toast.error(response.error || 'Veli kaydı oluşturulurken bir hata oluştu');
       }
@@ -361,6 +640,9 @@ export default function GuestInfoStep() {
 
   // Create a new guardian person
   const handleCreateGuardianPerson = async () => {
+    // Ensure guardian address data is updated
+    updateGuardianFormattedAddress();
+    
     const personData = {
       name: toUpperCase(watch('guardian.name')),
       surname: toUpperCase(watch('guardian.surname')),
@@ -369,11 +651,29 @@ export default function GuestInfoStep() {
       phone: watch('guardian.phone'),
       email: watch('guardian.email'),
       birth_date: watch('guardian.birth_date') || new Date().toISOString().split('T')[0],
+      address: {
+        country_id: parseInt(watch('guardian.address_data.country_id')),
+        province_id: parseInt(watch('guardian.address_data.province_id')),
+        district_id: parseInt(watch('guardian.address_data.district_id')),
+        neighborhood: watch('guardian.address_data.neighborhood'),
+        street: watch('guardian.address_data.street'),
+        building_no: watch('guardian.address_data.building_no'),
+        apartment_no: watch('guardian.address_data.apartment_no'),
+        postal_code: watch('guardian.address_data.postal_code'),
+        address_type: 'home',
+        is_default: true
+      }
     };
     
     // Validate required fields
     if (!personData.name || !personData.surname || !personData.tc_no || !personData.phone) {
       toast.error('Lütfen tüm zorunlu alanları doldurun');
+      return;
+    }
+    
+    // Validate address fields
+    if (!personData.address.country_id || !personData.address.province_id || !personData.address.district_id) {
+      toast.error('Lütfen adres bilgilerini eksiksiz doldurun (ülke, il ve ilçe zorunludur)');
       return;
     }
     
@@ -426,7 +726,6 @@ export default function GuestInfoStep() {
             setValue('guardian.is_emergency_contact', false);
             setValue('guardian.notes', '');
             setGuardianSearchTerm('');
-            setShowGuardianForm(false);
           }
         }
       } else {
@@ -641,6 +940,7 @@ export default function GuestInfoStep() {
           name="person.gender"
           label="Cinsiyet*"
           options={[
+            { value: '', label: 'Seçiniz' },
             { value: 'MALE', label: 'Erkek' },
             { value: 'FEMALE', label: 'Kadın' }
           ]}
@@ -764,48 +1064,249 @@ export default function GuestInfoStep() {
             </div>
           </div>
         )}
+      </div>
+
+      {/* Address Information */}
+      <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+        <div className="flex items-center gap-3 mb-4">
+          <MapPin className="w-5 h-5 text-blue-500 dark:text-blue-400" />
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white">Adres Bilgileri</h3>
+        </div>
         
-        <div className="md:col-span-2">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Adres
-          </label>
-          <div className="relative">
-            <MapPin className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          {/* Country */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Ülke*
+            </label>
             <Controller
-              name="person.address"
+              name="person.address_data.country_id"
               control={control}
               render={({ field }) => (
-                <textarea
+                <select
                   {...field}
-                  placeholder="Adres"
-                  rows={3}
-                  className="w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
+                  className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
+                  disabled={isLoadingCountries}
+                  onChange={(e) => {
+                    field.onChange(e.target.value);
+                    updateFormattedAddress();
+                  }}
+                >
+                  <option value="">Ülke Seçin</option>
+                  {countries.map((country) => (
+                    <option key={country.id} value={country.id}>
+                      {country.name}
+                    </option>
+                  ))}
+                </select>
+              )}
+            />
+            {errors.person?.address_data?.country_id && (
+              <p className="mt-1 text-sm text-red-600 dark:text-red-400">Ülke seçimi zorunludur</p>
+            )}
+          </div>
+          
+          {/* Province */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              İl*
+            </label>
+            <Controller
+              name="person.address_data.province_id"
+              control={control}
+              render={({ field }) => (
+                <select
+                  {...field}
+                  className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
+                  disabled={isLoadingProvinces || !countryId}
+                  onChange={(e) => {
+                    field.onChange(e.target.value);
+                    updateFormattedAddress();
+                  }}
+                >
+                  <option value="">İl Seçin</option>
+                  {provinces.map((province) => (
+                    <option key={province.id} value={province.id}>
+                      {province.name}
+                    </option>
+                  ))}
+                </select>
+              )}
+            />
+            {errors.person?.address_data?.province_id && (
+              <p className="mt-1 text-sm text-red-600 dark:text-red-400">İl seçimi zorunludur</p>
+            )}
+          </div>
+          
+          {/* District */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              İlçe*
+            </label>
+            <Controller
+              name="person.address_data.district_id"
+              control={control}
+              render={({ field }) => (
+                <select
+                  {...field}
+                  className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
+                  disabled={isLoadingDistricts || !provinceId}
+                  onChange={(e) => {
+                    field.onChange(e.target.value);
+                    updateFormattedAddress();
+                  }}
+                >
+                  <option value="">İlçe Seçin</option>
+                  {districts.map((district) => (
+                    <option key={district.id} value={district.id}>
+                      {district.name}
+                    </option>
+                  ))}
+                </select>
+              )}
+            />
+            {errors.person?.address_data?.district_id && (
+              <p className="mt-1 text-sm text-red-600 dark:text-red-400">İlçe seçimi zorunludur</p>
+            )}
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          {/* Neighborhood */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Mahalle
+            </label>
+            <Controller
+              name="person.address_data.neighborhood"
+              control={control}
+              render={({ field }) => (
+                <input
+                  {...field}
+                  type="text"
+                  placeholder="Mahalle"
+                  className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
+                  onChange={(e) => {
+                    field.onChange(e.target.value);
+                    updateFormattedAddress();
+                  }}
+                />
+              )}
+            />
+          </div>
+          
+          {/* Street */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Cadde/Sokak
+            </label>
+            <Controller
+              name="person.address_data.street"
+              control={control}
+              render={({ field }) => (
+                <input
+                  {...field}
+                  type="text"
+                  placeholder="Cadde/Sokak"
+                  className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
+                  onChange={(e) => {
+                    field.onChange(e.target.value);
+                    updateFormattedAddress();
+                  }}
                 />
               )}
             />
           </div>
         </div>
         
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Şehir
-          </label>
-          <div className="relative">
-            <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          {/* Building No */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Bina No
+            </label>
             <Controller
-              name="person.city"
+              name="person.address_data.building_no"
               control={control}
               render={({ field }) => (
                 <input
                   {...field}
                   type="text"
-                  placeholder="Şehir"
-                  className="w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
-                  onChange={(e) => handleInputChange(e, 'person.city')}
+                  placeholder="Bina No"
+                  className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
+                  onChange={(e) => {
+                    field.onChange(e.target.value);
+                    updateFormattedAddress();
+                  }}
                 />
               )}
             />
           </div>
+          
+          {/* Apartment No */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Daire No
+            </label>
+            <Controller
+              name="person.address_data.apartment_no"
+              control={control}
+              render={({ field }) => (
+                <input
+                  {...field}
+                  type="text"
+                  placeholder="Daire No"
+                  className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
+                  onChange={(e) => {
+                    field.onChange(e.target.value);
+                    updateFormattedAddress();
+                  }}
+                />
+              )}
+            />
+          </div>
+          
+          {/* Postal Code */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Posta Kodu
+            </label>
+            <Controller
+              name="person.address_data.postal_code"
+              control={control}
+              render={({ field }) => (
+                <input
+                  {...field}
+                  type="text"
+                  placeholder="Posta Kodu"
+                  className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
+                  onChange={(e) => {
+                    field.onChange(e.target.value);
+                    updateFormattedAddress();
+                  }}
+                />
+              )}
+            />
+          </div>
+        </div>
+        
+        {/* Formatted Address (Read-only) */}
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Tam Adres
+          </label>
+          <Controller
+            name="person.address"
+            control={control}
+            render={({ field }) => (
+              <textarea
+                {...field}
+                className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
+                rows={3}
+                readOnly
+              />
+            )}
+          />
         </div>
       </div>
 
@@ -826,262 +1327,472 @@ export default function GuestInfoStep() {
 
         {!isSelfGuardian && (
           <div className="space-y-6">
-            {!showGuardianForm ? (
-              <div className="flex justify-between items-center">
-                <p className="text-gray-600 dark:text-gray-400">
-                  Veli bilgisi eklemek için aşağıdaki butonu kullanın.
-                </p>
-                <Button
-                  onClick={() => setShowGuardianForm(true)}
-                  variant="secondary"
-                  size="sm"
-                >
-                  Veli Ekle
-                </Button>
-              </div>
-            ) : (
-              <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-                <h4 className="text-md font-medium text-gray-900 dark:text-white mb-4">
-                  Veli Bilgileri
-                </h4>
-                
-                {/* Search for existing guardian */}
-                <div className="mb-6">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Mevcut Kişi Ara
-                  </label>
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                    <input
-                      type="text"
-                      value={guardianSearchTerm}
-                      onChange={(e) => setGuardianSearchTerm(e.target.value)}
-                      placeholder="İsim veya telefon numarası ile ara..."
-                      className="w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
-                    />
-                    <Button
-                      onClick={handleGuardianSearch}
-                      className="absolute right-1 top-1/2 -translate-y-1/2"
-                      size="sm"
-                      isLoading={isSearchingGuardian}
-                      disabled={!guardianSearchTerm || guardianSearchTerm.length < 3}
-                    >
-                      Ara
-                    </Button>
-                  </div>
-                  
-                  {/* Guardian Search Results */}
-                  {showGuardianResults && (
-                    <div className="mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                      {isSearchingGuardian ? (
-                        <div className="p-4 text-center">
-                          <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
-                          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">Aranıyor...</p>
-                        </div>
-                      ) : guardianSearchResults.length > 0 ? (
-                        <ul>
-                          {guardianSearchResults.map((person) => (
-                            <li 
-                              key={person.id}
-                              className="p-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer border-b border-gray-200 dark:border-gray-700 last:border-b-0"
-                              onClick={() => handleSelectGuardian(person)}
-                            >
-                              <div className="flex items-center">
-                                <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/20 rounded-full flex items-center justify-center mr-3">
-                                  <User className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                                </div>
-                                <div>
-                                  <p className="font-medium text-gray-900 dark:text-white">{person.name} {person.surname}</p>
-                                  <p className="text-sm text-gray-500 dark:text-gray-400">{person.phone}</p>
-                                </div>
-                              </div>
-                            </li>
-                          ))}
-                        </ul>
-                      ) : (
-                        <div className="p-4 text-center">
-                          <p className="text-sm text-gray-600 dark:text-gray-400">Sonuç bulunamadı</p>
-                          <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">Yeni kişi oluşturmak için aşağıdaki formu doldurun</p>
-                        </div>
-                      )}
-                    </div>
-                  )}
+            <div className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+              <h4 className="text-md font-medium text-gray-900 dark:text-white mb-4">
+                Veli Bilgileri
+              </h4>
+              
+              {/* Search for existing guardian */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Mevcut Kişi Ara
+                </label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    type="text"
+                    value={guardianSearchTerm}
+                    onChange={(e) => setGuardianSearchTerm(e.target.value)}
+                    placeholder="İsim veya telefon numarası ile ara..."
+                    className="w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
+                  />
+                  <Button
+                    onClick={handleGuardianSearch}
+                    className="absolute right-1 top-1/2 -translate-y-1/2"
+                    size="sm"
+                    isLoading={isSearchingGuardian}
+                    disabled={!guardianSearchTerm || guardianSearchTerm.length < 3}
+                  >
+                    Ara
+                  </Button>
                 </div>
                 
-                {/* Guardian Form */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Ad*
-                    </label>
-                    <div className="relative">
-                      <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                      <Controller
-                        name="guardian.name"
-                        control={control}
-                        render={({ field }) => (
-                          <input
-                            {...field}
-                            type="text"
-                            placeholder="Ad"
-                            className="w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
-                            onChange={(e) => handleInputChange(e, 'guardian.name')}
-                          />
-                        )}
-                      />
-                    </div>
+                {/* Guardian Search Results */}
+                {showGuardianResults && (
+                  <div className="mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                    {isSearchingGuardian ? (
+                      <div className="p-4 text-center">
+                        <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+                        <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">Aranıyor...</p>
+                      </div>
+                    ) : guardianSearchResults.length > 0 ? (
+                      <ul>
+                        {guardianSearchResults.map((person) => (
+                          <li 
+                            key={person.id}
+                            className="p-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer border-b border-gray-200 dark:border-gray-700 last:border-b-0"
+                            onClick={() => handleSelectGuardian(person)}
+                          >
+                            <div className="flex items-center">
+                              <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/20 rounded-full flex items-center justify-center mr-3">
+                                <User className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                              </div>
+                              <div>
+                                <p className="font-medium text-gray-900 dark:text-white">{person.name} {person.surname}</p>
+                                <p className="text-sm text-gray-500 dark:text-gray-400">{person.phone}</p>
+                              </div>
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <div className="p-4 text-center">
+                        <p className="text-sm text-gray-600 dark:text-gray-400">Sonuç bulunamadı</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">Yeni kişi oluşturmak için aşağıdaki formu doldurun</p>
+                      </div>
+                    )}
                   </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Soyad*
-                    </label>
-                    <div className="relative">
-                      <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                      <Controller
-                        name="guardian.surname"
-                        control={control}
-                        render={({ field }) => (
-                          <input
-                            {...field}
-                            type="text"
-                            placeholder="Soyad"
-                            className="w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
-                            onChange={(e) => handleInputChange(e, 'guardian.surname')}
-                          />
-                        )}
-                      />
-                    </div>
-                  </div>
-                  
-                  <FormInput
-                    name="guardian.tc_no"
-                    label="TC Kimlik No*"
-                    placeholder="11 haneli TC Kimlik No"
-                    leftIcon={<User className="w-5 h-5 text-gray-400" />}
-                  />
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Telefon*
-                    </label>
-                    <div className="relative">
-                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                      <Controller
-                        name="guardian.phone"
-                        control={control}
-                        render={({ field }) => (
-                          <input
-                            {...field}
-                            type="tel"
-                            placeholder="(5XX) XXX XX XX"
-                            className="w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
-                            onChange={(e) => {
-                              // Only allow digits
-                              const value = e.target.value.replace(/\D/g, '');
-                              
-                              // Format the phone number
-                              let formattedValue = '';
-                              if (value.length > 0) {
-                                formattedValue = '(';
-                                if (value.length > 0) {
-                                  formattedValue += value.substring(0, 3);
-                                }
-                                if (value.length > 3) {
-                                  formattedValue += ') ' + value.substring(3, 6);
-                                }
-                                if (value.length > 6) {
-                                  formattedValue += ' ' + value.substring(6, 8);
-                                }
-                                if (value.length > 8) {
-                                  formattedValue += ' ' + value.substring(8, 10);
-                                }
-                              }
-                              
-                              field.onChange(formattedValue);
-                            }}
-                          />
-                        )}
-                      />
-                    </div>
-                  </div>
-                  
-                  <FormInput
-                    name="guardian.email"
-                    label="E-posta"
-                    placeholder="ornek@email.com"
-                    leftIcon={<Mail className="w-5 h-5 text-gray-400" />}
-                  />
-                  
-                  <FormSelect
-                    name="guardian.relationship"
-                    label="Yakınlık Derecesi*"
-                    options={[
-                      { value: 'PARENT', label: 'Ebeveyn' },
-                      { value: 'SIBLING', label: 'Kardeş' },
-                      { value: 'RELATIVE', label: 'Akraba' },
-                      { value: 'SPOUSE', label: 'Eş' },
-                      { value: 'OTHER', label: 'Diğer' }
-                    ]}
-                  />
-                  
-                  <div className="md:col-span-2">
-                    <FormCheckbox
-                      name="guardian.is_emergency_contact"
-                      label="Acil durum kişisi olarak belirle"
-                    />
-                  </div>
-                  
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Notlar
-                    </label>
+                )}
+              </div>
+              
+              {/* Guardian Form */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Ad*
+                  </label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                     <Controller
-                      name="guardian.notes"
+                      name="guardian.name"
                       control={control}
                       render={({ field }) => (
-                        <textarea
+                        <input
                           {...field}
-                          className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
-                          placeholder="Ek bilgiler..."
-                          rows={3}
+                          type="text"
+                          placeholder="Ad"
+                          className="w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
+                          onChange={(e) => handleInputChange(e, 'guardian.name')}
                         />
                       )}
                     />
                   </div>
                 </div>
                 
-                <div className="flex justify-end gap-2">
-                  <Button
-                    onClick={() => setShowGuardianForm(false)}
-                    variant="secondary"
-                    size="sm"
-                  >
-                    İptal
-                  </Button>
-                  
-                  {selectedGuardian ? (
-                    <Button
-                      onClick={handleCreateGuardian}
-                      variant="primary"
-                      size="sm"
-                      isLoading={isCreatingGuardian}
-                    >
-                      Veli Olarak Ekle
-                    </Button>
-                  ) : (
-                    <Button
-                      onClick={handleCreateGuardianPerson}
-                      variant="primary"
-                      size="sm"
-                      isLoading={isCreatingPerson}
-                    >
-                      Kişi Oluştur ve Veli Olarak Ekle
-                    </Button>
-                  )}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Soyad*
+                  </label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <Controller
+                      name="guardian.surname"
+                      control={control}
+                      render={({ field }) => (
+                        <input
+                          {...field}
+                          type="text"
+                          placeholder="Soyad"
+                          className="w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
+                          onChange={(e) => handleInputChange(e, 'guardian.surname')}
+                        />
+                      )}
+                    />
+                  </div>
+                </div>
+                
+                <FormInput
+                  name="guardian.tc_no"
+                  label="TC Kimlik No*"
+                  placeholder="11 haneli TC Kimlik No"
+                  leftIcon={<User className="w-5 h-5 text-gray-400" />}
+                />
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Telefon*
+                  </label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <Controller
+                      name="guardian.phone"
+                      control={control}
+                      render={({ field }) => (
+                        <input
+                          {...field}
+                          type="tel"
+                          placeholder="(5XX) XXX XX XX"
+                          className="w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
+                          onChange={(e) => {
+                            // Only allow digits
+                            const value = e.target.value.replace(/\D/g, '');
+                            
+                            // Format the phone number
+                            let formattedValue = '';
+                            if (value.length > 0) {
+                              formattedValue = '(';
+                              if (value.length > 0) {
+                                formattedValue += value.substring(0, 3);
+                              }
+                              if (value.length > 3) {
+                                formattedValue += ') ' + value.substring(3, 6);
+                              }
+                              if (value.length > 6) {
+                                formattedValue += ' ' + value.substring(6, 8);
+                              }
+                              if (value.length > 8) {
+                                formattedValue += ' ' + value.substring(8, 10);
+                              }
+                            }
+                            
+                            field.onChange(formattedValue);
+                          }}
+                        />
+                      )}
+                    />
+                  </div>
+                </div>
+                
+                <FormInput
+                  name="guardian.email"
+                  label="E-posta"
+                  placeholder="ornek@email.com"
+                  leftIcon={<Mail className="w-5 h-5 text-gray-400" />}
+                />
+                
+                <FormSelect
+                  name="guardian.relationship"
+                  label="Yakınlık Derecesi*"
+                  options={[
+                    { value: 'PARENT', label: 'Ebeveyn' },
+                    { value: 'SIBLING', label: 'Kardeş' },
+                    { value: 'RELATIVE', label: 'Akraba' },
+                    { value: 'SPOUSE', label: 'Eş' },
+                    { value: 'OTHER', label: 'Diğer' }
+                  ]}
+                />
+                
+                <div className="md:col-span-2">
+                  <FormCheckbox
+                    name="guardian.is_emergency_contact"
+                    label="Acil durum kişisi olarak belirle"
+                  />
                 </div>
               </div>
-            )}
+
+              {/* Guardian Address Information */}
+              <div className="mt-4 mb-4">
+                <h5 className="text-md font-medium text-gray-700 dark:text-gray-300 mb-3">
+                  Veli Adres Bilgileri
+                </h5>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                  {/* Country */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Ülke*
+                    </label>
+                    <Controller
+                      name="guardian.address_data.country_id"
+                      control={control}
+                      render={({ field }) => (
+                        <select
+                          {...field}
+                          className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
+                          onChange={(e) => {
+                            field.onChange(e.target.value);
+                            updateGuardianFormattedAddress();
+                          }}
+                        >
+                          <option value="">Ülke Seçin</option>
+                          {guardianCountries.map((country) => (
+                            <option key={country.id} value={country.id}>
+                              {country.name}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                    />
+                  </div>
+                  
+                  {/* Province */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      İl*
+                    </label>
+                    <Controller
+                      name="guardian.address_data.province_id"
+                      control={control}
+                      render={({ field }) => (
+                        <select
+                          {...field}
+                          className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
+                          disabled={!guardianCountryId}
+                          onChange={(e) => {
+                            field.onChange(e.target.value);
+                            updateGuardianFormattedAddress();
+                          }}
+                        >
+                          <option value="">İl Seçin</option>
+                          {guardianProvinces.map((province) => (
+                            <option key={province.id} value={province.id}>
+                              {province.name}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                    />
+                  </div>
+                  
+                  {/* District */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      İlçe*
+                    </label>
+                    <Controller
+                      name="guardian.address_data.district_id"
+                      control={control}
+                      render={({ field }) => (
+                        <select
+                          {...field}
+                          className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
+                          disabled={!guardianProvinceId}
+                          onChange={(e) => {
+                            field.onChange(e.target.value);
+                            updateGuardianFormattedAddress();
+                          }}
+                        >
+                          <option value="">İlçe Seçin</option>
+                          {guardianDistricts.map((district) => (
+                            <option key={district.id} value={district.id}>
+                              {district.name}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                    />
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  {/* Neighborhood */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Mahalle
+                    </label>
+                    <Controller
+                      name="guardian.address_data.neighborhood"
+                      control={control}
+                      render={({ field }) => (
+                        <input
+                          {...field}
+                          type="text"
+                          placeholder="Mahalle"
+                          className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
+                          onChange={(e) => {
+                            field.onChange(e.target.value);
+                            updateGuardianFormattedAddress();
+                          }}
+                        />
+                      )}
+                    />
+                  </div>
+                  
+                  {/* Street */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Cadde/Sokak
+                    </label>
+                    <Controller
+                      name="guardian.address_data.street"
+                      control={control}
+                      render={({ field }) => (
+                        <input
+                          {...field}
+                          type="text"
+                          placeholder="Cadde/Sokak"
+                          className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
+                          onChange={(e) => {
+                            field.onChange(e.target.value);
+                            updateGuardianFormattedAddress();
+                          }}
+                        />
+                      )}
+                    />
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                  {/* Building No */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Bina No
+                    </label>
+                    <Controller
+                      name="guardian.address_data.building_no"
+                      control={control}
+                      render={({ field }) => (
+                        <input
+                          {...field}
+                          type="text"
+                          placeholder="Bina No"
+                          className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
+                          onChange={(e) => {
+                            field.onChange(e.target.value);
+                            updateGuardianFormattedAddress();
+                          }}
+                        />
+                      )}
+                    />
+                  </div>
+                  
+                  {/* Apartment No */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Daire No
+                    </label>
+                    <Controller
+                      name="guardian.address_data.apartment_no"
+                      control={control}
+                      render={({ field }) => (
+                        <input
+                          {...field}
+                          type="text"
+                          placeholder="Daire No"
+                          className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
+                          onChange={(e) => {
+                            field.onChange(e.target.value);
+                            updateGuardianFormattedAddress();
+                          }}
+                        />
+                      )}
+                    />
+                  </div>
+                  
+                  {/* Postal Code */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Posta Kodu
+                    </label>
+                    <Controller
+                      name="guardian.address_data.postal_code"
+                      control={control}
+                      render={({ field }) => (
+                        <input
+                          {...field}
+                          type="text"
+                          placeholder="Posta Kodu"
+                          className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
+                          onChange={(e) => {
+                            field.onChange(e.target.value);
+                            updateGuardianFormattedAddress();
+                          }}
+                        />
+                      )}
+                    />
+                  </div>
+                </div>
+                
+                {/* Formatted Address (Read-only) */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Tam Adres
+                  </label>
+                  <Controller
+                    name="guardian.address"
+                    control={control}
+                    render={({ field }) => (
+                      <textarea
+                        {...field}
+                        className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
+                        rows={3}
+                        readOnly
+                      />
+                    )}
+                  />
+                </div>
+              </div>
+              
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Notlar
+                </label>
+                <Controller
+                  name="guardian.notes"
+                  control={control}
+                  render={({ field }) => (
+                    <textarea
+                      {...field}
+                      className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
+                      placeholder="Ek bilgiler..."
+                      rows={3}
+                    />
+                  )}
+                />
+              </div>
+              
+              <div className="flex justify-end gap-2 mt-4">
+                {selectedGuardian ? (
+                  <Button
+                    onClick={handleCreateGuardian}
+                    variant="primary"
+                    size="sm"
+                    isLoading={isCreatingGuardian}
+                  >
+                    Veli Olarak Ekle
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={handleCreateGuardianPerson}
+                    variant="primary"
+                    size="sm"
+                    isLoading={isCreatingPerson}
+                  >
+                    Kişi Oluştur ve Veli Olarak Ekle
+                  </Button>
+                )}
+              </div>
+            </div>
           </div>
         )}
       </div>
@@ -1090,7 +1801,7 @@ export default function GuestInfoStep() {
       {!guestId && (
         <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+            <div className="flex items-center gap-2 text-red-600 dark:text-red-400">
               <AlertCircle className="w-5 h-5" />
               <span className="text-sm font-medium">Bu kişi için misafir kaydı oluşturulması gerekiyor</span>
             </div>

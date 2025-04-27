@@ -3,30 +3,40 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
-import { Plus, Search, Filter, ChevronLeft, ChevronRight, FileText, User, Calendar, Building2, Pencil, Trash2 } from 'lucide-react';
+import { 
+  Users, 
+  Plus, 
+  Calendar, 
+  FileText, 
+  CreditCard, 
+  Building2, 
+  Bed, 
+  ArrowUpRight,
+  Search,
+  GraduationCap,
+  UserPlus,
+  Clock,
+  CheckCircle,
+  AlertTriangle
+} from 'lucide-react';
 import { guestsApi } from '@/lib/api/guests';
+import { seasonRegistrationsApi } from '@/lib/api/seasonRegistrations';
 import { useToast } from '@/hooks/useToast';
 import { Button } from '@/components/ui/atoms/Button';
-import DeleteConfirmationModal from '@/components/DeleteConfirmationModal';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/atoms/Card';
 
-export default function StudentsPage() {
+export default function StudentsOverviewPage() {
   const router = useRouter();
   const { isAuthenticated, checkAuth } = useAuth();
   const [isChecking, setIsChecking] = useState(true);
-  const [students, setStudents] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [filters, setFilters] = useState({
-    status: 'ACTIVE',
-    guestType: 'STUDENT',
+  const [stats, setStats] = useState({
+    totalStudents: 0,
+    activeStudents: 0,
+    pendingPayments: 0,
+    upcomingRegistrations: 0,
+    recentRegistrations: []
   });
-  const [showFilters, setShowFilters] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [studentToDelete, setStudentToDelete] = useState<any>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [deleteError, setDeleteError] = useState('');
   const toast = useToast();
 
   useEffect(() => {
@@ -50,115 +60,36 @@ export default function StudentsPage() {
 
   useEffect(() => {
     if (isAuthenticated) {
-      fetchStudents();
+      fetchDashboardData();
     }
-  }, [isAuthenticated, currentPage, filters]);
+  }, [isAuthenticated]);
 
-  const fetchStudents = async () => {
+  const fetchDashboardData = async () => {
     setIsLoading(true);
     try {
-      const response = await guestsApi.search(
-        searchTerm || undefined,
-        filters.guestType as any,
-        filters.status as any,
-        currentPage,
-        10
+      // Fetch total students
+      const studentsResponse = await guestsApi.getAll(1, 1);
+      
+      // Fetch active students
+      const activeStudentsResponse = await guestsApi.getAll(1, 1, undefined, 'ACTIVE');
+      
+      // Fetch recent registrations
+      const registrationsResponse = await seasonRegistrationsApi.getAll(
+        undefined, undefined, undefined, 'active', undefined, undefined, 1, 5
       );
       
-      if (response.success && response.data) {
-        setStudents(response.data);
-        setTotalPages(Math.ceil(response.total / response.limit));
-      } else {
-        toast.error('Öğrenciler yüklenirken bir hata oluştu');
-      }
+      setStats({
+        totalStudents: studentsResponse.total || 0,
+        activeStudents: activeStudentsResponse.total || 0,
+        pendingPayments: 12, // Mock data
+        upcomingRegistrations: 8, // Mock data
+        recentRegistrations: registrationsResponse.data || []
+      });
     } catch (error) {
-      console.error('Error fetching students:', error);
-      toast.error('Öğrenciler yüklenirken bir hata oluştu');
+      console.error('Dashboard verileri çekilirken hata oluştu:', error);
+      toast.error('Veriler yüklenirken bir hata oluştu');
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const handlePageChange = (page: number) => {
-    if (page < 1 || page > totalPages) return;
-    setCurrentPage(page);
-  };
-
-  const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFilters(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleSearch = () => {
-    setCurrentPage(1);
-    fetchStudents();
-  };
-
-  const handleClearFilters = () => {
-    setFilters({
-      status: 'ACTIVE',
-      guestType: 'STUDENT',
-    });
-    setSearchTerm('');
-    setCurrentPage(1);
-  };
-
-  const handleDeleteClick = (student: any) => {
-    setStudentToDelete(student);
-    setShowDeleteModal(true);
-  };
-
-  const handleDeleteStudent = async () => {
-    if (!studentToDelete) return;
-    
-    setIsDeleting(true);
-    setDeleteError('');
-    
-    try {
-      // Update status to INACTIVE instead of deleting
-      const response = await guestsApi.updateStatus(studentToDelete.id, 'INACTIVE');
-      
-      if (response.success) {
-        toast.success('Öğrenci kaydı başarıyla pasife alındı');
-        setShowDeleteModal(false);
-        fetchStudents(); // Refresh the list
-      } else {
-        throw new Error(response.error || 'Öğrenci kaydı pasife alınırken bir hata oluştu');
-      }
-    } catch (error: any) {
-      console.error('Error deactivating student:', error);
-      setDeleteError(error.message || 'Öğrenci kaydı pasife alınırken bir hata oluştu');
-    } finally {
-      setIsDeleting(false);
-    }
-  };
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'ACTIVE':
-        return (
-          <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300">
-            Aktif
-          </span>
-        );
-      case 'INACTIVE':
-        return (
-          <span className="px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-300">
-            Pasif
-          </span>
-        );
-      case 'SUSPENDED':
-        return (
-          <span className="px-2 py-1 text-xs font-medium rounded-full bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-300">
-            Askıda
-          </span>
-        );
-      default:
-        return (
-          <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
-            {status}
-          </span>
-        );
     }
   };
 
@@ -177,266 +108,295 @@ export default function StudentsPage() {
   return (
     <div className="p-8">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-          Öğrenciler
-        </h1>
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            Öğrenci Yönetimi
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">
+            Öğrenci kayıtlarını yönetin ve takip edin
+          </p>
+        </div>
         <div className="flex gap-2">
           <Button 
-            onClick={() => router.push('/dashboard/students/new')}
-            variant="primary"
-            leftIcon={<Plus className="w-5 h-5" />}
-          >
-            Yeni Öğrenci
-          </Button>
-          <Button 
             onClick={() => router.push('/dashboard/students/registrations/new')}
-            variant="secondary"
-            leftIcon={<Calendar className="w-5 h-5" />}
+            variant="primary"
+            leftIcon={<UserPlus className="w-5 h-5" />}
           >
-            Yeni Kayıt
+            Öğrenci Kaydı Oluştur
           </Button>
         </div>
       </div>
 
-      {/* Search and Filters */}
-      <div className="mb-6 flex flex-col md:flex-row gap-4">
-        <div className="flex-1 relative">
+      {/* Quick Search */}
+      <div className="mb-8">
+        <div className="relative max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
           <input
             type="text"
             placeholder="Öğrenci ara..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
+            className="w-full pl-10 pr-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                router.push(`/dashboard/students/registrations?search=${e.currentTarget.value}`);
+              }
+            }}
           />
         </div>
-        
-        <button 
-          onClick={() => setShowFilters(!showFilters)}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-            showFilters 
-              ? 'bg-blue-500 hover:bg-blue-600 text-white' 
-              : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700'
-          }`}
-        >
-          <Filter className="w-5 h-5" />
-          Filtreler
-        </button>
       </div>
 
-      {/* Filters Panel */}
-      {showFilters && (
-        <div className="mb-6 p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Durum
-              </label>
-              <select
-                name="status"
-                value={filters.status}
-                onChange={handleFilterChange}
-                className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
-              >
-                <option value="ACTIVE">Aktif</option>
-                <option value="INACTIVE">Pasif</option>
-                <option value="SUSPENDED">Askıda</option>
-              </select>
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-gray-500 dark:text-gray-400">
+              Toplam Öğrenci
+            </CardTitle>
+            <Users className="w-5 h-5 text-blue-500 dark:text-blue-400" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-gray-900 dark:text-white">
+              {isLoading ? (
+                <div className="w-12 h-6 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+              ) : (
+                stats.totalStudents
+              )}
             </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Öğrenci Tipi
-              </label>
-              <select
-                name="guestType"
-                value={filters.guestType}
-                onChange={handleFilterChange}
-                className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
-              >
-                <option value="STUDENT">Öğrenci</option>
-                <option value="EMPLOYEE">Çalışan</option>
-                <option value="OTHER">Diğer</option>
-              </select>
-            </div>
-          </div>
-          
-          <div className="mt-4 flex justify-end gap-3">
-            <button
-              onClick={handleClearFilters}
-              className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-            >
-              Temizle
-            </button>
-            <button
-              onClick={handleSearch}
-              className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
-            >
-              Filtrele
-            </button>
-          </div>
-        </div>
-      )}
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              Kayıtlı öğrenci sayısı
+            </p>
+          </CardContent>
+        </Card>
 
-      {/* Students Table */}
-      {isLoading ? (
-        <div className="flex justify-center py-12">
-          <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-gray-500 dark:text-gray-400">
+              Aktif Öğrenciler
+            </CardTitle>
+            <GraduationCap className="w-5 h-5 text-green-500 dark:text-green-400" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-gray-900 dark:text-white">
+              {isLoading ? (
+                <div className="w-12 h-6 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+              ) : (
+                stats.activeStudents
+              )}
+            </div>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              Aktif durumdaki öğrenciler
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-gray-500 dark:text-gray-400">
+              Bekleyen Ödemeler
+            </CardTitle>
+            <CreditCard className="w-5 h-5 text-amber-500 dark:text-amber-400" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-gray-900 dark:text-white">
+              {isLoading ? (
+                <div className="w-12 h-6 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+              ) : (
+                stats.pendingPayments
+              )}
+            </div>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              Bekleyen ödeme sayısı
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-gray-500 dark:text-gray-400">
+              Yaklaşan Kayıtlar
+            </CardTitle>
+            <Calendar className="w-5 h-5 text-purple-500 dark:text-purple-400" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-gray-900 dark:text-white">
+              {isLoading ? (
+                <div className="w-12 h-6 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+              ) : (
+                stats.upcomingRegistrations
+              )}
+            </div>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              Önümüzdeki 30 gün içinde
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Recent Registrations */}
+      <div className="mb-8">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+            Son Kayıtlar
+          </h2>
+          <Button 
+            onClick={() => router.push('/dashboard/students/registrations')}
+            variant="secondary"
+            size="sm"
+            rightIcon={<ArrowUpRight className="w-4 h-4" />}
+          >
+            Tümünü Gör
+          </Button>
         </div>
-      ) : (
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead className="bg-gray-50 dark:bg-gray-700">
-                <tr>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    ID
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Öğrenci
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    İletişim
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Bölüm/Fakülte
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Durum
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    İşlemler
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                {students.length > 0 ? (
-                  students.map((student) => (
-                    <tr key={student.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900 dark:text-white">{student.id}</div>
-                      </td>
+
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+          {isLoading ? (
+            <div className="p-8 flex justify-center">
+              <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          ) : stats.recentRegistrations.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead className="bg-gray-50 dark:bg-gray-700">
+                  <tr>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Öğrenci
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Apart
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Tarih Aralığı
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Durum
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      İşlemler
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                  {stats.recentRegistrations.map((registration: any) => (
+                    <tr key={registration.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
-                          <User className="flex-shrink-0 mr-3 h-5 w-5 text-gray-500 dark:text-gray-400" />
-                          <div className="text-sm font-medium text-gray-900 dark:text-white">
-                            {student.person?.name || 'Bilinmeyen Öğrenci'}
+                          <div className="flex-shrink-0 h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                            <Users className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+                          </div>
+                          <div className="ml-4">
+                            <div className="text-sm font-medium text-gray-900 dark:text-white">
+                              {registration.guest?.person?.name || 'İsimsiz Öğrenci'}
+                            </div>
+                            <div className="text-sm text-gray-500 dark:text-gray-400">
+                              {registration.guest?.professionDepartment || 'Bölüm belirtilmemiş'}
+                            </div>
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-500 dark:text-gray-400">
-                          {student.person?.phone || '-'}
+                        <div className="flex items-center">
+                          <Building2 className="flex-shrink-0 mr-2 h-5 w-5 text-gray-500 dark:text-gray-400" />
+                          <div className="text-sm text-gray-900 dark:text-white">
+                            {registration.apart?.name || 'Apart belirtilmemiş'}
+                          </div>
                         </div>
-                        <div className="text-sm text-gray-500 dark:text-gray-400">
-                          {student.person?.email || '-'}
+                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          <Bed className="inline-block mr-1 h-3 w-3" />
+                          {registration.bed?.bed_number || 'Yatak belirtilmemiş'}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900 dark:text-white">
+                          {new Date(registration.checkInDate).toLocaleDateString('tr-TR')}
+                        </div>
                         <div className="text-sm text-gray-500 dark:text-gray-400">
-                          {student.professionDepartment || '-'}
+                          {new Date(registration.checkOutDate).toLocaleDateString('tr-TR')}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        {getStatusBadge(student.status)}
+                        <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                          registration.status === 'active'
+                            ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300'
+                            : registration.status === 'completed'
+                            ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-300'
+                            : 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-300'
+                        }`}>
+                          {registration.status === 'active' ? 'Aktif' : 
+                           registration.status === 'completed' ? 'Tamamlandı' : 'İptal Edildi'}
+                        </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <div className="flex justify-end space-x-2">
-                          <button
-                            onClick={() => router.push(`/dashboard/students/${student.id}`)}
-                            className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
-                            title="Detaylar"
-                          >
-                            <FileText className="w-5 h-5" />
-                          </button>
-                          <button
-                            onClick={() => router.push(`/dashboard/students/${student.id}/edit`)}
-                            className="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300"
-                            title="Düzenle"
-                          >
-                            <Pencil className="w-5 h-5" />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteClick(student)}
-                            className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
-                            title="Pasife Al"
-                          >
-                            <Trash2 className="w-5 h-5" />
-                          </button>
-                        </div>
+                        <button
+                          onClick={() => router.push(`/dashboard/students/registrations/${registration.id}`)}
+                          className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
+                        >
+                          <FileText className="w-5 h-5" />
+                        </button>
                       </td>
                     </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={6} className="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
-                      {searchTerm
-                        ? 'Arama kriterlerine uygun öğrenci bulunamadı.'
-                        : 'Henüz öğrenci kaydı bulunmamaktadır.'}
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="p-8 text-center">
+              <p className="text-gray-500 dark:text-gray-400">Henüz kayıt bulunmamaktadır.</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Quick Access Cards */}
+      <div>
+        <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+          Hızlı Erişim
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div 
+            onClick={() => router.push('/dashboard/students/registrations/new')}
+            className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow cursor-pointer"
+          >
+            <div className="flex items-center gap-4 mb-4">
+              <div className="p-3 rounded-lg bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400">
+                <UserPlus className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Yeni Kayıt</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Yeni öğrenci kaydı oluşturun</p>
+              </div>
+            </div>
+          </div>
+          
+          <div 
+            onClick={() => router.push('/dashboard/students/registrations?status=active')}
+            className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow cursor-pointer"
+          >
+            <div className="flex items-center gap-4 mb-4">
+              <div className="p-3 rounded-lg bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400">
+                <CheckCircle className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Aktif Kayıtlar</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Aktif öğrenci kayıtlarını görüntüleyin</p>
+              </div>
+            </div>
+          </div>
+          
+          <div 
+            onClick={() => router.push('/dashboard/students/registrations?filter=overdue')}
+            className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow cursor-pointer"
+          >
+            <div className="flex items-center gap-4 mb-4">
+              <div className="p-3 rounded-lg bg-amber-100 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400">
+                <AlertTriangle className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Geciken Ödemeler</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Geciken ödemeleri kontrol edin</p>
+              </div>
+            </div>
           </div>
         </div>
-      )}
-
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="mt-6 flex justify-center">
-          <nav className="flex items-center space-x-2">
-            <button
-              onClick={() => handlePageChange(currentPage - 1)}
-              disabled={currentPage === 1}
-              className={`p-2 rounded-md ${
-                currentPage === 1
-                  ? 'text-gray-400 cursor-not-allowed'
-                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-              }`}
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-            
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-              <button
-                key={page}
-                onClick={() => handlePageChange(page)}
-                className={`px-3 py-1 rounded-md ${
-                  currentPage === page
-                    ? 'bg-blue-500 text-white'
-                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-                }`}
-              >
-                {page}
-              </button>
-            ))}
-            
-            <button
-              onClick={() => handlePageChange(currentPage + 1)}
-              disabled={currentPage === totalPages}
-              className={`p-2 rounded-md ${
-                currentPage === totalPages
-                  ? 'text-gray-400 cursor-not-allowed'
-                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-              }`}
-            >
-              <ChevronRight className="w-5 h-5" />
-            </button>
-          </nav>
-        </div>
-      )}
-
-      {/* Delete Confirmation Modal */}
-      <DeleteConfirmationModal
-        isOpen={showDeleteModal}
-        onClose={() => setShowDeleteModal(false)}
-        onConfirm={handleDeleteStudent}
-        title="Öğrenci Pasife Alma"
-        message={`"${studentToDelete?.person?.name}" isimli öğrenciyi pasife almak istediğinizden emin misiniz? Bu işlem geri alınabilir.`}
-        isLoading={isDeleting}
-        error={deleteError}
-      />
+      </div>
     </div>
   );
 }
