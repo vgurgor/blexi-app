@@ -13,13 +13,44 @@ export interface PersonDto {
   phone: string;
   email?: string;
   birth_date: string;
-  address?: string;
   city?: string;
   profile_photo_path?: string;
   profile_photo_url?: string;
   status: string;
   created_at: string;
   updated_at: string;
+  address?: {
+    id?: number;
+    country_id: number;
+    province_id: number;
+    district_id: number;
+    neighborhood?: string;
+    street?: string;
+    building_no?: string;
+    apartment_no?: string;
+    postal_code?: string;
+    address_type: 'home' | 'work' | 'other';
+    is_default?: boolean;
+    status?: 'active' | 'inactive';
+    formatted_address?: string;
+    country?: {
+      id: number;
+      code: string;
+      name: string;
+      phone_code: string;
+    };
+    province?: {
+      id: number;
+      country_id: number;
+      code: string;
+      name: string;
+    };
+    district?: {
+      id: number;
+      province_id: number;
+      name: string;
+    };
+  };
 }
 
 // Kişi oluşturma isteği için model
@@ -31,9 +62,21 @@ export interface CreatePersonRequest {
   phone: string;
   email?: string;
   birth_date: string;
-  address?: string;
   city?: string;
   status?: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
+  address?: {
+    country_id: number;
+    province_id: number;
+    district_id: number;
+    neighborhood?: string;
+    street?: string;
+    building_no?: string;
+    apartment_no?: string;
+    postal_code?: string;
+    address_type: 'home' | 'work' | 'other';
+    is_default?: boolean;
+    status?: 'active' | 'inactive';
+  };
 }
 
 // Kişi güncelleme isteği için model
@@ -45,8 +88,21 @@ export interface UpdatePersonRequest {
   phone?: string;
   email?: string;
   birth_date?: string;
-  address?: string;
   city?: string;
+  status?: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
+  address?: {
+    country_id?: number;
+    province_id?: number;
+    district_id?: number;
+    neighborhood?: string;
+    street?: string;
+    building_no?: string;
+    apartment_no?: string;
+    postal_code?: string;
+    address_type?: 'home' | 'work' | 'other';
+    is_default?: boolean;
+    status?: 'active' | 'inactive';
+  };
 }
 
 // Kişi durumu güncelleme isteği için model
@@ -71,13 +127,44 @@ const mapPersonDtoToModel = (dto: PersonDto): IPerson => {
     phone: dto.phone,
     email: dto.email,
     birthDate: dto.birth_date,
-    address: dto.address,
     city: dto.city,
     profilePhotoPath: dto.profile_photo_path,
     profilePhotoUrl: dto.profile_photo_url,
     status: dto.status as 'ACTIVE' | 'INACTIVE' | 'SUSPENDED',
     createdAt: dto.created_at,
     updatedAt: dto.updated_at,
+    address: dto.address ? {
+      id: dto.address.id?.toString(),
+      countryId: dto.address.country_id.toString(),
+      provinceId: dto.address.province_id.toString(),
+      districtId: dto.address.district_id.toString(),
+      neighborhood: dto.address.neighborhood,
+      street: dto.address.street,
+      buildingNo: dto.address.building_no,
+      apartmentNo: dto.address.apartment_no,
+      postalCode: dto.address.postal_code,
+      addressType: dto.address.address_type,
+      isDefault: dto.address.is_default,
+      status: dto.address.status,
+      formattedAddress: dto.address.formatted_address,
+      country: dto.address.country ? {
+        id: dto.address.country.id.toString(),
+        code: dto.address.country.code,
+        name: dto.address.country.name,
+        phoneCode: dto.address.country.phone_code
+      } : undefined,
+      province: dto.address.province ? {
+        id: dto.address.province.id.toString(),
+        countryId: dto.address.province.country_id.toString(),
+        code: dto.address.province.code,
+        name: dto.address.province.name
+      } : undefined,
+      district: dto.address.district ? {
+        id: dto.address.district.id.toString(),
+        provinceId: dto.address.district.province_id.toString(),
+        name: dto.address.district.name
+      } : undefined
+    } : undefined
   };
 };
 
@@ -89,18 +176,20 @@ export const peopleApi = {
    * Tüm kişileri listeler
    * @param status - Filtreleme için durum (isteğe bağlı)
    * @param name - Filtreleme için isim (isteğe bağlı)
-   * @param surname - Filtreleme için soyisim (isteğe bağlı)
-   * @param gender - Filtreleme için cinsiyet (isteğe bağlı)
    * @param phone - Filtreleme için telefon (isteğe bağlı)
+   * @param email - Filtreleme için e-posta (isteğe bağlı)
+   * @param city - Filtreleme için şehir (isteğe bağlı)
+   * @param address - Filtreleme için adres (isteğe bağlı)
    * @param page - Sayfa numarası
    * @param perPage - Sayfa başına öğe sayısı
    */
   getAll: async (
     status?: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED',
     name?: string,
-    surname?: string,
-    gender?: string,
     phone?: string,
+    email?: string,
+    city?: string,
+    address?: string,
     page: number = 1,
     perPage: number = 15
   ): Promise<PaginatedResponse<IPerson>> => {
@@ -114,16 +203,20 @@ export const peopleApi = {
       params.append('name', name);
     }
     
-    if (surname) {
-      params.append('surname', surname);
-    }
-    
     if (phone) {
       params.append('phone', phone);
     }
     
-    if (gender) {
-      params.append('gender', gender);
+    if (email) {
+      params.append('email', email);
+    }
+    
+    if (city) {
+      params.append('city', city);
+    }
+    
+    if (address) {
+      params.append('address', address);
     }
     
     params.append('page', page.toString());

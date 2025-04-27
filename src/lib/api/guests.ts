@@ -49,13 +49,61 @@ export interface GuestDto {
   }>;
   documents?: Array<{
     id: number;
-    document_type: any;
+    document_type: {
+      id: number;
+      name: string;
+      description?: string;
+      template_path?: string;
+      required_fields?: string[];
+      is_system: boolean;
+      validity_period?: number;
+      status: string;
+      created_at: string;
+      updated_at: string;
+    };
     type: 'UPLOADED' | 'SYSTEM_GENERATED';
     document_name: string;
     file_path: string;
+    upload_date: string;
+    valid_until?: string;
+    metadata?: Record<string, any>;
     status: string;
+    version?: string;
+    created_at: string;
+    updated_at: string;
   }>;
-  structured_address?: any | null;
+  structured_address?: {
+    id?: number;
+    country_id: number;
+    province_id: number;
+    district_id: number;
+    neighborhood?: string;
+    street?: string;
+    building_no?: string;
+    apartment_no?: string;
+    postal_code?: string;
+    address_type: 'home' | 'work' | 'other';
+    is_default?: boolean;
+    status?: 'active' | 'inactive';
+    formatted_address?: string;
+    country?: {
+      id: number;
+      code: string;
+      name: string;
+      phone_code: string;
+    };
+    province?: {
+      id: number;
+      country_id: number;
+      code: string;
+      name: string;
+    };
+    district?: {
+      id: number;
+      province_id: number;
+      name: string;
+    };
+  } | null;
   formatted_address?: string | null;
 }
 
@@ -132,18 +180,46 @@ const mapGuestDtoToModel = (dto: GuestDto): IGuest => {
       id: document.id.toString(),
       tenantId: dto.tenant_id.toString(),
       ownerId: dto.id.toString(),
-      documentType: document.document_type,
+      documentType: {
+        id: document.document_type.id.toString(),
+        name: document.document_type.name,
+        description: document.document_type.description,
+        templatePath: document.document_type.template_path,
+        requiredFields: document.document_type.required_fields,
+        isSystem: document.document_type.is_system,
+        validityPeriod: document.document_type.validity_period,
+        status: document.document_type.status,
+        createdAt: document.document_type.created_at,
+        updatedAt: document.document_type.updated_at
+      },
       type: document.type,
       documentName: document.document_name,
       filePath: document.file_path,
-      uploadDate: dto.created_at,
-      validUntil: undefined,
-      metadata: {},
+      uploadDate: document.upload_date || dto.created_at,
+      validUntil: document.valid_until,
+      metadata: document.metadata || {},
       status: document.status as 'active' | 'verified' | 'expired' | 'invalid',
+      version: document.version,
+      createdAt: document.created_at,
+      updatedAt: document.updated_at
+    })),
+    structuredAddress: dto.structured_address && dto.structured_address.id ? {
+      id: dto.structured_address.id.toString(),
+      districtId: dto.structured_address.district_id.toString(),
+      name: '',
+      addressLine: `${dto.structured_address.street || ''} ${dto.structured_address.building_no || ''} ${dto.structured_address.apartment_no || ''} ${dto.structured_address.neighborhood || ''}`.trim(),
+      postalCode: dto.structured_address.postal_code,
+      isDefault: !!dto.structured_address.is_default,
+      status: dto.structured_address.status || 'active',
+      district: dto.structured_address.district ? {
+        id: dto.structured_address.district.id.toString(),
+        code: '',
+        name: dto.structured_address.district.name,
+        provinceId: dto.structured_address.district.province_id.toString()
+      } : undefined,
       createdAt: dto.created_at,
       updatedAt: dto.updated_at
-    })),
-    structuredAddress: dto.structured_address,
+    } : null,
     formattedAddress: dto.formatted_address
   };
 };
@@ -157,12 +233,14 @@ export const guestsApi = {
    * @param page - Sayfa numarası
    * @param perPage - Sayfa başına kayıt sayısı
    * @param name - İsme göre filtreleme (isteğe bağlı)
+   * @param guestType - Misafir tipine göre filtreleme (isteğe bağlı)
    * @param status - Duruma göre filtreleme (isteğe bağlı)
    */
   getAll: async (
     page: number = 1,
     perPage: number = 15,
     name?: string,
+    guestType?: 'STUDENT' | 'EMPLOYEE' | 'OTHER',
     status?: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED'
   ): Promise<PaginatedResponse<IGuest>> => {
     const params = new URLSearchParams();
@@ -171,6 +249,10 @@ export const guestsApi = {
     
     if (name) {
       params.append('name', name);
+    }
+    
+    if (guestType) {
+      params.append('guest_type', guestType);
     }
     
     if (status) {

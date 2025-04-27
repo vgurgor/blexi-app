@@ -3,16 +3,7 @@
 import { ReactNode, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { 
-  Users, 
-  GraduationCap, 
   Calendar, 
-  FileText, 
-  CreditCard, 
-  Settings,
-  ChevronRight,
-  Building2,
-  Bed,
-  User
 } from 'lucide-react';
 
 interface StudentsLayoutProps {
@@ -26,41 +17,10 @@ export default function StudentsLayout({ children }: StudentsLayoutProps) {
 
   const menuItems = [
     { 
-      name: 'Öğrenciler', 
-      path: '/dashboard/students', 
-      icon: <Users className="w-5 h-5" />,
-      exact: true
-    },
-    { 
       name: 'Öğrenci Kayıtları', 
       path: '/dashboard/students/registrations', 
       icon: <Calendar className="w-5 h-5" /> 
-    },
-    { 
-      name: 'Öğrenci Belgeleri', 
-      path: '/dashboard/students/documents', 
-      icon: <FileText className="w-5 h-5" /> 
-    },
-    { 
-      name: 'Öğrenci Ödemeleri', 
-      path: '/dashboard/students/payments', 
-      icon: <CreditCard className="w-5 h-5" /> 
-    },
-    { 
-      name: 'Öğrenci Odaları', 
-      path: '/dashboard/students/rooms', 
-      icon: <Bed className="w-5 h-5" /> 
-    },
-    { 
-      name: 'Öğrenci Apartları', 
-      path: '/dashboard/students/apartments', 
-      icon: <Building2 className="w-5 h-5" /> 
-    },
-    { 
-      name: 'Öğrenci Ayarları', 
-      path: '/dashboard/students/settings', 
-      icon: <Settings className="w-5 h-5" /> 
-    },
+    }
   ];
 
   const isActive = (path: string, exact = false) => {
@@ -77,15 +37,17 @@ export default function StudentsLayout({ children }: StudentsLayoutProps) {
         collapsed ? 'w-16' : 'w-64'
       }`}>
         <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-          <div className={`flex items-center ${collapsed ? 'justify-center w-full' : ''}`}>
-            <GraduationCap className="w-6 h-6 text-blue-500 dark:text-blue-400" />
+          <div onClick={() => setCollapsed(!collapsed)} className={`flex items-center ${collapsed ? 'justify-center w-full' : ''}`}>
+            <Calendar className="w-6 h-6 text-blue-500 dark:text-blue-400" />
             {!collapsed && <span className="ml-2 font-semibold text-gray-900 dark:text-white">Öğrenci Yönetimi</span>}
           </div>
           <button 
             onClick={() => setCollapsed(!collapsed)}
             className={`p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 ${collapsed ? 'hidden' : ''}`}
           >
-            <ChevronRight className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+            <svg className="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
           </button>
         </div>
         

@@ -146,6 +146,16 @@ export default function ProductSelectionStep() {
     return (quantity * unitPrice).toFixed(2);
   };
 
+  // Format price for display
+  const formatPrice = (price: number): string => {
+    return new Intl.NumberFormat('tr-TR', {
+      style: 'currency',
+      currency: 'TRY',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(price);
+  };
+
   // Check if product can be removed (only if there are more than 2 products)
   const canRemoveProduct = () => {
     return fields.length > 2;
@@ -201,7 +211,7 @@ export default function ProductSelectionStep() {
                   </p>
                   <div className="flex justify-between items-center">
                     <span className="font-bold text-gray-900 dark:text-white">
-                      {price.price.toLocaleString('tr-TR')} {price.currency}
+                      {formatPrice(price.price)}
                     </span>
                     {!isSelected && (
                       <button 
@@ -280,7 +290,7 @@ export default function ProductSelectionStep() {
                     {/* Unit Price - Read-only */}
                     <div className="md:col-span-3">
                       <div className="text-sm text-gray-700 dark:text-gray-300">
-                        <span className="font-medium">Birim Fiyat:</span> {watch(`products.${index}.unit_price`)} ₺
+                        <span className="font-medium">Birim Fiyat:</span> {formatPrice(Number(watch(`products.${index}.unit_price`)))}
                       </div>
                       <Controller
                         name={`products.${index}.unit_price`}
@@ -294,7 +304,7 @@ export default function ProductSelectionStep() {
                     {/* Total Price & Remove Button */}
                     <div className="md:col-span-2 flex items-center justify-between">
                       <span className="font-medium text-gray-900 dark:text-white">
-                        {calculateLineTotal(index)} ₺
+                        {formatPrice(Number(calculateLineTotal(index)))}
                       </span>
                       {canRemoveProduct() && (
                         <button
@@ -341,7 +351,7 @@ export default function ProductSelectionStep() {
             <span className="text-gray-700 dark:text-gray-300 font-medium">Toplam Tutar:</span>
           </div>
           <span className="text-xl font-bold text-gray-900 dark:text-white">
-            {totalAmount.toFixed(2)} ₺
+            {formatPrice(totalAmount)}
           </span>
         </div>
       </div>
