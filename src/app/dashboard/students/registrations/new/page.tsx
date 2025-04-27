@@ -43,9 +43,60 @@ export default function NewStudentRegistrationPage() {
     setRegistrationData(data);
     
     try {
-      // Prepare the data for API submission
-      const apiData = {
-        guest_id: parseInt(data.guest_id),
+      // Prepare the data for the streamlined API
+      const streamlinedData = {
+        guest: {
+          tc_id: data.guest.tc_no,
+          first_name: data.guest.name,
+          last_name: data.guest.surname,
+          birth_date: data.guest.birth_date,
+          gender: data.guest.gender.toLowerCase(),
+          nationality: data.guest.nationality || 'TR',
+          guest_type: data.guest.guest_type.toLowerCase(),
+          education_level: data.guest.education_level,
+          school_name: data.guest.school_name,
+          phone: data.guest.phone,
+          email: data.guest.email || '',
+          special_notes: data.guest.notes,
+          emergency_contact: {
+            name: data.guest.emergency_contact_name,
+            phone: data.guest.emergency_contact_phone,
+            relationship: data.guest.emergency_contact_relationship || 'Diğer',
+          },
+          address: data.guest.address || {
+            country_id: 223, // Default to Turkey
+            province_id: data.guest.province_id || 34, // Default to Istanbul
+            district_id: data.guest.district_id || 1,
+            neighborhood: data.guest.neighborhood,
+            street: data.guest.street,
+            building_no: data.guest.building_no,
+            apartment_no: data.guest.apartment_no,
+            postal_code: data.guest.postal_code,
+          },
+        },
+        is_self_guardian: data.is_self_guardian,
+        guardian: !data.is_self_guardian ? {
+          tc_id: data.guardian.tc_no,
+          first_name: data.guardian.name,
+          last_name: data.guardian.surname,
+          birth_date: data.guardian.birth_date,
+          gender: data.guardian.gender.toLowerCase(),
+          relationship_type: data.guardian.relationship,
+          phone: data.guardian.phone,
+          email: data.guardian.email || '',
+          occupation: data.guardian.occupation,
+          workplace: data.guardian.workplace,
+          address: data.guardian.address || {
+            country_id: 223, // Default to Turkey
+            province_id: data.guardian.province_id || 34, // Default to Istanbul
+            district_id: data.guardian.district_id || 1,
+            neighborhood: data.guardian.neighborhood,
+            street: data.guardian.street,
+            building_no: data.guardian.building_no,
+            apartment_no: data.guardian.apartment_no,
+            postal_code: data.guardian.postal_code,
+          },
+        } : undefined,
         bed_id: parseInt(data.bed_id),
         season_code: data.season_code,
         check_in_date: data.check_in_date,
@@ -53,36 +104,35 @@ export default function NewStudentRegistrationPage() {
         deposit_amount: data.deposit_amount || 0,
         notes: data.notes || '',
         products: data.products.map((product: any) => ({
-          product_id: product.product_id,
-          quantity: product.quantity,
-          unit_price: product.unit_price
-        })),
-        payment_plans: data.payment_plans.map((plan: any) => ({
-          planned_amount: plan.planned_amount,
-          planned_date: plan.planned_date,
-          planned_payment_type_id: plan.planned_payment_type_id,
-          is_deposit: plan.is_deposit || false
+          product_id: parseInt(product.product_id),
+          quantity: parseInt(product.quantity),
         })),
         invoice_titles: data.invoice_titles.map((title: any) => ({
           title_type: title.title_type,
-          first_name: title.first_name || '',
-          last_name: title.last_name || '',
-          identity_number: title.identity_number || '',
-          company_name: title.company_name || '',
-          tax_office: title.tax_office || '',
-          tax_number: title.tax_number || '',
-          address: title.address,
+          first_name: title.first_name,
+          last_name: title.last_name,
+          identity_number: title.identity_number,
+          company_name: title.company_name,
+          tax_office: title.tax_office,
+          tax_number: title.tax_number,
           phone: title.phone,
           email: title.email || '',
           is_default: title.is_default || false,
-          address_data: title.address_data
+          address: {
+            country_id: title.address_data?.country_id || 223,
+            province_id: title.address_data?.province_id || 34,
+            district_id: title.address_data?.district_id || 1,
+            neighborhood: title.address_data?.neighborhood,
+            street: title.address_data?.street,
+            building_no: title.address_data?.building_no,
+            apartment_no: title.address_data?.apartment_no,
+            postal_code: title.address_data?.postal_code,
+          },
         })),
-        discounts: data.discounts || [],
-        guardians: data.guardians || []
       };
       
-      // Submit the complete registration data to the API
-      const response = await seasonRegistrationsApi.createComplete(apiData);
+      // Submit the streamlined registration data to the API
+      const response = await seasonRegistrationsApi.createStreamlined(streamlinedData);
       
       if (response.success && response.data) {
         setIsCompleted(true);

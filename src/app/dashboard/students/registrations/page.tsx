@@ -3,7 +3,31 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
-import { Plus, Search, Filter, ChevronLeft, ChevronRight, FileText, User, Calendar, Building2, Download, SlidersHorizontal, X, Check, FileDown, FileSpreadsheet, FileIcon, ArrowUpDown, ArrowUp, ArrowDown, Users } from 'lucide-react';
+import { 
+  Plus, 
+  Search, 
+  Filter, 
+  ChevronLeft, 
+  ChevronRight, 
+  FileText, 
+  User, 
+  Calendar, 
+  Building2, 
+  Download, 
+  SlidersHorizontal, 
+  X, 
+  Check, 
+  FileDown, 
+  FileSpreadsheet, 
+  FileIcon, 
+  ArrowUpDown, 
+  ArrowUp, 
+  ArrowDown, 
+  Users,
+  Bed,
+  DollarSign,
+  Tag
+} from 'lucide-react';
 import { seasonRegistrationsApi } from '@/lib/api/seasonRegistrations';
 import { guestsApi } from '@/lib/api/guests';
 import { apartsApi } from '@/lib/api/apartments';
@@ -11,6 +35,8 @@ import { seasonsApi } from '@/lib/api/seasons';
 import { useToast } from '@/hooks/useToast';
 import { Button } from '@/components/ui/atoms/Button';
 import { FormInput, FormSelect } from '@/components/ui';
+import { formatCurrency, formatDate } from '@/utils/format';
+import { downloadCSV, downloadExcel, formatDataForExport, getStudentRegistrationExportHeaders } from '@/utils/export';
 
 export default function StudentRegistrationsPage() {
   const router = useRouter();
@@ -230,8 +256,12 @@ export default function StudentRegistrationsPage() {
 
     switch (action) {
       case 'export-excel':
-        toast.info(`${selectedItems.length} kayıt Excel'e aktarılıyor...`);
-        // Implement Excel export logic
+        const formattedData = formatDataForExport(
+          registrations.filter(reg => selectedItems.includes(reg.id))
+        );
+        const headers = getStudentRegistrationExportHeaders();
+        downloadExcel(formattedData, headers, 'ogrenci-kayitlari.xlsx');
+        toast.success(`${selectedItems.length} kayıt Excel'e aktarıldı`);
         break;
       case 'export-pdf':
         toast.info(`${selectedItems.length} kayıt PDF'e aktarılıyor...`);
@@ -252,7 +282,7 @@ export default function StudentRegistrationsPage() {
 
   // Navigate to student details page
   const handleViewStudentDetails = (registration: any) => {
-    if (registration.id) {
+    if (registration.guest?.id) {
       router.push(`/dashboard/students/registrations/${registration.id}`);
     } else {
       toast.error('Öğrenci bilgisi bulunamadı');
@@ -825,15 +855,7 @@ export default function StudentRegistrationsPage() {
                       onClick={() => handleSort('apart.name')}
                       className="flex items-center"
                     >
-                      Apart {sortField === 'apart.name' && getSortIcon('apart.name')}
-                    </button>
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    <button 
-                      onClick={() => handleSort('season.name')}
-                      className="flex items-center"
-                    >
-                      Sezon {sortField === 'season.name' && getSortIcon('season.name')}
+                      Konaklama {sortField === 'apart.name' && getSortIcon('apart.name')}
                     </button>
                   </th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
@@ -898,24 +920,25 @@ export default function StudentRegistrationsPage() {
                         className="px-6 py-4 whitespace-nowrap"
                         onClick={() => handleViewRegistrationDetails(registration.id)}
                       >
-                        <div className="flex items-center">
-                          <Building2 className="flex-shrink-0 mr-3 h-5 w-5 text-gray-500 dark:text-gray-400" />
-                          <div className="text-sm text-gray-500 dark:text-gray-400">
-                            {registration.apart?.name || 'Bilinmeyen Apart'}
+                        <div className="flex flex-col">
+                          <div className="flex items-center">
+                            <Building2 className="flex-shrink-0 mr-2 h-5 w-5 text-gray-500 dark:text-gray-400" />
+                            <div className="text-sm text-gray-700 dark:text-gray-300">
+                              {registration.apart?.name || 'Bilinmeyen Apart'}
+                            </div>
                           </div>
-                        </div>
-                        {registration.bed?.bed_number && (
-                          <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                            Yatak: {registration.bed.bed_number}
+                          <div className="flex items-center mt-1">
+                            <Bed className="flex-shrink-0 mr-2 h-4 w-4 text-gray-500 dark:text-gray-400" />
+                            <div className="text-xs text-gray-500 dark:text-gray-400">
+                              {registration.bed?.bed_number ? `Yatak ${registration.bed.bed_number}` : 'Yatak belirtilmemiş'}
+                            </div>
                           </div>
-                        )}
-                      </td>
-                      <td 
-                        className="px-6 py-4 whitespace-nowrap"
-                        onClick={() => handleViewRegistrationDetails(registration.id)}
-                      >
-                        <div className="text-sm text-gray-500 dark:text-gray-400">
-                          {registration.season?.name || registration.seasonCode}
+                          <div className="flex items-center mt-1">
+                            <Tag className="flex-shrink-0 mr-2 h-4 w-4 text-gray-500 dark:text-gray-400" />
+                            <div className="text-xs text-gray-500 dark:text-gray-400">
+                              {registration.season?.name || registration.seasonCode || 'Sezon belirtilmemiş'}
+                            </div>
+                          </div>
                         </div>
                       </td>
                       <td 
@@ -928,6 +951,14 @@ export default function StudentRegistrationsPage() {
                             {new Date(registration.checkInDate).toLocaleDateString('tr-TR')} - {new Date(registration.checkOutDate).toLocaleDateString('tr-TR')}
                           </div>
                         </div>
+                        {registration.depositAmount > 0 && (
+                          <div className="flex items-center mt-1">
+                            <DollarSign className="flex-shrink-0 mr-2 h-4 w-4 text-gray-500 dark:text-gray-400" />
+                            <div className="text-xs text-gray-500 dark:text-gray-400">
+                              Depozito: {formatCurrency(registration.depositAmount)}
+                            </div>
+                          </div>
+                        )}
                       </td>
                       <td 
                         className="px-6 py-4 whitespace-nowrap"

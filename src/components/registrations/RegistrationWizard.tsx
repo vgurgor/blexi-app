@@ -8,9 +8,9 @@ import { ArrowLeft, ArrowRight, Save, Check, X, AlertTriangle } from 'lucide-rea
 import { Button } from '@/components/ui/atoms/Button';
 import { useToast } from '@/hooks/useToast';
 import GuestInfoStep from './steps/GuestInfoStep';
-import ApartmentSelectionStep from './steps/ApartmentSelectionStep';
-import ProductSelectionStep from './steps/ProductSelectionStep';
-import PaymentPlanStep from './steps/PaymentPlanStep';
+import GuardianInfoStep from './steps/GuardianInfoStep';
+import AccommodationStep from './steps/AccommodationStep';
+import PricingStep from './steps/PricingStep';
 import InvoiceInfoStep from './steps/InvoiceInfoStep';
 import SummaryStep from './steps/SummaryStep';
 import WizardProgress from './WizardProgress';
@@ -18,9 +18,9 @@ import WizardProgress from './WizardProgress';
 // Define the steps of the wizard
 const STEPS = [
   { id: 'guest-info', title: 'Misafir Bilgileri' },
-  { id: 'apartment-selection', title: 'Konaklama Seçimi' },
-  { id: 'product-selection', title: 'Ürün Seçimi' },
-  { id: 'payment-plan', title: 'Ödeme Planı' },
+  { id: 'guardian-info', title: 'Veli Bilgileri' },
+  { id: 'accommodation', title: 'Konaklama' },
+  { id: 'pricing', title: 'Ücret' },
   { id: 'invoice-info', title: 'Fatura Bilgileri' },
   { id: 'summary', title: 'Özet ve Onay' },
 ];
@@ -28,38 +28,66 @@ const STEPS = [
 // Create a schema for the entire form
 const registrationSchema = z.object({
   // Guest Info
-  guest_id: z.string().optional(),
-  person: z.object({
-    id: z.string().optional(),
-    name: z.string().min(3, 'Ad en az 3 karakter olmalıdır'),
+  guest: z.object({
+    name: z.string().min(2, 'Ad en az 2 karakter olmalıdır'),
     surname: z.string().min(2, 'Soyad en az 2 karakter olmalıdır'),
-    gender: z.enum(['MALE', 'FEMALE'], { 
-      required_error: 'Cinsiyet seçimi zorunludur',
-      invalid_type_error: 'Cinsiyet MALE veya FEMALE olmalıdır'
-    }).optional(),
+    gender: z.enum(['MALE', 'FEMALE']),
     tc_no: z.string().min(11, 'TC Kimlik No 11 karakter olmalıdır').max(11),
     phone: z.string().min(10, 'Telefon numarası en az 10 karakter olmalıdır'),
     email: z.string().email('Geçerli bir e-posta adresi giriniz').optional().or(z.literal('')),
     birth_date: z.string().min(1, 'Doğum tarihi zorunludur'),
-    address: z.string().optional().or(z.literal('')),
-    city: z.string().optional().or(z.literal('')),
-  }).optional(),
-  guest_type: z.enum(['STUDENT', 'EMPLOYEE', 'OTHER']),
-  profession_department: z.string().optional().or(z.literal('')),
-  is_self_guardian: z.boolean().optional(),
-  guardian_relationship: z.string().optional().or(z.literal('')),
+    nationality: z.string().default('TR'),
+    guest_type: z.enum(['STUDENT', 'EMPLOYEE', 'OTHER']),
+    education_level: z.string().optional().or(z.literal('')),
+    school_name: z.string().optional().or(z.literal('')),
+    notes: z.string().optional().or(z.literal('')),
+    emergency_contact_name: z.string().min(2, 'Acil durum kişisi adı zorunludur'),
+    emergency_contact_phone: z.string().min(10, 'Acil durum kişisi telefonu zorunludur'),
+    emergency_contact_relationship: z.string().optional().or(z.literal('')),
+    // Address fields
+    country_id: z.number().or(z.string().transform(val => Number(val))).default(223), // Turkey
+    province_id: z.number().or(z.string().transform(val => Number(val))).optional(),
+    district_id: z.number().or(z.string().transform(val => Number(val))).optional(),
+    neighborhood: z.string().optional().or(z.literal('')),
+    street: z.string().optional().or(z.literal('')),
+    building_no: z.string().optional().or(z.literal('')),
+    apartment_no: z.string().optional().or(z.literal('')),
+    postal_code: z.string().optional().or(z.literal('')),
+  }),
   
-  // Accommodation Selection
-  apart_id: z.string().min(1, 'Lütfen bir apart seçin'),
-  room_id: z.string().min(1, 'Lütfen bir oda seçin'),
+  // Guardian Info
+  is_self_guardian: z.boolean().default(false),
+  guardian: z.object({
+    name: z.string().min(2, 'Ad en az 2 karakter olmalıdır').optional(),
+    surname: z.string().min(2, 'Soyad en az 2 karakter olmalıdır').optional(),
+    gender: z.enum(['MALE', 'FEMALE']).optional(),
+    relationship: z.string().min(1, 'İlişki türü zorunludur').optional(),
+    tc_no: z.string().min(11, 'TC Kimlik No 11 karakter olmalıdır').max(11).optional(),
+    phone: z.string().min(10, 'Telefon numarası en az 10 karakter olmalıdır').optional(),
+    email: z.string().email('Geçerli bir e-posta adresi giriniz').optional().or(z.literal('')),
+    birth_date: z.string().optional(),
+    occupation: z.string().optional().or(z.literal('')),
+    workplace: z.string().optional().or(z.literal('')),
+    // Address fields
+    country_id: z.number().or(z.string().transform(val => Number(val))).default(223).optional(), // Turkey
+    province_id: z.number().or(z.string().transform(val => Number(val))).optional(),
+    district_id: z.number().or(z.string().transform(val => Number(val))).optional(),
+    neighborhood: z.string().optional().or(z.literal('')),
+    street: z.string().optional().or(z.literal('')),
+    building_no: z.string().optional().or(z.literal('')),
+    apartment_no: z.string().optional().or(z.literal('')),
+    postal_code: z.string().optional().or(z.literal('')),
+  }).optional(),
+  
+  // Accommodation
   bed_id: z.string().min(1, 'Lütfen bir yatak seçin'),
   season_code: z.string().min(1, 'Lütfen bir sezon seçin'),
   check_in_date: z.string().min(1, 'Giriş tarihi zorunludur'),
   check_out_date: z.string().min(1, 'Çıkış tarihi zorunludur'),
-  deposit_amount: z.number().optional(),
+  deposit_amount: z.number().optional().or(z.string().transform(val => Number(val))),
   notes: z.string().optional(),
   
-  // Product Selection
+  // Pricing
   products: z.array(
     z.object({
       product_id: z.number().or(z.string().transform(val => Number(val))),
@@ -67,14 +95,6 @@ const registrationSchema = z.object({
       unit_price: z.number().min(0, 'Birim fiyat 0 veya daha büyük olmalıdır').or(z.string().transform(val => Number(val))),
     })
   ).min(1, 'En az bir ürün seçmelisiniz'),
-  
-  // Payment Plan
-  payment_plans: z.array(z.object({
-    planned_amount: z.number().min(1, 'Planlanan tutar en az 1 olmalıdır').or(z.string().transform(val => Number(val))),
-    planned_date: z.string().min(1, 'Planlanan tarih zorunludur'),
-    planned_payment_type_id: z.number().or(z.string().transform(val => Number(val))),
-    is_deposit: z.boolean().optional(),
-  })).min(1, 'En az bir ödeme planı oluşturmalısınız'),
   
   // Invoice Info
   invoice_titles: z.array(z.object({
@@ -85,7 +105,6 @@ const registrationSchema = z.object({
     company_name: z.string().optional(),
     tax_office: z.string().optional(),
     tax_number: z.string().optional(),
-    address: z.string().min(1, 'Adres zorunludur'),
     phone: z.string().min(1, 'Telefon zorunludur'),
     email: z.string().email('Geçerli bir e-posta adresi giriniz').optional().or(z.literal('')),
     is_default: z.boolean().optional(),
@@ -100,22 +119,22 @@ const registrationSchema = z.object({
       postal_code: z.string().optional(),
     }).optional(),
   })).min(1, 'En az bir fatura başlığı oluşturmalısınız'),
-  
-  // Discounts (optional)
-  discounts: z.array(z.object({
-    discount_rule_id: z.number().or(z.string().transform(val => Number(val))),
-    product_id: z.number().or(z.string().transform(val => Number(val))),
-  })).optional(),
-  
-  // Guardians (optional)
-  guardians: z.array(z.object({
-    person_id: z.number().or(z.string().transform(val => Number(val))),
-    relationship: z.string(),
-    is_self: z.boolean().optional(),
-    is_emergency_contact: z.boolean().optional(),
-    valid_from: z.string(),
-    notes: z.string().optional(),
-  })).optional(),
+}).refine(data => {
+  // If is_self_guardian is false, guardian info is required
+  if (!data.is_self_guardian) {
+    return data.guardian && 
+           data.guardian.name && 
+           data.guardian.surname && 
+           data.guardian.gender && 
+           data.guardian.tc_no && 
+           data.guardian.phone && 
+           data.guardian.birth_date && 
+           data.guardian.relationship;
+  }
+  return true;
+}, {
+  message: "Veli bilgileri zorunludur",
+  path: ["guardian"]
 });
 
 export type RegistrationFormData = z.infer<typeof registrationSchema>;
@@ -127,13 +146,40 @@ interface RegistrationWizardProps {
 export default function RegistrationWizard({ onSubmit }: RegistrationWizardProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState<Partial<RegistrationFormData>>({
-    guest_type: 'STUDENT',
+    guest: {
+      name: '',
+      surname: '',
+      gender: 'MALE',
+      tc_no: '',
+      phone: '',
+      email: '',
+      birth_date: '',
+      nationality: 'TR',
+      guest_type: 'STUDENT',
+      education_level: '',
+      school_name: '',
+      notes: '',
+      emergency_contact_name: '',
+      emergency_contact_phone: '',
+      emergency_contact_relationship: '',
+      country_id: 223, // Turkey
+    },
     is_self_guardian: false,
+    guardian: {
+      name: '',
+      surname: '',
+      gender: 'MALE',
+      relationship: '',
+      tc_no: '',
+      phone: '',
+      email: '',
+      birth_date: '',
+      occupation: '',
+      workplace: '',
+      country_id: 223, // Turkey
+    },
     products: [],
-    payment_plans: [],
     invoice_titles: [],
-    discounts: [],
-    guardians: [],
   });
   const [isStepValid, setIsStepValid] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -181,26 +227,6 @@ export default function RegistrationWizard({ onSubmit }: RegistrationWizardProps
     try {
       setIsSubmitting(true);
       const values = methods.getValues();
-      
-      // If self guardian is checked, add to guardians array
-      if (values.is_self_guardian && values.person && values.guest_id) {
-        const personId = parseInt(values.person.id || '0');
-        if (!values.guardians) {
-          values.guardians = [];
-        }
-        
-        // Only add if not already in the array
-        if (!values.guardians.some(g => g.is_self)) {
-          values.guardians.push({
-            person_id: personId,
-            relationship: 'SELF',
-            is_self: true,
-            is_emergency_contact: true,
-            valid_from: new Date().toISOString().split('T')[0],
-          });
-        }
-      }
-      
       await onSubmit(values as RegistrationFormData);
     } catch (error) {
       console.error('Form submission error:', error);
@@ -213,13 +239,34 @@ export default function RegistrationWizard({ onSubmit }: RegistrationWizardProps
   const getFieldsForStep = (step: number): string[] => {
     switch (step) {
       case 0: // Guest Info
-        return ['guest_id', 'person.name', 'person.surname', 'person.tc_no', 'person.phone', 'person.birth_date', 'guest_type'];
-      case 1: // Accommodation Selection
-        return ['apart_id', 'room_id', 'bed_id', 'season_code', 'check_in_date', 'check_out_date'];
-      case 2: // Product Selection
+        return [
+          'guest.name', 
+          'guest.surname', 
+          'guest.gender', 
+          'guest.tc_no', 
+          'guest.phone', 
+          'guest.birth_date', 
+          'guest.guest_type',
+          'guest.emergency_contact_name',
+          'guest.emergency_contact_phone'
+        ];
+      case 1: // Guardian Info
+        return formData.is_self_guardian 
+          ? ['is_self_guardian'] 
+          : [
+              'is_self_guardian',
+              'guardian.name', 
+              'guardian.surname', 
+              'guardian.gender', 
+              'guardian.relationship', 
+              'guardian.tc_no', 
+              'guardian.phone', 
+              'guardian.birth_date'
+            ];
+      case 2: // Accommodation
+        return ['bed_id', 'season_code', 'check_in_date', 'check_out_date'];
+      case 3: // Pricing
         return ['products'];
-      case 3: // Payment Plan
-        return ['payment_plans'];
       case 4: // Invoice Info
         return ['invoice_titles'];
       default:
@@ -233,11 +280,11 @@ export default function RegistrationWizard({ onSubmit }: RegistrationWizardProps
       case 0:
         return <GuestInfoStep />;
       case 1:
-        return <ApartmentSelectionStep />;
+        return <GuardianInfoStep />;
       case 2:
-        return <ProductSelectionStep />;
+        return <AccommodationStep />;
       case 3:
-        return <PaymentPlanStep />;
+        return <PricingStep />;
       case 4:
         return <InvoiceInfoStep />;
       case 5:
