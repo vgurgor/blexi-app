@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { User, Building2, Calendar, Package, CreditCard, FileText, Check, AlertTriangle, Shield, Bed, DoorOpen } from 'lucide-react';
 import { RegistrationFormData } from '../RegistrationWizard';
+import { formatCurrency, formatDate } from '@/utils/format';
 
 interface SummaryStepProps {
   data: RegistrationFormData;
@@ -11,11 +12,10 @@ interface SummaryStepProps {
 export default function SummaryStep({ data }: SummaryStepProps) {
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     guest: true,
+    guardian: true,
     accommodation: true,
     products: true,
-    payments: true,
     invoice: true,
-    guardian: true,
   });
 
   // Toggle section expansion
@@ -35,22 +35,6 @@ export default function SummaryStep({ data }: SummaryStepProps) {
     return total;
   };
 
-  // Calculate total planned payments
-  const calculatePlannedTotal = () => {
-    let total = 0;
-    data.payment_plans?.forEach(plan => {
-      total += plan.planned_amount;
-    });
-    return total;
-  };
-
-  // Check if payment plans match total amount
-  const isPaymentBalanced = () => {
-    const total = calculateTotal();
-    const plannedTotal = calculatePlannedTotal();
-    return Math.abs(total - plannedTotal) < 0.01; // Allow for small floating point differences
-  };
-
   // Get bed type display text
   const getBedTypeDisplay = (bedType: string) => {
     switch (bedType) {
@@ -58,6 +42,16 @@ export default function SummaryStep({ data }: SummaryStepProps) {
       case 'DOUBLE': return 'Çift Kişilik';
       case 'BUNK': return 'Ranza';
       default: return bedType;
+    }
+  };
+
+  // Get guest type display text
+  const getGuestTypeDisplay = (guestType: string) => {
+    switch (guestType) {
+      case 'STUDENT': return 'Öğrenci';
+      case 'EMPLOYEE': return 'Çalışan';
+      case 'OTHER': return 'Diğer';
+      default: return guestType;
     }
   };
 
@@ -94,43 +88,60 @@ export default function SummaryStep({ data }: SummaryStepProps) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <p className="text-sm text-gray-500 dark:text-gray-400">Ad:</p>
-                <p className="font-medium text-gray-900 dark:text-white">{data.person?.name}</p>
+                <p className="font-medium text-gray-900 dark:text-white">{data.guest?.name}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-500 dark:text-gray-400">Soyad:</p>
-                <p className="font-medium text-gray-900 dark:text-white">{data.person?.surname}</p>
+                <p className="font-medium text-gray-900 dark:text-white">{data.guest?.surname}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-500 dark:text-gray-400">TC Kimlik No:</p>
-                <p className="font-medium text-gray-900 dark:text-white">{data.person?.tc_no}</p>
+                <p className="font-medium text-gray-900 dark:text-white">{data.guest?.tc_no}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-500 dark:text-gray-400">Telefon:</p>
-                <p className="font-medium text-gray-900 dark:text-white">{data.person?.phone}</p>
+                <p className="font-medium text-gray-900 dark:text-white">{data.guest?.phone}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-500 dark:text-gray-400">E-posta:</p>
-                <p className="font-medium text-gray-900 dark:text-white">{data.person?.email || '-'}</p>
+                <p className="font-medium text-gray-900 dark:text-white">{data.guest?.email || '-'}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-500 dark:text-gray-400">Doğum Tarihi:</p>
-                <p className="font-medium text-gray-900 dark:text-white">{data.person?.birth_date}</p>
+                <p className="font-medium text-gray-900 dark:text-white">{data.guest?.birth_date}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Cinsiyet:</p>
+                <p className="font-medium text-gray-900 dark:text-white">
+                  {data.guest?.gender === 'MALE' ? 'Erkek' : 'Kadın'}
+                </p>
               </div>
               <div>
                 <p className="text-sm text-gray-500 dark:text-gray-400">Misafir Tipi:</p>
                 <p className="font-medium text-gray-900 dark:text-white">
-                  {data.guest_type === 'STUDENT' ? 'Öğrenci' : 
-                   data.guest_type === 'EMPLOYEE' ? 'Çalışan' : 'Diğer'}
+                  {getGuestTypeDisplay(data.guest?.guest_type || '')}
                 </p>
               </div>
-              {data.profession_department && (
-                <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {data.guest_type === 'STUDENT' ? 'Bölüm/Fakülte:' : 'Çalıştığı Kurum/Departman:'}
-                  </p>
-                  <p className="font-medium text-gray-900 dark:text-white">{data.profession_department}</p>
-                </div>
+              {data.guest?.guest_type === 'STUDENT' && (
+                <>
+                  <div>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Eğitim Seviyesi:</p>
+                    <p className="font-medium text-gray-900 dark:text-white">{data.guest?.education_level || '-'}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Okul:</p>
+                    <p className="font-medium text-gray-900 dark:text-white">{data.guest?.school_name || '-'}</p>
+                  </div>
+                </>
               )}
+              <div>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Acil Durum Kişisi:</p>
+                <p className="font-medium text-gray-900 dark:text-white">{data.guest?.emergency_contact_name}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Acil Durum Telefonu:</p>
+                <p className="font-medium text-gray-900 dark:text-white">{data.guest?.emergency_contact_phone}</p>
+              </div>
             </div>
           </div>
         )}
@@ -162,11 +173,60 @@ export default function SummaryStep({ data }: SummaryStepProps) {
                   Misafir kendi velisi olarak atanacak
                 </p>
               </div>
+            ) : data.guardian ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Ad:</p>
+                  <p className="font-medium text-gray-900 dark:text-white">{data.guardian.name}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Soyad:</p>
+                  <p className="font-medium text-gray-900 dark:text-white">{data.guardian.surname}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">TC Kimlik No:</p>
+                  <p className="font-medium text-gray-900 dark:text-white">{data.guardian.tc_no}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Telefon:</p>
+                  <p className="font-medium text-gray-900 dark:text-white">{data.guardian.phone}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">E-posta:</p>
+                  <p className="font-medium text-gray-900 dark:text-white">{data.guardian.email || '-'}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Doğum Tarihi:</p>
+                  <p className="font-medium text-gray-900 dark:text-white">{data.guardian.birth_date}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Cinsiyet:</p>
+                  <p className="font-medium text-gray-900 dark:text-white">
+                    {data.guardian.gender === 'MALE' ? 'Erkek' : 'Kadın'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Yakınlık Derecesi:</p>
+                  <p className="font-medium text-gray-900 dark:text-white">{data.guardian.relationship}</p>
+                </div>
+                {data.guardian.occupation && (
+                  <div>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Meslek:</p>
+                    <p className="font-medium text-gray-900 dark:text-white">{data.guardian.occupation}</p>
+                  </div>
+                )}
+                {data.guardian.workplace && (
+                  <div>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">İş Yeri:</p>
+                    <p className="font-medium text-gray-900 dark:text-white">{data.guardian.workplace}</p>
+                  </div>
+                )}
+              </div>
             ) : (
               <div className="flex items-center gap-2 p-3 bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 rounded-lg">
                 <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400" />
                 <p className="text-amber-700 dark:text-amber-300">
-                  Veli bilgisi eklenmedi. Kayıt tamamlandıktan sonra veli bilgisi ekleyebilirsiniz.
+                  Veli bilgisi eklenmedi.
                 </p>
               </div>
             )}
@@ -195,14 +255,6 @@ export default function SummaryStep({ data }: SummaryStepProps) {
           <div className="p-4 border-t border-gray-200 dark:border-gray-700">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Apart ID:</p>
-                <p className="font-medium text-gray-900 dark:text-white">{data.apart_id}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Oda ID:</p>
-                <p className="font-medium text-gray-900 dark:text-white">{data.room_id}</p>
-              </div>
-              <div>
                 <p className="text-sm text-gray-500 dark:text-gray-400">Yatak ID:</p>
                 <p className="font-medium text-gray-900 dark:text-white">{data.bed_id}</p>
               </div>
@@ -221,7 +273,7 @@ export default function SummaryStep({ data }: SummaryStepProps) {
               {data.deposit_amount && (
                 <div>
                   <p className="text-sm text-gray-500 dark:text-gray-400">Depozito Tutarı:</p>
-                  <p className="font-medium text-gray-900 dark:text-white">{data.deposit_amount} ₺</p>
+                  <p className="font-medium text-gray-900 dark:text-white">{formatCurrency(data.deposit_amount)}</p>
                 </div>
               )}
               {data.notes && (
@@ -268,80 +320,16 @@ export default function SummaryStep({ data }: SummaryStepProps) {
                   <tr key={idx}>
                     <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">{product.product_id}</td>
                     <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">{product.quantity}</td>
-                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">{product.unit_price} ₺</td>
-                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-white text-right">{(product.quantity * product.unit_price).toFixed(2)} ₺</td>
+                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">{formatCurrency(product.unit_price)}</td>
+                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-white text-right">{formatCurrency(product.quantity * product.unit_price)}</td>
                   </tr>
                 ))}
                 <tr className="bg-gray-50 dark:bg-gray-700/30">
                   <td colSpan={3} className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white text-right">Toplam:</td>
-                  <td className="px-4 py-3 text-sm font-bold text-gray-900 dark:text-white text-right">{calculateTotal().toFixed(2)} ₺</td>
+                  <td className="px-4 py-3 text-sm font-bold text-gray-900 dark:text-white text-right">{formatCurrency(calculateTotal())}</td>
                 </tr>
               </tbody>
             </table>
-          </div>
-        )}
-      </div>
-
-      {/* Payment Plans */}
-      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-        <div 
-          className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 cursor-pointer"
-          onClick={() => toggleSection('payments')}
-        >
-          <div className="flex items-center gap-3">
-            <CreditCard className="w-5 h-5 text-blue-500 dark:text-blue-400" />
-            <h3 className="font-medium text-gray-900 dark:text-white">Ödeme Planı</h3>
-          </div>
-          <div className={`transform transition-transform ${expandedSections.payments ? 'rotate-180' : ''}`}>
-            <svg className="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
-          </div>
-        </div>
-        
-        {expandedSections.payments && (
-          <div className="p-4 border-t border-gray-200 dark:border-gray-700">
-            <table className="w-full">
-              <thead className="bg-gray-50 dark:bg-gray-700/50 text-left">
-                <tr>
-                  <th className="px-4 py-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Ödeme Tipi ID</th>
-                  <th className="px-4 py-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Tarih</th>
-                  <th className="px-4 py-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Tutar</th>
-                  <th className="px-4 py-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Depozito</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                {data.payment_plans?.map((plan, idx) => (
-                  <tr key={idx}>
-                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">{plan.planned_payment_type_id}</td>
-                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">{plan.planned_date}</td>
-                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">{plan.planned_amount} ₺</td>
-                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-white">
-                      {plan.is_deposit ? (
-                        <Check className="w-5 h-5 text-green-500 dark:text-green-400" />
-                      ) : (
-                        <span>-</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-                <tr className="bg-gray-50 dark:bg-gray-700/30">
-                  <td colSpan={2} className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white text-right">Toplam:</td>
-                  <td colSpan={2} className="px-4 py-3 text-sm font-bold text-gray-900 dark:text-white">{calculatePlannedTotal().toFixed(2)} ₺</td>
-                </tr>
-              </tbody>
-            </table>
-            
-            {!isPaymentBalanced() && (
-              <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 rounded-lg flex items-start gap-2">
-                <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
-                <p className="text-sm text-amber-700 dark:text-amber-300">
-                  {calculateTotal() > calculatePlannedTotal() 
-                    ? `Ödeme planı toplamı, ürün toplamından ${(calculateTotal() - calculatePlannedTotal()).toFixed(2)} ₺ eksik.` 
-                    : `Ödeme planı toplamı, ürün toplamından ${(calculatePlannedTotal() - calculateTotal()).toFixed(2)} ₺ fazla.`}
-                </p>
-              </div>
-            )}
           </div>
         )}
       </div>
@@ -420,11 +408,6 @@ export default function SummaryStep({ data }: SummaryStepProps) {
                       <p className="font-medium text-gray-900 dark:text-white">{title.email}</p>
                     </div>
                   )}
-                  
-                  <div className="md:col-span-2">
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Adres:</p>
-                    <p className="font-medium text-gray-900 dark:text-white">{title.address}</p>
-                  </div>
                 </div>
               </div>
             ))}
