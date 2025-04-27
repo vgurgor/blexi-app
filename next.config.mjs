@@ -9,6 +9,9 @@ const nextConfig = {
       },
     ],
   },
+  // Middleware'i devre dışı bırak (artık AuthGuard component'i kullanıyoruz)
+  skipMiddlewareUrlNormalize: true,
+  skipTrailingSlashRedirect: true,
 };
 
 export default nextConfig;
