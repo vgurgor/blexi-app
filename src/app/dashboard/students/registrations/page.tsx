@@ -119,22 +119,34 @@ export default function StudentRegistrationsPage() {
   const fetchReferenceData = async () => {
     setIsLoadingReferenceData(true);
     try {
-      // Fetch students
-      const studentsResponse = await guestsApi.getAll(1, 100);
-      if (studentsResponse.success && studentsResponse.data) {
-        setStudents(studentsResponse.data);
+      // Fetch students with error handling
+      try {
+        const studentsResponse = await guestsApi.getAll(1, 100);
+        if (studentsResponse.success && studentsResponse.data) {
+          setStudents(studentsResponse.data);
+        }
+      } catch (error) {
+        console.error('Error fetching students:', error);
       }
 
-      // Fetch apartments
-      const apartmentsResponse = await apartsApi.getAll();
-      if (apartmentsResponse.success && apartmentsResponse.data) {
-        setApartments(apartmentsResponse.data);
+      // Fetch apartments with error handling
+      try {
+        const apartmentsResponse = await apartsApi.getAll();
+        if (apartmentsResponse.success && apartmentsResponse.data) {
+          setApartments(apartmentsResponse.data);
+        }
+      } catch (error) {
+        console.error('Error fetching apartments:', error);
       }
 
-      // Fetch seasons
-      const seasonsResponse = await seasonsApi.getAll();
-      if (seasonsResponse.success && seasonsResponse.data) {
-        setSeasons(seasonsResponse.data);
+      // Fetch seasons with error handling
+      try {
+        const seasonsResponse = await seasonsApi.getAll();
+        if (seasonsResponse.success && seasonsResponse.data) {
+          setSeasons(seasonsResponse.data);
+        }
+      } catch (error) {
+        console.error('Error fetching seasons:', error);
       }
     } catch (error) {
       console.error('Reference data fetch error:', error);
@@ -721,6 +733,7 @@ export default function StudentRegistrationsPage() {
                     setSortField(field);
                     setSortDirection(direction as 'asc' | 'desc');
                   }}
+                  
                   className="px-3 py-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
                 >
                   <option value="created_at-desc">Kayıt Tarihi (Yeni-Eski)</option>

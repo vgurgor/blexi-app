@@ -64,7 +64,7 @@ export default function NewStudentRegistrationPage() {
             relationship: data.guest.emergency_contact_relationship || 'Diğer',
           },
           address: data.guest.address || {
-            country_id: 223, // Default to Turkey
+            country_id: 1, // Default to Turkey
             province_id: data.guest.province_id || 34, // Default to Istanbul
             district_id: data.guest.district_id || 1,
             neighborhood: data.guest.neighborhood,
@@ -87,7 +87,7 @@ export default function NewStudentRegistrationPage() {
           occupation: data.guardian.occupation,
           workplace: data.guardian.workplace,
           address: data.guardian.address || {
-            country_id: 223, // Default to Turkey
+            country_id:1, // Default to Turkey
             province_id: data.guardian.province_id || 34, // Default to Istanbul
             district_id: data.guardian.district_id || 1,
             neighborhood: data.guardian.neighborhood,
@@ -119,7 +119,7 @@ export default function NewStudentRegistrationPage() {
           email: title.email || '',
           is_default: title.is_default || false,
           address: {
-            country_id: title.address_data?.country_id || 223,
+            country_id: title.address_data?.country_id || 1,
             province_id: title.address_data?.province_id || 34,
             district_id: title.address_data?.district_id || 1,
             neighborhood: title.address_data?.neighborhood,

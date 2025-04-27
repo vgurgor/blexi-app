@@ -21,6 +21,22 @@ export interface SeasonRegistrationDto {
     person_id: number;
     guest_type: string;
     profession_department?: string;
+    status?: string;
+    emergency_contact?: string;
+    notes?: string;
+    person?: {
+      id: number;
+      name: string;
+      surname: string;
+      gender?: string;
+      tc_no: string;
+      phone: string;
+      email?: string;
+      birth_date: string;
+      city?: string;
+      profile_photo_url?: string;
+      status: string;
+    };
   };
   bed?: {
     id: number;
@@ -28,12 +44,21 @@ export interface SeasonRegistrationDto {
     bed_number: string;
     bed_type: string;
     status: string;
+    building_id?: number;
+    room?: {
+      id: number;
+      name: string;
+      floor?: string;
+      status: string;
+    };
   };
   season?: {
     id: number;
     name: string;
     code: string;
     status: 'active' | 'inactive';
+    created_at?: string;
+    updated_at?: string;
   };
 }
 
@@ -65,143 +90,6 @@ export interface UpdateSeasonRegistrationStatusRequest {
   status: 'active' | 'cancelled' | 'completed';
 }
 
-// Tam sezon kaydı oluşturma isteği modeli
-export interface CreateCompleteSeasonRegistrationRequest {
-  guest_id: number;
-  bed_id: number;
-  season_code: string;
-  check_in_date: string;
-  check_out_date: string;
-  deposit_amount?: number;
-  notes?: string;
-  products: Array<{
-    product_id: number;
-    quantity: number;
-    unit_price: number;
-  }>;
-  payment_plans: Array<{
-    planned_amount: number;
-    planned_date: string;
-    planned_payment_type_id: number;
-    is_deposit?: boolean;
-  }>;
-  invoice_titles: Array<{
-    title_type: 'individual' | 'corporate';
-    first_name?: string;
-    last_name?: string;
-    identity_number?: string;
-    company_name?: string;
-    tax_office?: string;
-    tax_number?: string;
-    address?: string;
-    phone: string;
-    email?: string;
-    is_default?: boolean;
-    address_data?: {
-      country_id: number;
-      province_id: number;
-      district_id: number;
-      neighborhood?: string;
-      street?: string;
-      building_no?: string;
-      apartment_no?: string;
-      postal_code?: string;
-    };
-  }>;
-  discounts?: Array<{
-    discount_rule_id: number;
-    product_id: number;
-  }>;
-}
-
-// Streamlined sezon kaydı oluşturma isteği modeli
-export interface CreateStreamlinedSeasonRegistrationRequest {
-  guest: {
-    tc_id: string;
-    first_name: string;
-    last_name: string;
-    birth_date: string;
-    gender: 'male' | 'female';
-    nationality: string;
-    guest_type: 'student' | 'employee' | 'other';
-    education_level?: string;
-    school_name?: string;
-    phone: string;
-    email: string;
-    special_notes?: string;
-    emergency_contact: {
-      name: string;
-      phone: string;
-      relationship: string;
-    };
-    address: {
-      country_id: number;
-      province_id: number;
-      district_id: number;
-      neighborhood?: string;
-      street?: string;
-      building_no?: string;
-      apartment_no?: string;
-      postal_code?: string;
-    };
-  };
-  is_self_guardian: boolean;
-  guardian?: {
-    tc_id: string;
-    first_name: string;
-    last_name: string;
-    birth_date: string;
-    gender: 'male' | 'female';
-    relationship_type: string;
-    phone: string;
-    email: string;
-    occupation?: string;
-    workplace?: string;
-    address: {
-      country_id: number;
-      province_id: number;
-      district_id: number;
-      neighborhood?: string;
-      street?: string;
-      building_no?: string;
-      apartment_no?: string;
-      postal_code?: string;
-    };
-  };
-  bed_id: number;
-  season_code: string;
-  check_in_date: string;
-  check_out_date: string;
-  deposit_amount?: number;
-  notes?: string;
-  products: Array<{
-    product_id: number;
-    quantity: number;
-  }>;
-  invoice_titles: Array<{
-    title_type: 'individual' | 'corporate';
-    first_name?: string;
-    last_name?: string;
-    identity_number?: string;
-    company_name?: string;
-    tax_office?: string;
-    tax_number?: string;
-    phone: string;
-    email?: string;
-    is_default?: boolean;
-    address?: {
-      country_id: number;
-      province_id: number;
-      district_id: number;
-      neighborhood?: string;
-      street?: string;
-      building_no?: string;
-      apartment_no?: string;
-      postal_code?: string;
-    };
-  }>;
-}
-
 // API'den gelen SeasonRegistrationDto'yu ISeasonRegistration modeline dönüştüren yardımcı fonksiyon
 const mapSeasonRegistrationDtoToModel = (dto: SeasonRegistrationDto): ISeasonRegistration => {
   return {
@@ -221,20 +109,45 @@ const mapSeasonRegistrationDtoToModel = (dto: SeasonRegistrationDto): ISeasonReg
       id: dto.guest.id.toString(),
       personId: dto.guest.person_id.toString(),
       guestType: dto.guest.guest_type,
-      professionDepartment: dto.guest.profession_department
+      professionDepartment: dto.guest.profession_department,
+      status: dto.guest.status,
+      emergencyContact: dto.guest.emergency_contact,
+      notes: dto.guest.notes,
+      person: dto.guest.person ? {
+        id: dto.guest.person.id.toString(),
+        name: dto.guest.person.name,
+        surname: dto.guest.person.surname,
+        gender: dto.guest.person.gender,
+        tcNo: dto.guest.person.tc_no,
+        phone: dto.guest.person.phone,
+        email: dto.guest.person.email,
+        birthDate: dto.guest.person.birth_date,
+        city: dto.guest.person.city,
+        profilePhotoUrl: dto.guest.person.profile_photo_url,
+        status: dto.guest.person.status
+      } : undefined
     } : undefined,
     bed: dto.bed ? {
       id: dto.bed.id.toString(),
       roomId: dto.bed.room_id.toString(),
       bedNumber: dto.bed.bed_number,
       bedType: dto.bed.bed_type,
-      status: dto.bed.status
+      status: dto.bed.status,
+      buildingId: dto.bed.building_id?.toString(),
+      room: dto.bed.room ? {
+        id: dto.bed.room.id.toString(),
+        name: dto.bed.room.name,
+        floor: dto.bed.room.floor,
+        status: dto.bed.room.status
+      } : undefined
     } : undefined,
     season: dto.season ? {
       id: dto.season.id.toString(),
       name: dto.season.name,
       code: dto.season.code,
-      status: dto.season.status
+      status: dto.season.status,
+      createdAt: dto.season.created_at,
+      updatedAt: dto.season.updated_at
     } : undefined
   };
 };
@@ -527,7 +440,53 @@ export const seasonRegistrationsApi = {
    * Tek seferde tam bir sezon kaydı oluşturur (ürünler, ödeme planları, fatura bilgileri ve indirimler dahil)
    * @param data - Tam sezon kaydı oluşturma verisi
    */
-  createComplete: async (data: CreateCompleteSeasonRegistrationRequest): Promise<ApiResponse<ISeasonRegistration>> => {
+  createComplete: async (data: {
+    guest_id: number;
+    bed_id: number;
+    season_code: string;
+    check_in_date: string;
+    check_out_date: string;
+    deposit_amount?: number;
+    notes?: string;
+    products: Array<{
+      product_id: number;
+      quantity: number;
+      unit_price: number;
+    }>;
+    payment_plans: Array<{
+      planned_amount: number;
+      planned_date: string;
+      planned_payment_type_id: number;
+      is_deposit?: boolean;
+    }>;
+    invoice_titles: Array<{
+      title_type: 'individual' | 'corporate';
+      first_name?: string;
+      last_name?: string;
+      identity_number?: string;
+      company_name?: string;
+      tax_office?: string;
+      tax_number?: string;
+      address?: string;
+      phone: string;
+      email?: string;
+      is_default?: boolean;
+      address_data?: {
+        country_id: number;
+        province_id: number;
+        district_id: number;
+        neighborhood?: string;
+        street?: string;
+        building_no?: string;
+        apartment_no?: string;
+        postal_code?: string;
+      };
+    }>;
+    discounts?: Array<{
+      discount_rule_id: number;
+      product_id: number;
+    }>;
+  }): Promise<ApiResponse<ISeasonRegistration>> => {
     const response = await api.post<SeasonRegistrationDto>('/api/v1/season-registrations/complete', data);
     
     if (response.success && response.data) {
@@ -542,12 +501,109 @@ export const seasonRegistrationsApi = {
       data: undefined,
     };
   },
-  
+
   /**
-   * Streamlined (otomatik misafir ve vasi işlemleri dahil) bir sezon kaydı oluşturur
-   * @param data - Streamlined sezon kaydı oluşturma verisi
+   * Hızlandırılmış sezon kaydı oluşturur (öğrenci ve veli bilgileriyle birlikte)
+   * @param data - Hızlandırılmış sezon kaydı oluşturma verisi
    */
-  createStreamlined: async (data: CreateStreamlinedSeasonRegistrationRequest): Promise<ApiResponse<ISeasonRegistration>> => {
+  createStreamlined: async (data: {
+    guest: {
+      tc_id: string;
+      first_name: string;
+      last_name: string;
+      birth_date: string;
+      gender: 'male' | 'female';
+      nationality: string;
+      guest_type: 'student' | 'employee' | 'other';
+      education_level?: string;
+      school_name?: string;
+      phone: string;
+      email?: string;
+      special_notes?: string;
+      emergency_contact: {
+        name: string;
+        phone: string;
+        relationship: string;
+      };
+      address: {
+        country_id: number;
+        province_id: number;
+        district_id: number;
+        neighborhood?: string;
+        street?: string;
+        building_no?: string;
+        apartment_no?: string;
+        postal_code?: string;
+      };
+    };
+    is_self_guardian: boolean;
+    guardian?: {
+      tc_id: string;
+      first_name: string;
+      last_name: string;
+      birth_date: string;
+      gender: 'male' | 'female';
+      relationship_type: string;
+      phone: string;
+      email?: string;
+      occupation?: string;
+      workplace?: string;
+      address: {
+        country_id: number;
+        province_id: number;
+        district_id: number;
+        neighborhood?: string;
+        street?: string;
+        building_no?: string;
+        apartment_no?: string;
+        postal_code?: string;
+      };
+    };
+    bed_id: number;
+    season_code: string;
+    check_in_date: string;
+    check_out_date: string;
+    deposit_amount?: number;
+    notes?: string;
+    products: Array<{
+      product_id: number;
+      quantity: number;
+      unit_price: number;
+    }>;
+    payment_plans: Array<{
+      planned_amount: number;
+      planned_date: string;
+      planned_payment_type_id: number;
+      is_deposit?: boolean;
+    }>;
+    invoice_titles: Array<{
+      title_type: 'individual' | 'corporate';
+      first_name?: string;
+      last_name?: string;
+      identity_number?: string;
+      company_name?: string;
+      tax_office?: string;
+      tax_number?: string;
+      address?: string;
+      phone: string;
+      email?: string;
+      is_default?: boolean;
+      address_data?: {
+        country_id: number;
+        province_id: number;
+        district_id: number;
+        neighborhood?: string;
+        street?: string;
+        building_no?: string;
+        apartment_no?: string;
+        postal_code?: string;
+      };
+    }>;
+    discounts?: Array<{
+      discount_rule_id: number;
+      product_id: number;
+    }>;
+  }): Promise<ApiResponse<ISeasonRegistration>> => {
     const response = await api.post<SeasonRegistrationDto>('/api/v1/season-registrations/streamlined', data);
     
     if (response.success && response.data) {
@@ -561,45 +617,5 @@ export const seasonRegistrationsApi = {
       ...response,
       data: undefined,
     };
-  },
-  
-  /**
-   * Sezon kaydına ait depozito özetini alır
-   * @param registrationId - Sezon kaydı ID'si
-   */
-  getDepositSummary: async (registrationId: string | number): Promise<ApiResponse<any>> => {
-    return await api.get(`/api/v1/season-registrations/${registrationId}/deposit-summary`);
-  },
-  
-  /**
-   * Sezon kaydına ait depozito kesintilerini alır
-   * @param registrationId - Sezon kaydı ID'si
-   */
-  getDepositDeductions: async (registrationId: string | number): Promise<ApiResponse<any>> => {
-    return await api.get(`/api/v1/season-registrations/${registrationId}/deposit-deductions`);
-  },
-  
-  /**
-   * Sezon kaydına ait faturaları alır
-   * @param registrationId - Sezon kaydı ID'si
-   */
-  getInvoices: async (registrationId: string | number): Promise<ApiResponse<any>> => {
-    return await api.get(`/api/v1/season-registrations/${registrationId}/invoices`);
-  },
-  
-  /**
-   * Sezon kaydına ait fatura başlıklarını alır
-   * @param registrationId - Sezon kaydı ID'si
-   */
-  getInvoiceTitles: async (registrationId: string | number): Promise<ApiResponse<any>> => {
-    return await api.get(`/api/v1/season-registrations/${registrationId}/invoice-titles`);
-  },
-  
-  /**
-   * Sezon kaydına ait ürünleri alır
-   * @param registrationId - Sezon kaydı ID'si
-   */
-  getProducts: async (registrationId: string | number): Promise<ApiResponse<any>> => {
-    return await api.get(`/api/v1/season-registrations/${registrationId}/products`);
   }
 }; 

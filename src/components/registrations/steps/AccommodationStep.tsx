@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useFormContext, Controller } from 'react-hook-form';
 import { Calendar, Building2, Bed, DollarSign, Info, AlertTriangle } from 'lucide-react';
 import { FormInput } from '@/components/ui';
-import { apartsApi } from '@/lib/api/apartments';
+import * as apartsApi from '@/lib/api/apartments';
 import { roomsApi } from '@/lib/api/rooms';
 import { bedsApi } from '@/lib/api/beds';
 import { seasonsApi } from '@/lib/api/seasons';

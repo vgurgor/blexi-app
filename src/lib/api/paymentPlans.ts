@@ -94,7 +94,7 @@ export const paymentPlansApi = {
   getAll: async (options: {
     page?: number;
     perPage?: number;
-    seasonRegistrationProductId?: string | number;
+    seasonRegistrationId?: string | number;
     status?: 'planned' | 'paid' | 'partial_paid' | 'overdue';
     startDate?: string;
     endDate?: string;
@@ -111,7 +111,7 @@ export const paymentPlansApi = {
     }
     
     if (options.seasonRegistrationProductId) {
-      params.append('season_registration_product_id', options.seasonRegistrationProductId.toString());
+      params.append('season_registration_id', options.seasonRegistrationId.toString());
     }
     
     if (options.status) {

@@ -387,6 +387,22 @@ export interface ISeasonRegistration {
     personId: string;
     guestType: string;
     professionDepartment?: string;
+    status?: string;
+    emergencyContact?: string;
+    notes?: string;
+    person?: {
+      id: string;
+      name: string;
+      surname: string;
+      gender?: string;
+      tcNo: string;
+      phone: string;
+      email?: string;
+      birthDate: string;
+      city?: string;
+      profilePhotoUrl?: string;
+      status: string;
+    };
   };
   bed?: {
     id: string;
@@ -394,12 +410,21 @@ export interface ISeasonRegistration {
     bedNumber: string;
     bedType: string;
     status: string;
+    buildingId?: string;
+    room?: {
+      id: string;
+      name: string;
+      floor?: string;
+      status: string;
+    };
   };
   season?: {
     id: string;
     name: string;
     code: string;
     status: 'active' | 'inactive';
+    createdAt?: string;
+    updatedAt?: string;
   };
 }
 
