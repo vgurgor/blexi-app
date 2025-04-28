@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useFormContext, Controller } from 'react-hook-form';
 import { Calendar, Building2, Bed, DollarSign, Info, AlertTriangle } from 'lucide-react';
 import { FormInput } from '@/components/ui';
-import * as apartsApi from '@/lib/api/apartments';
+import { apartsApi } from '@/lib/api/apartments';
 import { roomsApi } from '@/lib/api/rooms';
 import { bedsApi } from '@/lib/api/beds';
 import { seasonsApi } from '@/lib/api/seasons';
@@ -77,8 +77,9 @@ export default function AccommodationStep() {
     setIsLoadingApartments(true);
     try {
       const personGender = watch('guest')?.gender;
-      const response = await apartsApi.getAll({ status: 'active' });
+      const response = await apartsApi.getAll({ status: 'active', gender_type: personGender });
       
+      console.log(response);
       if (response.success && response.data) {
         setApartments(response.data);
       } else {
@@ -152,7 +153,7 @@ export default function AccommodationStep() {
   // Fetch apartment details
   const fetchApartmentDetails = async (id: string) => {
     try {
-      const response = await apartsApi.getById(id);
+      const response = await apartsApi.getById(parseInt(id));
       
       if (response.success && response.data) {
         setSelectedApartment(response.data);

@@ -124,7 +124,7 @@ export default function RegistrationHeader({ registration }: RegistrationHeaderP
 
             {/* Detailed Information (Collapsible) */}
             {showDetails && (
-              <>
+              <   >
               <div className="flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-700/30 rounded-lg">
                 <div className="p-2 rounded-lg bg-red-100 dark:bg-red-900/20">
                   <Calendar className="w-5 h-5 text-red-600 dark:text-red-400" />

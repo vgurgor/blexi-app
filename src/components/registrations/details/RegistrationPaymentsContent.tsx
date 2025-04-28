@@ -25,7 +25,7 @@ export default function RegistrationPaymentsContent({ registrationId }: Registra
       });
       
       if (response.success) {
-        setPaymentPlans(response.data);
+        setPaymentPlans(response.data || []);
       } else {
         toast.error('Ödeme planı bilgileri yüklenirken bir hata oluştu');
       }

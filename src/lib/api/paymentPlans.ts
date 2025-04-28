@@ -110,7 +110,7 @@ export const paymentPlansApi = {
       params.append('per_page', options.perPage.toString());
     }
     
-    if (options.seasonRegistrationProductId) {
+    if (options.seasonRegistrationId) {
       params.append('season_registration_id', options.seasonRegistrationId.toString());
     }
     
