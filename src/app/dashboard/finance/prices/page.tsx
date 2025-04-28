@@ -25,6 +25,7 @@ import { seasonsApi } from '@/lib/api/seasons';
 import { apartsApi } from '@/lib/api/apartments';
 import { taxTypesApi } from '@/lib/api/taxTypes';
 import { IPrice, IProduct, ISeason, ITaxType } from '@/types/models';
+import { formatCurrency, formatDate } from '@/utils/format';
 import DeleteConfirmationModal from '@/components/DeleteConfirmationModal';
 
 export default function PricesPage() {
@@ -568,9 +569,8 @@ export default function PricesPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
-                          <DollarSign className="flex-shrink-0 mr-1 h-5 w-5 text-gray-500 dark:text-gray-400" />
                           <div className="text-sm font-medium text-gray-900 dark:text-white">
-                            {price.price.toLocaleString('tr-TR')} {price.currency}
+                            {formatCurrency(price.price)} {price.currency}
                           </div>
                         </div>
                       </td>
