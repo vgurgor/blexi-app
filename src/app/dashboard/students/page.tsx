@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { guestsApi } from '@/lib/api/guests';
 import { seasonRegistrationsApi } from '@/lib/api/seasonRegistrations';
+import { overduePaymentsApi } from '@/lib/api/overduepayments';
 import { useToast } from '@/hooks/useToast';
 import { Button } from '@/components/ui/atoms/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/atoms/Card';
@@ -67,22 +68,42 @@ export default function StudentsOverviewPage() {
   const fetchDashboardData = async () => {
     setIsLoading(true);
     try {
-      // Fetch total students
-      const studentsResponse = await guestsApi.getAll(1, 1);
+      // Paralel veri çekme işlemlerini gerçekleştirelim
+      const [
+        registrationsResponse,
+        registrationStatsResponse,
+        overduePaymentsResponse,
+        upcomingRegistrationsResponse
+      ] = await Promise.all([
+        // Fetch recent registrations (son 5 kayıt)
+        seasonRegistrationsApi.getAll(
+          undefined, undefined, undefined, 'active', undefined, undefined, 1, 5
+        ),
+        
+        // Fetch registration stats - öğrenci sayıları için
+        seasonRegistrationsApi.getStats(),
+        
+        // Fetch overdue payments count
+        overduePaymentsApi.getTotalOverduePayments(),
+        
+        // Fetch upcoming registrations count
+        overduePaymentsApi.getUpcomingRegistrationsCount()
+      ]);
       
-      // Fetch active students
-      const activeStudentsResponse = await guestsApi.getAll(1, 1, undefined, 'ACTIVE');
-      
-      // Fetch recent registrations
-      const registrationsResponse = await seasonRegistrationsApi.getAll(
-        undefined, undefined, undefined, 'active', undefined, undefined, 1, 5
-      );
+      // Öğrenci sayısı istatistiklerini alma
+      const totalStudents = registrationStatsResponse.success 
+        ? registrationStatsResponse.data.totalGuestCount || 0 
+        : 0;
+        
+      const activeStudents = registrationStatsResponse.success 
+        ? registrationStatsResponse.data.activeGuestCount || 0 
+        : 0;
       
       setStats({
-        totalStudents: studentsResponse.total || 0,
-        activeStudents: activeStudentsResponse.total || 0,
-        pendingPayments: 12, // Mock data
-        upcomingRegistrations: 8, // Mock data
+        totalStudents,
+        activeStudents,
+        pendingPayments: overduePaymentsResponse.success ? overduePaymentsResponse.data.count : 0,
+        upcomingRegistrations: upcomingRegistrationsResponse.success ? upcomingRegistrationsResponse.data.count : 0,
         recentRegistrations: registrationsResponse.data || []
       });
     } catch (error) {
@@ -284,7 +305,7 @@ export default function StudentsOverviewPage() {
                           </div>
                           <div className="ml-4">
                             <div className="text-sm font-medium text-gray-900 dark:text-white">
-                              {registration.guest?.person?.name || 'İsimsiz Öğrenci'}
+                              {registration.guest?.person ? `${registration.guest.person.name} ${registration.guest.person.surname}` : 'İsimsiz Öğrenci'}
                             </div>
                             <div className="text-sm text-gray-500 dark:text-gray-400">
                               {registration.guest?.professionDepartment || 'Bölüm belirtilmemiş'}
@@ -296,12 +317,12 @@ export default function StudentsOverviewPage() {
                         <div className="flex items-center">
                           <Building2 className="flex-shrink-0 mr-2 h-5 w-5 text-gray-500 dark:text-gray-400" />
                           <div className="text-sm text-gray-900 dark:text-white">
-                            {registration.apart?.name || 'Apart belirtilmemiş'}
+                          {registration.bed?.room?.apart?.name || 'Belirtilmemiş'}
                           </div>
                         </div>
                         <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                           <Bed className="inline-block mr-1 h-3 w-3" />
-                          {registration.bed?.bed_number || 'Yatak belirtilmemiş'}
+                          Yatak {registration.bed?.bedNumber || registration.bed?.bed_number || 'Belirtilmemiş'}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">

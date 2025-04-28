@@ -3,7 +3,9 @@
 import { ReactNode, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { 
-  Calendar, 
+  Calendar,
+  List, 
+  
 } from 'lucide-react';
 
 interface StudentsLayoutProps {
@@ -19,7 +21,7 @@ export default function StudentsLayout({ children }: StudentsLayoutProps) {
     { 
       name: 'Öğrenci Kayıtları', 
       path: '/dashboard/students/registrations', 
-      icon: <Calendar className="w-5 h-5" /> 
+      icon: <List className="w-5 h-5" /> 
     }
   ];
 
@@ -37,9 +39,9 @@ export default function StudentsLayout({ children }: StudentsLayoutProps) {
         collapsed ? 'w-16' : 'w-64'
       }`}>
         <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-          <div onClick={() => setCollapsed(!collapsed)} className={`flex items-center ${collapsed ? 'justify-center w-full' : ''}`}>
-            <Calendar className="w-6 h-6 text-blue-500 dark:text-blue-400" />
-            {!collapsed && <span className="ml-2 font-semibold text-gray-900 dark:text-white">Öğrenci Yönetimi</span>}
+          <div className={`flex items-center ${collapsed ? 'justify-center w-full' : ''}`}>
+            <Calendar  onClick={() => setCollapsed(!collapsed)}  className="w-6 h-6 text-blue-500 dark:text-blue-400" />
+            {!collapsed && <span onClick={() => router.push('/dashboard/students')} className="ml-2 cursor-pointer font-semibold text-gray-900 dark:text-white">Öğrenci Yönetimi</span>}
           </div>
           <button 
             onClick={() => setCollapsed(!collapsed)}

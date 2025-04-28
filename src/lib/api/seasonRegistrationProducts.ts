@@ -295,5 +295,14 @@ export const seasonRegistrationProductsApi = {
       limit: perPage,
       total: 0,
     };
+  },
+  
+  /**
+   * Belirli bir kayda ait finansal özeti getirir
+   * @param registrationId - Sezon kaydı ID'si
+   */
+  getFinancialSummary: async (registrationId: string | number): Promise<ApiResponse<any>> => {
+    const url = `/api/v1/season-registrations/${registrationId}/financial-summary`;
+    return await api.get(url);
   }
 }; 

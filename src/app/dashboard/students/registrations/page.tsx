@@ -315,8 +315,8 @@ export default function StudentRegistrationsPage() {
       return (
         (registration.guest?.person?.name && 
          registration.guest.person.name.toLowerCase().includes(filters.search.toLowerCase())) ||
-        (registration.apart?.name && 
-         registration.apart.name.toLowerCase().includes(filters.search.toLowerCase())) ||
+        ((registration.bed?.room?.apart?.name || registration.apart?.name) && 
+         (registration.bed?.room?.apart?.name || registration.apart?.name).toLowerCase().includes(filters.search.toLowerCase())) ||
         (registration.season?.name && 
          registration.season.name.toLowerCase().includes(filters.search.toLowerCase()))
       );
@@ -865,10 +865,10 @@ export default function StudentRegistrationsPage() {
                   </th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     <button 
-                      onClick={() => handleSort('apart.name')}
+                      onClick={() => handleSort('bed.room.apart.name')}
                       className="flex items-center"
                     >
-                      Konaklama {sortField === 'apart.name' && getSortIcon('apart.name')}
+                      Konaklama {sortField === 'bed.room.apart.name' && getSortIcon('bed.room.apart.name')}
                     </button>
                   </th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
@@ -918,16 +918,11 @@ export default function StudentRegistrationsPage() {
                         onClick={() => registration.guest?.id && handleViewStudentDetails(registration)}
                       >
                         <div className="flex items-center">
-                          <User className="flex-shrink-0 mr-3 h-5 w-5 text-gray-500 dark:text-gray-400" />
                           <div className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline">
-                            {registration.guest?.person?.name || 'Bilinmeyen Öğrenci'}
+                            {registration.guest?.person?.name+' '+registration.guest?.person?.surname || 'Bilinmeyen Öğrenci'}
                           </div>
                         </div>
-                        {registration.guest?.professionDepartment && (
-                          <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                            {registration.guest.professionDepartment}
-                          </div>
-                        )}
+                        
                       </td>
                       <td 
                         className="px-6 py-4 whitespace-nowrap"
@@ -937,13 +932,13 @@ export default function StudentRegistrationsPage() {
                           <div className="flex items-center">
                             <Building2 className="flex-shrink-0 mr-2 h-5 w-5 text-gray-500 dark:text-gray-400" />
                             <div className="text-sm text-gray-700 dark:text-gray-300">
-                              {registration.apart?.name || 'Bilinmeyen Apart'}
+                              {registration.bed?.room?.apart?.name || registration.apart?.name || 'Bilinmeyen Apart'}
                             </div>
                           </div>
                           <div className="flex items-center mt-1">
                             <Bed className="flex-shrink-0 mr-2 h-4 w-4 text-gray-500 dark:text-gray-400" />
                             <div className="text-xs text-gray-500 dark:text-gray-400">
-                              {registration.bed?.bed_number ? `Yatak ${registration.bed.bed_number}` : 'Yatak belirtilmemiş'}
+                              {registration.bed?.room?.name+'-'+registration.bed?.bedNumber || 'Yatak belirtilmemiş'}
                             </div>
                           </div>
                           <div className="flex items-center mt-1">

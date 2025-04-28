@@ -11,6 +11,8 @@ import {
   Edit
 } from 'lucide-react';
 import { seasonRegistrationsApi } from '@/lib/api/seasonRegistrations';
+import { seasonRegistrationProductsApi } from '@/lib/api/seasonRegistrationProducts';
+import { paymentPlansApi } from '@/lib/api/paymentPlans';
 import { useToast } from '@/hooks/useToast';
 import { Button } from '@/components/ui/atoms/Button';
 import DeleteConfirmationModal from '@/components/DeleteConfirmationModal';
@@ -23,6 +25,9 @@ export default function RegistrationDetailsPage({ params }: { params: { id: stri
   const { isAuthenticated, checkAuth } = useAuth();
   const [isChecking, setIsChecking] = useState(true);
   const [registration, setRegistration] = useState<any>(null);
+  const [financialData, setFinancialData] = useState<any>(null);
+  const [paymentPlansData, setPaymentPlansData] = useState<any>(null);
+  const [paymentSummary, setPaymentSummary] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('details');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -58,13 +63,35 @@ export default function RegistrationDetailsPage({ params }: { params: { id: stri
   const fetchRegistrationDetails = async () => {
     setIsLoading(true);
     try {
-      // Fetch registration details
-      const registrationResponse = await seasonRegistrationsApi.getById(params.id);
+      // Tüm veri isteğini paralel olarak yapalım
+      const [
+        registrationResponse,
+        financialResponse,
+        paymentPlansResponse,
+        paymentSummaryResponse
+      ] = await Promise.all([
+        seasonRegistrationsApi.getById(params.id),
+        seasonRegistrationProductsApi.getFinancialSummary(params.id),
+        paymentPlansApi.getByRegistrationId(params.id),
+        paymentPlansApi.getPaymentSummary(params.id)
+      ]);
       
       if (registrationResponse.success && registrationResponse.data) {
         setRegistration(registrationResponse.data);
       } else {
         toast.error('Kayıt detayları yüklenirken bir hata oluştu');
+      }
+      
+      if (financialResponse.success && financialResponse.data) {
+        setFinancialData(financialResponse.data);
+      }
+      
+      if (paymentPlansResponse.success && paymentPlansResponse.data) {
+        setPaymentPlansData(paymentPlansResponse.data);
+      }
+      
+      if (paymentSummaryResponse.success && paymentSummaryResponse.data) {
+        setPaymentSummary(paymentSummaryResponse.data);
       }
     } catch (error) {
       console.error('Error fetching registration details:', error);
@@ -227,7 +254,30 @@ export default function RegistrationDetailsPage({ params }: { params: { id: stri
 
         {/* Tab Content */}
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-          <RegistrationDetailsContent registration={registration} />
+          <RegistrationDetailsContent 
+            registration={registration} 
+            financialData={financialData || {
+              products: [],
+              summary: {
+                totalGross: 0,
+                totalDiscount: 0,
+                totalDiscountPercentage: 0,
+                totalNet: 0,
+                totalPaid: 0,
+                totalRefund: 0,
+                totalRemaining: 0
+              }
+            }}
+            paymentPlansData={paymentPlansData?.data || []}
+            paymentSummary={paymentSummary?.data || {
+              totalAmount: 0,
+              paidAmount: 0,
+              remainingAmount: 0,
+              paymentProgress: 0,
+              lastPayment: null,
+              nextPayment: null
+            }}
+          />
         </div>
       </div>
 

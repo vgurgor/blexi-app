@@ -2168,6 +2168,15 @@
                         }
                     },
                     {
+                        "name": "address",
+                        "in": "query",
+                        "description": "Filter people by address",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
                         "name": "page",
                         "in": "query",
                         "description": "Page number",
@@ -2202,7 +2211,83 @@
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/components/schemas/PersonResource"
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "name": {
+                                                        "description": "Person's first name",
+                                                        "type": "string",
+                                                        "example": "John"
+                                                    },
+                                                    "surname": {
+                                                        "description": "Person's last name",
+                                                        "type": "string",
+                                                        "example": "Doe"
+                                                    },
+                                                    "tc_no": {
+                                                        "description": "Turkish Citizenship Number",
+                                                        "type": "string",
+                                                        "example": "12345678901"
+                                                    },
+                                                    "phone": {
+                                                        "description": "Phone number",
+                                                        "type": "string",
+                                                        "example": "+905555555555"
+                                                    },
+                                                    "email": {
+                                                        "description": "Email address",
+                                                        "type": "string",
+                                                        "example": "john@example.com"
+                                                    },
+                                                    "birth_date": {
+                                                        "description": "Birth date",
+                                                        "type": "string",
+                                                        "format": "date",
+                                                        "example": "1990-01-01"
+                                                    },
+                                                    "gender": {
+                                                        "description": "Person's gender",
+                                                        "type": "string",
+                                                        "enum": [
+                                                            "MALE",
+                                                            "FEMALE"
+                                                        ],
+                                                        "example": "MALE"
+                                                    },
+                                                    "city": {
+                                                        "description": "City",
+                                                        "type": "string",
+                                                        "example": "Istanbul"
+                                                    },
+                                                    "status": {
+                                                        "type": "string",
+                                                        "enum": [
+                                                            "ACTIVE",
+                                                            "INACTIVE",
+                                                            "SUSPENDED"
+                                                        ],
+                                                        "example": "ACTIVE"
+                                                    },
+                                                    "address": {
+                                                        "$ref": "#/components/schemas/AddressResource"
+                                                    },
+                                                    "profile_photo_url": {
+                                                        "type": "string",
+                                                        "example": "http://example.com/storage/profile-photos/abc123.jpg",
+                                                        "nullable": true
+                                                    },
+                                                    "created_at": {
+                                                        "type": "string",
+                                                        "format": "date-time"
+                                                    },
+                                                    "updated_at": {
+                                                        "type": "string",
+                                                        "format": "date-time"
+                                                    }
+                                                },
+                                                "type": "object"
                                             }
                                         },
                                         "meta": {
@@ -2242,7 +2327,145 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/CreatePersonRequestSchema"
+                                "required": [
+                                    "name",
+                                    "surname",
+                                    "tc_no",
+                                    "phone",
+                                    "birth_date"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "description": "Person's first name",
+                                        "type": "string",
+                                        "example": "John"
+                                    },
+                                    "surname": {
+                                        "description": "Person's last name",
+                                        "type": "string",
+                                        "example": "Doe"
+                                    },
+                                    "tc_no": {
+                                        "description": "Turkish Citizenship Number (11 digits)",
+                                        "type": "string",
+                                        "example": "12345678901"
+                                    },
+                                    "phone": {
+                                        "description": "Phone number",
+                                        "type": "string",
+                                        "example": "+905555555555"
+                                    },
+                                    "email": {
+                                        "description": "Email address",
+                                        "type": "string",
+                                        "example": "john@example.com",
+                                        "nullable": true
+                                    },
+                                    "birth_date": {
+                                        "description": "Birth date",
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "1990-01-01"
+                                    },
+                                    "gender": {
+                                        "description": "Person's gender",
+                                        "type": "string",
+                                        "enum": [
+                                            "MALE",
+                                            "FEMALE"
+                                        ],
+                                        "example": "MALE",
+                                        "nullable": true
+                                    },
+                                    "city": {
+                                        "description": "City",
+                                        "type": "string",
+                                        "example": "Istanbul",
+                                        "nullable": true
+                                    },
+                                    "status": {
+                                        "description": "Person status",
+                                        "type": "string",
+                                        "enum": [
+                                            "ACTIVE",
+                                            "INACTIVE",
+                                            "SUSPENDED"
+                                        ],
+                                        "example": "ACTIVE"
+                                    },
+                                    "address": {
+                                        "properties": {
+                                            "country_id": {
+                                                "description": "Country ID",
+                                                "type": "integer",
+                                                "example": 1
+                                            },
+                                            "province_id": {
+                                                "description": "Province ID",
+                                                "type": "integer",
+                                                "example": 34
+                                            },
+                                            "district_id": {
+                                                "description": "District ID",
+                                                "type": "integer",
+                                                "example": 1
+                                            },
+                                            "neighborhood": {
+                                                "description": "Neighborhood name",
+                                                "type": "string",
+                                                "example": "Caddebostan"
+                                            },
+                                            "street": {
+                                                "description": "Street name",
+                                                "type": "string",
+                                                "example": "Bağdat Caddesi"
+                                            },
+                                            "building_no": {
+                                                "description": "Building number",
+                                                "type": "string",
+                                                "example": "123"
+                                            },
+                                            "apartment_no": {
+                                                "description": "Apartment number",
+                                                "type": "string",
+                                                "example": "4"
+                                            },
+                                            "postal_code": {
+                                                "description": "Postal code",
+                                                "type": "string",
+                                                "example": "34728"
+                                            },
+                                            "address_type": {
+                                                "description": "Address type",
+                                                "type": "string",
+                                                "enum": [
+                                                    "home",
+                                                    "work",
+                                                    "other"
+                                                ],
+                                                "example": "home"
+                                            },
+                                            "is_default": {
+                                                "description": "Whether this is the default address",
+                                                "type": "boolean",
+                                                "default": false,
+                                                "example": true
+                                            },
+                                            "status": {
+                                                "description": "Address status",
+                                                "type": "string",
+                                                "default": "active",
+                                                "enum": [
+                                                    "active",
+                                                    "inactive"
+                                                ],
+                                                "example": "active"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                },
+                                "type": "object"
                             }
                         }
                     }
@@ -2263,7 +2486,55 @@
                                             "example": "Person created successfully"
                                         },
                                         "data": {
-                                            "$ref": "#/components/schemas/PersonResource"
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "John Doe"
+                                                },
+                                                "email": {
+                                                    "type": "string",
+                                                    "format": "email",
+                                                    "example": "john@example.com"
+                                                },
+                                                "phone": {
+                                                    "type": "string",
+                                                    "example": "+902121234567"
+                                                },
+                                                "city": {
+                                                    "type": "string",
+                                                    "example": "Istanbul"
+                                                },
+                                                "status": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "ACTIVE",
+                                                        "INACTIVE",
+                                                        "SUSPENDED"
+                                                    ],
+                                                    "example": "ACTIVE"
+                                                },
+                                                "address": {
+                                                    "$ref": "#/components/schemas/AddressResource"
+                                                },
+                                                "profile_photo_url": {
+                                                    "type": "string",
+                                                    "example": "http://example.com/storage/profile-photos/abc123.jpg",
+                                                    "nullable": true
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                }
+                                            },
+                                            "type": "object"
                                         }
                                     },
                                     "type": "object"
@@ -2320,7 +2591,83 @@
                                             "example": true
                                         },
                                         "data": {
-                                            "$ref": "#/components/schemas/PersonResource"
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "name": {
+                                                    "description": "Person's first name",
+                                                    "type": "string",
+                                                    "example": "John"
+                                                },
+                                                "surname": {
+                                                    "description": "Person's last name",
+                                                    "type": "string",
+                                                    "example": "Doe"
+                                                },
+                                                "tc_no": {
+                                                    "description": "Turkish Citizenship Number",
+                                                    "type": "string",
+                                                    "example": "12345678901"
+                                                },
+                                                "phone": {
+                                                    "description": "Phone number",
+                                                    "type": "string",
+                                                    "example": "+905555555555"
+                                                },
+                                                "email": {
+                                                    "description": "Email address",
+                                                    "type": "string",
+                                                    "example": "john@example.com"
+                                                },
+                                                "birth_date": {
+                                                    "description": "Birth date",
+                                                    "type": "string",
+                                                    "format": "date",
+                                                    "example": "1990-01-01"
+                                                },
+                                                "gender": {
+                                                    "description": "Person's gender",
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "MALE",
+                                                        "FEMALE"
+                                                    ],
+                                                    "example": "MALE"
+                                                },
+                                                "city": {
+                                                    "description": "City",
+                                                    "type": "string",
+                                                    "example": "Istanbul"
+                                                },
+                                                "status": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "ACTIVE",
+                                                        "INACTIVE",
+                                                        "SUSPENDED"
+                                                    ],
+                                                    "example": "ACTIVE"
+                                                },
+                                                "address": {
+                                                    "$ref": "#/components/schemas/AddressResource"
+                                                },
+                                                "profile_photo_url": {
+                                                    "type": "string",
+                                                    "example": "http://example.com/storage/profile-photos/abc123.jpg",
+                                                    "nullable": true
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                }
+                                            },
+                                            "type": "object"
                                         }
                                     },
                                     "type": "object"
@@ -2368,7 +2715,138 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/UpdatePersonRequestSchema"
+                                "properties": {
+                                    "name": {
+                                        "description": "Person's first name",
+                                        "type": "string",
+                                        "example": "John"
+                                    },
+                                    "surname": {
+                                        "description": "Person's last name",
+                                        "type": "string",
+                                        "example": "Doe"
+                                    },
+                                    "tc_no": {
+                                        "description": "Turkish Citizenship Number (11 digits)",
+                                        "type": "string",
+                                        "example": "12345678901"
+                                    },
+                                    "phone": {
+                                        "description": "Phone number",
+                                        "type": "string",
+                                        "example": "+905555555555"
+                                    },
+                                    "email": {
+                                        "description": "Email address",
+                                        "type": "string",
+                                        "example": "john@example.com",
+                                        "nullable": true
+                                    },
+                                    "birth_date": {
+                                        "description": "Birth date",
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "1990-01-01"
+                                    },
+                                    "gender": {
+                                        "description": "Person's gender",
+                                        "type": "string",
+                                        "enum": [
+                                            "MALE",
+                                            "FEMALE"
+                                        ],
+                                        "example": "MALE",
+                                        "nullable": true
+                                    },
+                                    "city": {
+                                        "description": "City",
+                                        "type": "string",
+                                        "example": "Istanbul",
+                                        "nullable": true
+                                    },
+                                    "status": {
+                                        "description": "Person status",
+                                        "type": "string",
+                                        "enum": [
+                                            "ACTIVE",
+                                            "INACTIVE",
+                                            "SUSPENDED"
+                                        ],
+                                        "example": "ACTIVE"
+                                    },
+                                    "address": {
+                                        "properties": {
+                                            "country_id": {
+                                                "description": "Country ID",
+                                                "type": "integer",
+                                                "example": 1
+                                            },
+                                            "province_id": {
+                                                "description": "Province ID",
+                                                "type": "integer",
+                                                "example": 34
+                                            },
+                                            "district_id": {
+                                                "description": "District ID",
+                                                "type": "integer",
+                                                "example": 1
+                                            },
+                                            "neighborhood": {
+                                                "description": "Neighborhood name",
+                                                "type": "string",
+                                                "example": "Caddebostan"
+                                            },
+                                            "street": {
+                                                "description": "Street name",
+                                                "type": "string",
+                                                "example": "Bağdat Caddesi"
+                                            },
+                                            "building_no": {
+                                                "description": "Building number",
+                                                "type": "string",
+                                                "example": "123"
+                                            },
+                                            "apartment_no": {
+                                                "description": "Apartment number",
+                                                "type": "string",
+                                                "example": "4"
+                                            },
+                                            "postal_code": {
+                                                "description": "Postal code",
+                                                "type": "string",
+                                                "example": "34728"
+                                            },
+                                            "address_type": {
+                                                "description": "Address type",
+                                                "type": "string",
+                                                "enum": [
+                                                    "home",
+                                                    "work",
+                                                    "other"
+                                                ],
+                                                "example": "home"
+                                            },
+                                            "is_default": {
+                                                "description": "Whether this is the default address",
+                                                "type": "boolean",
+                                                "default": false,
+                                                "example": true
+                                            },
+                                            "status": {
+                                                "description": "Address status",
+                                                "type": "string",
+                                                "default": "active",
+                                                "enum": [
+                                                    "active",
+                                                    "inactive"
+                                                ],
+                                                "example": "active"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                },
+                                "type": "object"
                             }
                         }
                     }
@@ -2498,7 +2976,93 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/UpdatePersonStatusRequestSchema"
+                                "required": [
+                                    "status"
+                                ],
+                                "properties": {
+                                    "status": {
+                                        "description": "Person status",
+                                        "type": "string",
+                                        "enum": [
+                                            "ACTIVE",
+                                            "INACTIVE",
+                                            "SUSPENDED"
+                                        ],
+                                        "example": "ACTIVE"
+                                    },
+                                    "address": {
+                                        "properties": {
+                                            "country_id": {
+                                                "description": "Country ID",
+                                                "type": "integer",
+                                                "example": 1
+                                            },
+                                            "province_id": {
+                                                "description": "Province ID",
+                                                "type": "integer",
+                                                "example": 34
+                                            },
+                                            "district_id": {
+                                                "description": "District ID",
+                                                "type": "integer",
+                                                "example": 1
+                                            },
+                                            "neighborhood": {
+                                                "description": "Neighborhood name",
+                                                "type": "string",
+                                                "example": "Caddebostan"
+                                            },
+                                            "street": {
+                                                "description": "Street name",
+                                                "type": "string",
+                                                "example": "Bağdat Caddesi"
+                                            },
+                                            "building_no": {
+                                                "description": "Building number",
+                                                "type": "string",
+                                                "example": "123"
+                                            },
+                                            "apartment_no": {
+                                                "description": "Apartment number",
+                                                "type": "string",
+                                                "example": "4"
+                                            },
+                                            "postal_code": {
+                                                "description": "Postal code",
+                                                "type": "string",
+                                                "example": "34728"
+                                            },
+                                            "address_type": {
+                                                "description": "Address type",
+                                                "type": "string",
+                                                "enum": [
+                                                    "home",
+                                                    "work",
+                                                    "other"
+                                                ],
+                                                "example": "home"
+                                            },
+                                            "is_default": {
+                                                "description": "Whether this is the default address",
+                                                "type": "boolean",
+                                                "default": false,
+                                                "example": true
+                                            },
+                                            "status": {
+                                                "description": "Address status",
+                                                "type": "string",
+                                                "default": "active",
+                                                "enum": [
+                                                    "active",
+                                                    "inactive"
+                                                ],
+                                                "example": "active"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                },
+                                "type": "object"
                             }
                         }
                     }
@@ -2517,6 +3081,85 @@
                                         "message": {
                                             "type": "string",
                                             "example": "Person status updated successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "name": {
+                                                    "description": "Person's first name",
+                                                    "type": "string",
+                                                    "example": "John"
+                                                },
+                                                "surname": {
+                                                    "description": "Person's last name",
+                                                    "type": "string",
+                                                    "example": "Doe"
+                                                },
+                                                "tc_no": {
+                                                    "description": "Turkish Citizenship Number",
+                                                    "type": "string",
+                                                    "example": "12345678901"
+                                                },
+                                                "phone": {
+                                                    "description": "Phone number",
+                                                    "type": "string",
+                                                    "example": "+905555555555"
+                                                },
+                                                "email": {
+                                                    "description": "Email address",
+                                                    "type": "string",
+                                                    "example": "john@example.com"
+                                                },
+                                                "birth_date": {
+                                                    "description": "Birth date",
+                                                    "type": "string",
+                                                    "format": "date",
+                                                    "example": "1990-01-01"
+                                                },
+                                                "gender": {
+                                                    "description": "Person's gender",
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "MALE",
+                                                        "FEMALE"
+                                                    ],
+                                                    "example": "MALE"
+                                                },
+                                                "city": {
+                                                    "description": "City",
+                                                    "type": "string",
+                                                    "example": "Istanbul"
+                                                },
+                                                "status": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "ACTIVE",
+                                                        "INACTIVE",
+                                                        "SUSPENDED"
+                                                    ],
+                                                    "example": "ACTIVE"
+                                                },
+                                                "address": {
+                                                    "$ref": "#/components/schemas/AddressResource"
+                                                },
+                                                "profile_photo_url": {
+                                                    "type": "string",
+                                                    "example": "http://example.com/storage/profile-photos/abc123.jpg",
+                                                    "nullable": true
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                }
+                                            },
+                                            "type": "object"
                                         }
                                     },
                                     "type": "object"
@@ -2569,7 +3212,14 @@
                     "content": {
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/UploadProfilePhotoRequestSchema"
+                                "properties": {
+                                    "profile_photo": {
+                                        "description": "The profile photo file to upload",
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "object"
                             }
                         }
                     }
@@ -3093,6 +3743,124 @@
                     },
                     "403": {
                         "description": "Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "jwt": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/company/balance": {
+            "get": {
+                "tags": [
+                    "Company Integration"
+                ],
+                "summary": "Get company balance information",
+                "operationId": "7a4b63215a74df2c9dcfb8eeae2a35d0",
+                "parameters": [
+                    {
+                        "name": "provider",
+                        "in": "query",
+                        "description": "Optional provider override",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Company balance information",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Operation successful"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "Balance": {
+                                                    "type": "number",
+                                                    "example": 1000.5
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid request or error retrieving balance"
+                    }
+                },
+                "security": [
+                    {
+                        "jwt": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/company/vendors": {
+            "get": {
+                "tags": [
+                    "Company Integration"
+                ],
+                "summary": "Get company vendor information",
+                "operationId": "97f53b348ed1a131aa2ad44feed0af81",
+                "parameters": [
+                    {
+                        "name": "provider",
+                        "in": "query",
+                        "description": "Optional provider override",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Company vendor information",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Operation successful"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "vendors": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid request or error retrieving vendor information"
                     }
                 },
                 "security": [
@@ -6154,6 +6922,1368 @@
                 ]
             }
         },
+        "/api/v1/invoices/{id}/send-to-einvoice": {
+            "post": {
+                "tags": [
+                    "Invoices"
+                ],
+                "summary": "Send invoice to e-invoice system",
+                "operationId": "9785b3a026a49ad0b3778b5a229a3f55",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Invoice ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "is_archive": {
+                                        "description": "Whether to send as archive invoice",
+                                        "type": "boolean",
+                                        "example": false
+                                    },
+                                    "provider": {
+                                        "description": "Optional provider override",
+                                        "type": "string",
+                                        "example": "isnet"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Invoice sent successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Invoice sent successfully"
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Invoice not found"
+                    },
+                    "422": {
+                        "description": "Invalid request or invoice cannot be sent"
+                    }
+                },
+                "security": [
+                    {
+                        "jwt": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/invoices/{id}/cancel-in-einvoice": {
+            "post": {
+                "tags": [
+                    "Invoices"
+                ],
+                "summary": "Cancel invoice in e-invoice system",
+                "operationId": "ff19a14e23d130fe7eda967613bd3225",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Invoice ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "reason": {
+                                        "type": "string",
+                                        "example": "Customer requested cancellation"
+                                    },
+                                    "is_archive": {
+                                        "description": "Whether it's an archive invoice",
+                                        "type": "boolean",
+                                        "example": false
+                                    },
+                                    "provider": {
+                                        "description": "Optional provider override",
+                                        "type": "string",
+                                        "example": "isnet"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Invoice cancelled successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Invoice cancelled successfully"
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Invoice not found"
+                    },
+                    "422": {
+                        "description": "Invalid request or invoice cannot be cancelled"
+                    }
+                },
+                "security": [
+                    {
+                        "jwt": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/invoices/{id}/send-email": {
+            "post": {
+                "tags": [
+                    "Invoices"
+                ],
+                "summary": "Send invoice email via e-invoice system",
+                "operationId": "55bcaa8d23824b8d479133f1faaf4eb5",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "Invoice ID",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "customer@example.com"
+                                    },
+                                    "provider": {
+                                        "description": "Optional provider override",
+                                        "type": "string",
+                                        "example": "isnet"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Email sent successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Email sent successfully"
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Invoice not found"
+                    },
+                    "422": {
+                        "description": "Invalid request or email cannot be sent"
+                    }
+                },
+                "security": [
+                    {
+                        "jwt": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/invoices/search-in-einvoice": {
+            "post": {
+                "tags": [
+                    "Invoices"
+                ],
+                "summary": "Search for invoices in e-invoice system",
+                "operationId": "7c26a7217c13a6a9da3be9ce7119c3ea",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "search_params": {
+                                        "type": "object",
+                                        "example": {
+                                            "start_date": "2025-01-01",
+                                            "end_date": "2025-12-31"
+                                        }
+                                    },
+                                    "is_archive": {
+                                        "description": "Whether to search in archive",
+                                        "type": "boolean",
+                                        "example": false
+                                    },
+                                    "provider": {
+                                        "description": "Optional provider override",
+                                        "type": "string",
+                                        "example": "isnet"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Search results",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Search completed"
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid request"
+                    }
+                },
+                "security": [
+                    {
+                        "jwt": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/invoices/taxpayer/{taxCode}": {
+            "get": {
+                "tags": [
+                    "Invoices"
+                ],
+                "summary": "Check if a tax code belongs to an e-invoice taxpayer",
+                "operationId": "3f51d650e60fae0b8acdbcbcb4fc0c06",
+                "parameters": [
+                    {
+                        "name": "taxCode",
+                        "in": "path",
+                        "description": "Tax code to check",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "provider",
+                        "in": "query",
+                        "description": "Optional provider override",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Taxpayer information",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Tax payer information retrieved successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "is_einvoice_user": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "is_earchive_user": {
+                                                    "type": "boolean",
+                                                    "example": false
+                                                },
+                                                "tax_code": {
+                                                    "type": "string",
+                                                    "example": "1234567890"
+                                                },
+                                                "tax_name": {
+                                                    "type": "string",
+                                                    "example": "Test Company"
+                                                },
+                                                "registration_date": {
+                                                    "type": "string",
+                                                    "example": "2021-01-01"
+                                                },
+                                                "inbox_tags": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid request or taxpayer not found"
+                    }
+                },
+                "security": [
+                    {
+                        "jwt": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/invoices/address-data": {
+            "get": {
+                "tags": [
+                    "Invoices"
+                ],
+                "summary": "Get address data (cities and tax offices) for e-invoice",
+                "operationId": "efafba94fca946926a23eddbda0ae8a4",
+                "parameters": [
+                    {
+                        "name": "provider",
+                        "in": "query",
+                        "description": "Optional provider override",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Address data",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Address data retrieved successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "cities": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "tax_offices": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid request or error retrieving address data"
+                    }
+                },
+                "security": [
+                    {
+                        "jwt": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/invoices/cities/{cityCode}/towns": {
+            "get": {
+                "tags": [
+                    "Invoices"
+                ],
+                "summary": "Get towns for a specific city",
+                "operationId": "477cf816ae63f3aa3fa14b8d79767ccc",
+                "parameters": [
+                    {
+                        "name": "cityCode",
+                        "in": "path",
+                        "description": "City code",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "provider",
+                        "in": "query",
+                        "description": "Optional provider override",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Town list",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Town list retrieved successfully"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid request or error retrieving town list"
+                    }
+                },
+                "security": [
+                    {
+                        "jwt": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/invoices/archive/send-xml": {
+            "post": {
+                "tags": [
+                    "Invoices"
+                ],
+                "summary": "Send archive invoice XML to e-archive system",
+                "operationId": "ca71cdc7f2c9755ec9a97120ad488772",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "xml": {
+                                        "type": "string",
+                                        "example": "<xml>...</xml>"
+                                    },
+                                    "params": {
+                                        "type": "object",
+                                        "example": {
+                                            "CompanyVendorNumber": "1234"
+                                        }
+                                    },
+                                    "provider": {
+                                        "type": "string",
+                                        "example": "isnet"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Archive invoice sent successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Archive invoice sent successfully"
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid request or XML cannot be sent"
+                    }
+                },
+                "security": [
+                    {
+                        "jwt": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/invoices/archive/send-xml-without-number": {
+            "post": {
+                "tags": [
+                    "Invoices"
+                ],
+                "summary": "Send archive invoice XML without invoice number to e-archive system",
+                "operationId": "b2193ef5280ba1ef4ea46cb601beb2e0",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "xml": {
+                                        "type": "string",
+                                        "example": "<xml>...</xml>"
+                                    },
+                                    "params": {
+                                        "type": "object",
+                                        "example": {
+                                            "CompanyVendorNumber": "1234"
+                                        }
+                                    },
+                                    "provider": {
+                                        "type": "string",
+                                        "example": "isnet"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Archive invoice sent successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Archive invoice sent successfully"
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid request or XML cannot be sent"
+                    }
+                },
+                "security": [
+                    {
+                        "jwt": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/invoices/archive/send-report": {
+            "post": {
+                "tags": [
+                    "Invoices"
+                ],
+                "summary": "Send archive invoice report to GIB",
+                "operationId": "4f42e87d3f603f48442e3c66809c7262",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "last_date": {
+                                        "type": "string",
+                                        "example": "2025-12-31"
+                                    },
+                                    "provider": {
+                                        "type": "string",
+                                        "example": "isnet"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Archive invoice report sent successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Archive invoice report sent successfully"
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid request or report cannot be sent"
+                    }
+                },
+                "security": [
+                    {
+                        "jwt": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/invoices/archive/search-report": {
+            "get": {
+                "tags": [
+                    "Invoices"
+                ],
+                "summary": "Search for archive invoice report",
+                "operationId": "e6cb45a8fba5418fdc8ea775369cfa3b",
+                "parameters": [
+                    {
+                        "name": "report_number",
+                        "in": "query",
+                        "description": "Report number",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "group_number",
+                        "in": "query",
+                        "description": "Group number",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "provider",
+                        "in": "query",
+                        "description": "Optional provider override",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Archive invoice report search results",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Archive invoice report found"
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid request"
+                    }
+                },
+                "security": [
+                    {
+                        "jwt": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/invoices/document-viewer-link": {
+            "get": {
+                "tags": [
+                    "Invoices"
+                ],
+                "summary": "Get document viewer link",
+                "operationId": "1c8904f026adf5c89e187a9f9da6f672",
+                "parameters": [
+                    {
+                        "name": "ettn",
+                        "in": "query",
+                        "description": "ETTN of the document",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "direction",
+                        "in": "query",
+                        "description": "Direction of the invoice (INCOMING or OUTGOING)",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "INCOMING",
+                                "OUTGOING"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "document_type",
+                        "in": "query",
+                        "description": "Document type (EINVOICE or EARCHIVE)",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "EINVOICE",
+                                "EARCHIVE"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "provider",
+                        "in": "query",
+                        "description": "Optional provider override",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Document viewer link",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Document viewer link retrieved successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "link": {
+                                                    "type": "string",
+                                                    "example": "https://example.com/view/123456"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid request"
+                    }
+                },
+                "security": [
+                    {
+                        "jwt": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/invoices/send-xml": {
+            "post": {
+                "tags": [
+                    "Invoices"
+                ],
+                "summary": "Send invoice XML to e-invoice system",
+                "operationId": "9c4a817043688d9088ae6b4070898734",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "xml": {
+                                        "type": "string",
+                                        "example": "<xml>...</xml>"
+                                    },
+                                    "params": {
+                                        "type": "object",
+                                        "example": {
+                                            "CompanyVendorNumber": "1234"
+                                        }
+                                    },
+                                    "provider": {
+                                        "type": "string",
+                                        "example": "isnet"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Invoice sent successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Invoice sent successfully"
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid request or XML cannot be sent"
+                    }
+                },
+                "security": [
+                    {
+                        "jwt": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/invoices/send-xml-without-number": {
+            "post": {
+                "tags": [
+                    "Invoices"
+                ],
+                "summary": "Send invoice XML without invoice number to e-invoice system",
+                "operationId": "b423987bef5b29c1cc9a10533b8e8dd0",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "xml": {
+                                        "type": "string",
+                                        "example": "<xml>...</xml>"
+                                    },
+                                    "params": {
+                                        "type": "object",
+                                        "example": {
+                                            "CompanyVendorNumber": "1234"
+                                        }
+                                    },
+                                    "provider": {
+                                        "type": "string",
+                                        "example": "isnet"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Invoice sent successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Invoice sent successfully"
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid request or XML cannot be sent"
+                    }
+                },
+                "security": [
+                    {
+                        "jwt": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/invoices/send-reply": {
+            "post": {
+                "tags": [
+                    "Invoices"
+                ],
+                "summary": "Send reply to an invoice (accept or reject)",
+                "operationId": "3078a28640161132ec2e2ad831718d31",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "ettn": {
+                                        "type": "string",
+                                        "example": "12345-ABCDE-67890"
+                                    },
+                                    "response_type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "ACCEPT",
+                                            "REJECT"
+                                        ],
+                                        "example": "ACCEPT"
+                                    },
+                                    "note": {
+                                        "type": "string",
+                                        "example": "Invoice accepted",
+                                        "nullable": true
+                                    },
+                                    "provider": {
+                                        "type": "string",
+                                        "example": "isnet",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Reply sent successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Reply sent successfully"
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid request or reply cannot be sent"
+                    }
+                },
+                "security": [
+                    {
+                        "jwt": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/invoices/update-state": {
+            "put": {
+                "tags": [
+                    "Invoices"
+                ],
+                "summary": "Update invoice state in e-invoice system",
+                "operationId": "f98707e4f1f88825e254d72fcde95664",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "ettn": {
+                                        "type": "string",
+                                        "example": "12345-ABCDE-67890"
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "example": "READ"
+                                    },
+                                    "provider": {
+                                        "type": "string",
+                                        "example": "isnet",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Invoice state updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Invoice state updated successfully"
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid request or state cannot be updated"
+                    }
+                },
+                "security": [
+                    {
+                        "jwt": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/invoices/direct": {
+            "post": {
+                "tags": [
+                    "Invoices"
+                ],
+                "summary": "Direct invoice to another branch/vendor",
+                "operationId": "08e77785f49d26390ccad73312454593",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "ettn_list": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "example": "12345-ABCDE-67890"
+                                    },
+                                    "vendor_number": {
+                                        "type": "string",
+                                        "example": "12345"
+                                    },
+                                    "provider": {
+                                        "type": "string",
+                                        "example": "isnet",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Invoice directed successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Invoice directed successfully"
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid request or invoice cannot be directed"
+                    }
+                },
+                "security": [
+                    {
+                        "jwt": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/invoices/archive": {
+            "post": {
+                "tags": [
+                    "Invoices"
+                ],
+                "summary": "Archive an e-invoice",
+                "operationId": "ecd564ef32765fbceb42aba54b4801aa",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "ettn": {
+                                        "type": "string",
+                                        "example": "12345-ABCDE-67890"
+                                    },
+                                    "provider": {
+                                        "type": "string",
+                                        "example": "isnet",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Invoice archived successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Invoice archived successfully"
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid request or invoice cannot be archived"
+                    }
+                },
+                "security": [
+                    {
+                        "jwt": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/invoices/de-archive": {
+            "post": {
+                "tags": [
+                    "Invoices"
+                ],
+                "summary": "De-archive an e-invoice",
+                "operationId": "3b9f3fbb691edde00cdfcd5f87dec079",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "ettn": {
+                                        "type": "string",
+                                        "example": "12345-ABCDE-67890"
+                                    },
+                                    "provider": {
+                                        "type": "string",
+                                        "example": "isnet",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Invoice de-archived successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Invoice de-archived successfully"
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid request or invoice cannot be de-archived"
+                    }
+                },
+                "security": [
+                    {
+                        "jwt": []
+                    }
+                ]
+            }
+        },
         "/api/v1/invoices/{invoiceId}/details": {
             "get": {
                 "tags": [
@@ -7394,9 +9524,9 @@
                         }
                     },
                     {
-                        "name": "season_registration_product_id",
+                        "name": "season_registration_id",
                         "in": "query",
-                        "description": "Filter by season registration product ID",
+                        "description": "Filter by season registration ID",
                         "required": false,
                         "schema": {
                             "type": "integer"
@@ -13168,19 +15298,19 @@
                 ]
             }
         },
-        "/api/v1/aparts/{apartId}/season-registrations": {
+        "/api/v1/beds/{bedId}/season-registrations": {
             "get": {
                 "tags": [
                     "Season Registrations"
                 ],
-                "summary": "Get season registrations by apart",
-                "description": "Retrieve a list of season registrations for a specific apart",
-                "operationId": "4820d8da6782ee0fdd6d04476b2bf656",
+                "summary": "Get season registrations by bed",
+                "description": "Retrieve a list of season registrations for a specific bed",
+                "operationId": "5b0b27a201a6b68e62fc6671aea085b6",
                 "parameters": [
                     {
-                        "name": "apartId",
+                        "name": "bedId",
                         "in": "path",
-                        "description": "ID of apart to get registrations for",
+                        "description": "ID of bed to get registrations for",
                         "required": true,
                         "schema": {
                             "type": "integer",
@@ -13244,7 +15374,7 @@
                         "description": "Forbidden"
                     },
                     "404": {
-                        "description": "Apart not found"
+                        "description": "Bed not found"
                     }
                 },
                 "security": [
@@ -13654,6 +15784,541 @@
                                                     "items": {
                                                         "type": "string",
                                                         "example": "The selected guest is invalid."
+                                                    }
+                                                },
+                                                "products": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "At least one product must be selected."
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request - Business rule validation failed"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "500": {
+                        "description": "Server Error"
+                    }
+                },
+                "security": [
+                    {
+                        "jwt": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/season-registrations/streamlined": {
+            "post": {
+                "tags": [
+                    "Season Registrations"
+                ],
+                "summary": "Create streamlined season registration",
+                "description": "Create a streamlined season registration with automatic guest creation/update, guardian management, and payment plan generation",
+                "operationId": "bd7bf270b3454d31b9d11e23f309fe9e",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "guest",
+                                    "is_self_guardian",
+                                    "bed_id",
+                                    "season_code",
+                                    "check_in_date",
+                                    "check_out_date",
+                                    "products",
+                                    "invoice_titles"
+                                ],
+                                "properties": {
+                                    "guest": {
+                                        "required": [
+                                            "tc_id",
+                                            "first_name",
+                                            "last_name",
+                                            "birth_date",
+                                            "gender",
+                                            "nationality",
+                                            "guest_type",
+                                            "phone",
+                                            "email",
+                                            "emergency_contact",
+                                            "address"
+                                        ],
+                                        "properties": {
+                                            "tc_id": {
+                                                "type": "string",
+                                                "example": "12345678901"
+                                            },
+                                            "first_name": {
+                                                "type": "string",
+                                                "example": "Ali"
+                                            },
+                                            "last_name": {
+                                                "type": "string",
+                                                "example": "Yılmaz"
+                                            },
+                                            "birth_date": {
+                                                "type": "string",
+                                                "format": "date",
+                                                "example": "2010-05-15"
+                                            },
+                                            "gender": {
+                                                "type": "string",
+                                                "enum": [
+                                                    "male",
+                                                    "female"
+                                                ],
+                                                "example": "male"
+                                            },
+                                            "nationality": {
+                                                "type": "string",
+                                                "example": "TC"
+                                            },
+                                            "guest_type": {
+                                                "type": "string",
+                                                "enum": [
+                                                    "student",
+                                                    "employee",
+                                                    "other"
+                                                ],
+                                                "example": "student"
+                                            },
+                                            "education_level": {
+                                                "type": "string",
+                                                "example": "high_school"
+                                            },
+                                            "school_name": {
+                                                "type": "string",
+                                                "example": "Atatürk Lisesi"
+                                            },
+                                            "phone": {
+                                                "type": "string",
+                                                "example": "5321234567"
+                                            },
+                                            "email": {
+                                                "type": "string",
+                                                "format": "email",
+                                                "example": "ali@example.com"
+                                            },
+                                            "special_notes": {
+                                                "type": "string",
+                                                "example": "Gıda alerjisi var"
+                                            },
+                                            "emergency_contact": {
+                                                "properties": {
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "Ayşe Yılmaz"
+                                                    },
+                                                    "phone": {
+                                                        "type": "string",
+                                                        "example": "5331234568"
+                                                    },
+                                                    "relationship": {
+                                                        "type": "string",
+                                                        "example": "mother"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            },
+                                            "address": {
+                                                "properties": {
+                                                    "country_id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "province_id": {
+                                                        "type": "integer",
+                                                        "example": 34
+                                                    },
+                                                    "district_id": {
+                                                        "type": "integer",
+                                                        "example": 1530
+                                                    },
+                                                    "neighborhood": {
+                                                        "type": "string",
+                                                        "example": "Atatürk"
+                                                    },
+                                                    "street": {
+                                                        "type": "string",
+                                                        "example": "Cumhuriyet Caddesi"
+                                                    },
+                                                    "building_no": {
+                                                        "type": "string",
+                                                        "example": "123"
+                                                    },
+                                                    "apartment_no": {
+                                                        "type": "string",
+                                                        "example": "4"
+                                                    },
+                                                    "postal_code": {
+                                                        "type": "string",
+                                                        "example": "34000"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "type": "object"
+                                    },
+                                    "is_self_guardian": {
+                                        "type": "boolean",
+                                        "example": false
+                                    },
+                                    "guardian": {
+                                        "required": [
+                                            "tc_id",
+                                            "first_name",
+                                            "last_name",
+                                            "birth_date",
+                                            "gender",
+                                            "relationship_type",
+                                            "phone",
+                                            "email",
+                                            "address"
+                                        ],
+                                        "properties": {
+                                            "tc_id": {
+                                                "type": "string",
+                                                "example": "98765432109"
+                                            },
+                                            "first_name": {
+                                                "type": "string",
+                                                "example": "Mehmet"
+                                            },
+                                            "last_name": {
+                                                "type": "string",
+                                                "example": "Yılmaz"
+                                            },
+                                            "birth_date": {
+                                                "type": "string",
+                                                "format": "date",
+                                                "example": "1975-10-20"
+                                            },
+                                            "gender": {
+                                                "type": "string",
+                                                "enum": [
+                                                    "male",
+                                                    "female"
+                                                ],
+                                                "example": "male"
+                                            },
+                                            "relationship_type": {
+                                                "type": "string",
+                                                "example": "parent"
+                                            },
+                                            "phone": {
+                                                "type": "string",
+                                                "example": "5331234567"
+                                            },
+                                            "email": {
+                                                "type": "string",
+                                                "format": "email",
+                                                "example": "mehmet@example.com"
+                                            },
+                                            "occupation": {
+                                                "type": "string",
+                                                "example": "Öğretmen"
+                                            },
+                                            "workplace": {
+                                                "type": "string",
+                                                "example": "Atatürk İlkokulu"
+                                            },
+                                            "address": {
+                                                "properties": {
+                                                    "country_id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "province_id": {
+                                                        "type": "integer",
+                                                        "example": 34
+                                                    },
+                                                    "district_id": {
+                                                        "type": "integer",
+                                                        "example": 1530
+                                                    },
+                                                    "neighborhood": {
+                                                        "type": "string",
+                                                        "example": "Atatürk"
+                                                    },
+                                                    "street": {
+                                                        "type": "string",
+                                                        "example": "Cumhuriyet Caddesi"
+                                                    },
+                                                    "building_no": {
+                                                        "type": "string",
+                                                        "example": "123"
+                                                    },
+                                                    "apartment_no": {
+                                                        "type": "string",
+                                                        "example": "4"
+                                                    },
+                                                    "postal_code": {
+                                                        "type": "string",
+                                                        "example": "34000"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "type": "object"
+                                    },
+                                    "bed_id": {
+                                        "type": "integer",
+                                        "example": 45
+                                    },
+                                    "season_code": {
+                                        "type": "string",
+                                        "example": "2425"
+                                    },
+                                    "check_in_date": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2025-06-15"
+                                    },
+                                    "check_out_date": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2025-06-22"
+                                    },
+                                    "deposit_amount": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 1000
+                                    },
+                                    "notes": {
+                                        "type": "string",
+                                        "example": "VIP misafir",
+                                        "nullable": true
+                                    },
+                                    "products": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "product_id": {
+                                                    "type": "integer",
+                                                    "example": 5
+                                                },
+                                                "quantity": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "invoice_titles": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "title_type": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "individual",
+                                                        "corporate"
+                                                    ],
+                                                    "example": "individual"
+                                                },
+                                                "first_name": {
+                                                    "type": "string",
+                                                    "example": "Mehmet"
+                                                },
+                                                "last_name": {
+                                                    "type": "string",
+                                                    "example": "Yılmaz"
+                                                },
+                                                "identity_number": {
+                                                    "type": "string",
+                                                    "example": "98765432109"
+                                                },
+                                                "company_name": {
+                                                    "type": "string",
+                                                    "example": "Company Ltd"
+                                                },
+                                                "tax_office": {
+                                                    "type": "string",
+                                                    "example": "Tax Office"
+                                                },
+                                                "tax_number": {
+                                                    "type": "string",
+                                                    "example": "1234567890"
+                                                },
+                                                "phone": {
+                                                    "type": "string",
+                                                    "example": "5551234567"
+                                                },
+                                                "email": {
+                                                    "type": "string",
+                                                    "format": "email",
+                                                    "example": "john@example.com"
+                                                },
+                                                "is_default": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "address": {
+                                                    "properties": {
+                                                        "country_id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "province_id": {
+                                                            "type": "integer",
+                                                            "example": 34
+                                                        },
+                                                        "district_id": {
+                                                            "type": "integer",
+                                                            "example": 1530
+                                                        },
+                                                        "neighborhood": {
+                                                            "type": "string",
+                                                            "example": "Atatürk"
+                                                        },
+                                                        "street": {
+                                                            "type": "string",
+                                                            "example": "Cumhuriyet Caddesi"
+                                                        },
+                                                        "building_no": {
+                                                            "type": "string",
+                                                            "example": "123"
+                                                        },
+                                                        "apartment_no": {
+                                                            "type": "string",
+                                                            "example": "4"
+                                                        },
+                                                        "postal_code": {
+                                                            "type": "string",
+                                                            "example": "34000"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Streamlined season registration created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Season registration successfully created"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 456
+                                                },
+                                                "guest_id": {
+                                                    "type": "integer",
+                                                    "example": 123
+                                                },
+                                                "guardian_id": {
+                                                    "type": "integer",
+                                                    "example": 124
+                                                },
+                                                "season_code": {
+                                                    "type": "string",
+                                                    "example": "2425"
+                                                },
+                                                "bed_id": {
+                                                    "type": "integer",
+                                                    "example": 45
+                                                },
+                                                "check_in_date": {
+                                                    "type": "string",
+                                                    "format": "date",
+                                                    "example": "2025-06-15"
+                                                },
+                                                "check_out_date": {
+                                                    "type": "string",
+                                                    "format": "date",
+                                                    "example": "2025-06-22"
+                                                },
+                                                "status": {
+                                                    "type": "string",
+                                                    "example": "active"
+                                                },
+                                                "products": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "payment_plans": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "invoice_titles": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Failed to create season registration"
+                                        },
+                                        "errors": {
+                                            "properties": {
+                                                "guest.tc_id": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "Invalid TC ID format."
                                                     }
                                                 },
                                                 "products": {
@@ -23759,9 +26424,14 @@
                 ],
                 "properties": {
                     "name": {
-                        "description": "Person's full name",
+                        "description": "Person's first name",
                         "type": "string",
-                        "example": "John Doe"
+                        "example": "John"
+                    },
+                    "surname": {
+                        "description": "Person's last name",
+                        "type": "string",
+                        "example": "Doe"
                     },
                     "tc_no": {
                         "description": "Turkish Citizenship Number (11 digits)",
@@ -23785,10 +26455,14 @@
                         "format": "date",
                         "example": "1990-01-01"
                     },
-                    "address": {
-                        "description": "Full address",
+                    "gender": {
+                        "description": "Person's gender",
                         "type": "string",
-                        "example": "123 Main St, Apartment 4B",
+                        "enum": [
+                            "MALE",
+                            "FEMALE"
+                        ],
+                        "example": "MALE",
                         "nullable": true
                     },
                     "city": {
@@ -23806,6 +26480,77 @@
                             "SUSPENDED"
                         ],
                         "example": "ACTIVE"
+                    },
+                    "address": {
+                        "properties": {
+                            "country_id": {
+                                "description": "Country ID",
+                                "type": "integer",
+                                "example": 1
+                            },
+                            "province_id": {
+                                "description": "Province ID",
+                                "type": "integer",
+                                "example": 34
+                            },
+                            "district_id": {
+                                "description": "District ID",
+                                "type": "integer",
+                                "example": 1
+                            },
+                            "neighborhood": {
+                                "description": "Neighborhood name",
+                                "type": "string",
+                                "example": "Caddebostan"
+                            },
+                            "street": {
+                                "description": "Street name",
+                                "type": "string",
+                                "example": "Bağdat Caddesi"
+                            },
+                            "building_no": {
+                                "description": "Building number",
+                                "type": "string",
+                                "example": "123"
+                            },
+                            "apartment_no": {
+                                "description": "Apartment number",
+                                "type": "string",
+                                "example": "4"
+                            },
+                            "postal_code": {
+                                "description": "Postal code",
+                                "type": "string",
+                                "example": "34728"
+                            },
+                            "address_type": {
+                                "description": "Address type",
+                                "type": "string",
+                                "enum": [
+                                    "home",
+                                    "work",
+                                    "other"
+                                ],
+                                "example": "home"
+                            },
+                            "is_default": {
+                                "description": "Whether this is the default address",
+                                "type": "boolean",
+                                "default": false,
+                                "example": true
+                            },
+                            "status": {
+                                "description": "Address status",
+                                "type": "string",
+                                "default": "active",
+                                "enum": [
+                                    "active",
+                                    "inactive"
+                                ],
+                                "example": "active"
+                            }
+                        },
+                        "type": "object"
                     }
                 },
                 "type": "object"
@@ -23813,9 +26558,14 @@
             "UpdatePersonRequestSchema": {
                 "properties": {
                     "name": {
-                        "description": "Person's full name",
+                        "description": "Person's first name",
                         "type": "string",
-                        "example": "John Doe"
+                        "example": "John"
+                    },
+                    "surname": {
+                        "description": "Person's last name",
+                        "type": "string",
+                        "example": "Doe"
                     },
                     "tc_no": {
                         "description": "Turkish Citizenship Number (11 digits)",
@@ -23839,10 +26589,14 @@
                         "format": "date",
                         "example": "1990-01-01"
                     },
-                    "address": {
-                        "description": "Full address",
+                    "gender": {
+                        "description": "Person's gender",
                         "type": "string",
-                        "example": "123 Main St, Apartment 4B",
+                        "enum": [
+                            "MALE",
+                            "FEMALE"
+                        ],
+                        "example": "MALE",
                         "nullable": true
                     },
                     "city": {
@@ -23860,6 +26614,77 @@
                             "SUSPENDED"
                         ],
                         "example": "ACTIVE"
+                    },
+                    "address": {
+                        "properties": {
+                            "country_id": {
+                                "description": "Country ID",
+                                "type": "integer",
+                                "example": 1
+                            },
+                            "province_id": {
+                                "description": "Province ID",
+                                "type": "integer",
+                                "example": 34
+                            },
+                            "district_id": {
+                                "description": "District ID",
+                                "type": "integer",
+                                "example": 1
+                            },
+                            "neighborhood": {
+                                "description": "Neighborhood name",
+                                "type": "string",
+                                "example": "Caddebostan"
+                            },
+                            "street": {
+                                "description": "Street name",
+                                "type": "string",
+                                "example": "Bağdat Caddesi"
+                            },
+                            "building_no": {
+                                "description": "Building number",
+                                "type": "string",
+                                "example": "123"
+                            },
+                            "apartment_no": {
+                                "description": "Apartment number",
+                                "type": "string",
+                                "example": "4"
+                            },
+                            "postal_code": {
+                                "description": "Postal code",
+                                "type": "string",
+                                "example": "34728"
+                            },
+                            "address_type": {
+                                "description": "Address type",
+                                "type": "string",
+                                "enum": [
+                                    "home",
+                                    "work",
+                                    "other"
+                                ],
+                                "example": "home"
+                            },
+                            "is_default": {
+                                "description": "Whether this is the default address",
+                                "type": "boolean",
+                                "default": false,
+                                "example": true
+                            },
+                            "status": {
+                                "description": "Address status",
+                                "type": "string",
+                                "default": "active",
+                                "enum": [
+                                    "active",
+                                    "inactive"
+                                ],
+                                "example": "active"
+                            }
+                        },
+                        "type": "object"
                     }
                 },
                 "type": "object"
@@ -23878,6 +26703,77 @@
                             "SUSPENDED"
                         ],
                         "example": "ACTIVE"
+                    },
+                    "address": {
+                        "properties": {
+                            "country_id": {
+                                "description": "Country ID",
+                                "type": "integer",
+                                "example": 1
+                            },
+                            "province_id": {
+                                "description": "Province ID",
+                                "type": "integer",
+                                "example": 34
+                            },
+                            "district_id": {
+                                "description": "District ID",
+                                "type": "integer",
+                                "example": 1
+                            },
+                            "neighborhood": {
+                                "description": "Neighborhood name",
+                                "type": "string",
+                                "example": "Caddebostan"
+                            },
+                            "street": {
+                                "description": "Street name",
+                                "type": "string",
+                                "example": "Bağdat Caddesi"
+                            },
+                            "building_no": {
+                                "description": "Building number",
+                                "type": "string",
+                                "example": "123"
+                            },
+                            "apartment_no": {
+                                "description": "Apartment number",
+                                "type": "string",
+                                "example": "4"
+                            },
+                            "postal_code": {
+                                "description": "Postal code",
+                                "type": "string",
+                                "example": "34728"
+                            },
+                            "address_type": {
+                                "description": "Address type",
+                                "type": "string",
+                                "enum": [
+                                    "home",
+                                    "work",
+                                    "other"
+                                ],
+                                "example": "home"
+                            },
+                            "is_default": {
+                                "description": "Whether this is the default address",
+                                "type": "boolean",
+                                "default": false,
+                                "example": true
+                            },
+                            "status": {
+                                "description": "Address status",
+                                "type": "string",
+                                "default": "active",
+                                "enum": [
+                                    "active",
+                                    "inactive"
+                                ],
+                                "example": "active"
+                            }
+                        },
+                        "type": "object"
                     }
                 },
                 "type": "object"
@@ -23907,7 +26803,11 @@
                     },
                     "name": {
                         "type": "string",
-                        "example": "John Doe"
+                        "example": "John"
+                    },
+                    "surname": {
+                        "type": "string",
+                        "example": "Doe"
                     },
                     "tc_no": {
                         "type": "string",
@@ -23927,9 +26827,13 @@
                         "format": "date",
                         "example": "1990-01-01"
                     },
-                    "address": {
+                    "gender": {
                         "type": "string",
-                        "example": "123 Main St, Apartment 4B",
+                        "enum": [
+                            "MALE",
+                            "FEMALE"
+                        ],
+                        "example": "MALE",
                         "nullable": true
                     },
                     "city": {
@@ -23956,7 +26860,7 @@
                         ],
                         "example": "ACTIVE"
                     },
-                    "structured_address": {
+                    "address": {
                         "oneOf": [
                             {
                                 "$ref": "#/components/schemas/AddressResource"
@@ -23964,11 +26868,6 @@
                         ],
                         "nullable": true,
                         "type": "object"
-                    },
-                    "formatted_address": {
-                        "type": "string",
-                        "example": "123 Main St, Atasehir, Istanbul, 34758, Turkey",
-                        "nullable": true
                     },
                     "created_at": {
                         "type": "string",
@@ -26609,7 +29508,7 @@
                         "type": "integer",
                         "example": 1
                     },
-                    "apart_id": {
+                    "bed_id": {
                         "type": "integer",
                         "example": 1
                     },
@@ -26658,8 +29557,8 @@
                     "guest": {
                         "$ref": "#/components/schemas/GuestResource"
                     },
-                    "apart": {
-                        "$ref": "#/components/schemas/ApartResource"
+                    "bed": {
+                        "$ref": "#/components/schemas/BedResource"
                     },
                     "season": {
                         "$ref": "#/components/schemas/FinanceSeasonResource"
@@ -27332,35 +30231,7 @@
                         "format": "date-time"
                     },
                     "person": {
-                        "properties": {
-                            "id": {
-                                "type": "integer",
-                                "example": 1
-                            },
-                            "name": {
-                                "type": "string",
-                                "example": "John Doe"
-                            },
-                            "tc_no": {
-                                "type": "string",
-                                "example": "12345678901"
-                            },
-                            "phone": {
-                                "type": "string",
-                                "example": "+905551234567"
-                            },
-                            "email": {
-                                "type": "string",
-                                "format": "email",
-                                "example": "john@example.com"
-                            },
-                            "birth_date": {
-                                "type": "string",
-                                "format": "date",
-                                "example": "1990-01-01"
-                            }
-                        },
-                        "type": "object"
+                        "$ref": "#/components/schemas/PersonResource"
                     },
                     "guardians": {
                         "type": "array",
@@ -28081,6 +30952,9 @@
                         "items": {
                             "$ref": "#/components/schemas/FeatureResource"
                         }
+                    },
+                    "apart": {
+                        "$ref": "#/components/schemas/ApartResource"
                     }
                 },
                 "type": "object"
@@ -28742,6 +31616,10 @@
         {
             "name": "Account Transactions",
             "description": "API Endpoints for managing account transactions"
+        },
+        {
+            "name": "Company Integration",
+            "description": "API endpoints for company integration operations"
         },
         {
             "name": "Currencies",

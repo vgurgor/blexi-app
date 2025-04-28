@@ -21,9 +21,10 @@ export interface SeasonRegistrationDto {
     person_id: number;
     guest_type: string;
     profession_department?: string;
-    status?: string;
     emergency_contact?: string;
     notes?: string;
+    last_access_date?: string;
+    status?: string;
     person?: {
       id: number;
       name: string;
@@ -37,6 +38,7 @@ export interface SeasonRegistrationDto {
       profile_photo_url?: string;
       status: string;
     };
+    formatted_address?: string;
   };
   bed?: {
     id: number;
@@ -44,12 +46,22 @@ export interface SeasonRegistrationDto {
     bed_number: string;
     bed_type: string;
     status: string;
-    building_id?: number;
+    guest_id?: number;
     room?: {
       id: number;
       name: string;
-      floor?: string;
+      room_number: string;
+      floor?: number;
+      capacity?: number;
+      room_type?: string;
       status: string;
+      apart?: {
+        id: number;
+        name: string;
+        address: string;
+        gender_type: string;
+        status: string;
+      };
     };
   };
   season?: {
@@ -133,12 +145,19 @@ const mapSeasonRegistrationDtoToModel = (dto: SeasonRegistrationDto): ISeasonReg
       bedNumber: dto.bed.bed_number,
       bedType: dto.bed.bed_type,
       status: dto.bed.status,
-      buildingId: dto.bed.building_id?.toString(),
+      buildingId: dto.bed.room && dto.bed.room.apart ? dto.bed.room.apart.id.toString() : undefined,
       room: dto.bed.room ? {
         id: dto.bed.room.id.toString(),
-        name: dto.bed.room.name,
-        floor: dto.bed.room.floor,
-        status: dto.bed.room.status
+        name: dto.bed.room.room_number,
+        floor: dto.bed.room.floor?.toString(),
+        status: dto.bed.room.status,
+        apart: dto.bed.room.apart ? {
+          id: dto.bed.room.apart.id.toString(),
+          name: dto.bed.room.apart.name,
+          address: dto.bed.room.apart.address,
+          genderType: dto.bed.room.apart.gender_type,
+          status: dto.bed.room.apart.status
+        } : undefined
       } : undefined
     } : undefined,
     season: dto.season ? {
@@ -156,6 +175,13 @@ const mapSeasonRegistrationDtoToModel = (dto: SeasonRegistrationDto): ISeasonReg
  * Sezon Kayıtları API servisi
  */
 export const seasonRegistrationsApi = {
+  /**
+   * Sezon kayıtları ile ilgili özet istatistikleri getirir
+   */
+  getStats: async (): Promise<ApiResponse<any>> => {
+    const url = '/api/v1/season-registrations/stats';
+    return await api.get(url);
+  },
   /**
    * Tüm sezon kayıtlarını listeler, filtreleme opsiyonları ile
    * @param guestId - Misafir ID filtresi (isteğe bağlı)

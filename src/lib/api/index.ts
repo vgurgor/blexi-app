@@ -33,6 +33,7 @@ export * from './invoiceTitles';
 export * from './paymentPlans';
 export * from './depositDeductions';
 export * from './payments';
+export * from './overduepayments';
 export * from './invoices';
 export * from './invoiceDetails';
 export * from './invoiceTaxDetails';

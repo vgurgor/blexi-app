@@ -1,13 +1,41 @@
 import React from 'react';
-import { User, Phone, Mail, Calendar, Building2, Bed, Tag } from 'lucide-react';
+import { User, Phone, Mail, Calendar, Building2, Bed, Tag, GraduationCap, Flag, School, ChevronUp, ChevronDown } from 'lucide-react';
 import { ISeasonRegistration } from '@/types/models';
+import { formatCurrency } from '@/utils/format';
 import StatusBadge from './StatusBadge';
+import EmergencyContactCard from './EmergencyContactCard';
+import { useState } from 'react';
 
 interface RegistrationHeaderProps {
   registration: ISeasonRegistration;
 }
 
 export default function RegistrationHeader({ registration }: RegistrationHeaderProps) {
+  // Prepare financial summary data
+  const financialSummary = registration.financialSummary || {
+    totalAmount: parseFloat(registration.totalAmount) || 491903,
+    paidAmount: parseFloat(registration.paidAmount) || 98381,
+    remainingAmount: (parseFloat(registration.totalAmount) || 491903) - (parseFloat(registration.paidAmount) || 98381),
+    paymentProgress: Math.round(((parseFloat(registration.paidAmount) || 98381) / (parseFloat(registration.totalAmount) || 491903)) * 100)
+  };
+
+  // Prepare payment schedule data for next payment
+  const paymentSchedule = registration.paymentSchedule?.map(payment => ({
+    id: payment.id || String(Math.random()),
+    date: payment.date,
+    amount: parseFloat(payment.amount) || 0,
+    paidAmount: parseFloat(payment.paidAmount) || 0,
+    remainingAmount: parseFloat(payment.amount) - parseFloat(payment.paidAmount) || 0,
+    isPaid: parseFloat(payment.paidAmount) >= parseFloat(payment.amount)
+  })) || [];
+
+  // Find next payment
+  const nextPayment = paymentSchedule
+    .filter(payment => !payment.isPaid)
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
+
+  const [showDetails, setShowDetails] = useState(false);
+
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 mb-6">
       <div className="flex flex-col lg:flex-row gap-6">
@@ -22,17 +50,19 @@ export default function RegistrationHeader({ registration }: RegistrationHeaderP
                 {registration.guest?.person?.name} {registration.guest?.person?.surname}
               </h2>
               <p className="text-gray-600 dark:text-gray-400 text-lg">
-                {registration.guest?.professionDepartment || 'Ümraniye Ortaokulu'} - 6. Sınıf
+                {registration.guest?.professionDepartment || 'Öğrenci'}
               </p>
               <div className="flex flex-wrap gap-3 mt-2">
-                <div className="flex items-center gap-1 text-gray-600 dark:text-gray-400">
-                  <Phone className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-                  <span className="text-sm">{registration.guest?.person?.phone || '05354243484'}</span>
-                </div>
+                {registration.guest?.person?.phone && (
+                  <div className="flex items-center gap-1 text-gray-600 dark:text-gray-400">
+                    <Phone className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                    <span className="text-sm">{registration.guest.person.phone}</span>
+                  </div>
+                )}
                 {registration.guest?.person?.email && (
                   <div className="flex items-center gap-1 text-gray-600 dark:text-gray-400">
                     <Mail className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-                    <span className="text-sm">{registration.guest?.person?.email}</span>
+                    <span className="text-sm">{registration.guest.person.email}</span>
                   </div>
                 )}
                 <div className="flex items-center gap-1 text-gray-600 dark:text-gray-400">
@@ -51,7 +81,7 @@ export default function RegistrationHeader({ registration }: RegistrationHeaderP
               <div>
                 <div className="text-sm text-gray-500 dark:text-gray-400">Apart</div>
                 <div className="font-medium text-gray-900 dark:text-white">
-                  {registration.bed?.room?.name || 'A Blok'}
+                  {registration.bed?.room?.apart?.name || registration.bed?.room?.name || '-'}
                 </div>
               </div>
             </div>
@@ -63,7 +93,7 @@ export default function RegistrationHeader({ registration }: RegistrationHeaderP
               <div>
                 <div className="text-sm text-gray-500 dark:text-gray-400">Oda/Yatak</div>
                 <div className="font-medium text-gray-900 dark:text-white">
-                  {registration.bed?.bedNumber || 'Oda 101'} / {registration.bed?.bedType === 'SINGLE' ? 'Tek Kişilik' : registration.bed?.bedType === 'DOUBLE' ? 'Çift Kişilik' : 'Ranza'}
+                  {registration.bed?.room?.name || '-'} / {registration.bed?.bedNumber || '-'}
                 </div>
               </div>
             </div>
@@ -75,7 +105,7 @@ export default function RegistrationHeader({ registration }: RegistrationHeaderP
               <div>
                 <div className="text-sm text-gray-500 dark:text-gray-400">Dönem</div>
                 <div className="font-medium text-gray-900 dark:text-white">
-                  {registration.season?.name || '2025-2026 Akademik Yıl'}
+                  {registration.season?.name || registration.seasonCode || '-'}
                 </div>
               </div>
             </div>
@@ -87,11 +117,92 @@ export default function RegistrationHeader({ registration }: RegistrationHeaderP
               <div>
                 <div className="text-sm text-gray-500 dark:text-gray-400">Kimlik No</div>
                 <div className="font-medium text-gray-900 dark:text-white">
-                  {registration.guest?.person?.tcNo || '13240092742'}
+                  {registration.guest?.person?.tcNo || '-'}
                 </div>
               </div>
             </div>
+
+            {/* Detailed Information (Collapsible) */}
+            {showDetails && (
+              <>
+              <div className="flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-700/30 rounded-lg">
+                <div className="p-2 rounded-lg bg-red-100 dark:bg-red-900/20">
+                  <Calendar className="w-5 h-5 text-red-600 dark:text-red-400" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Doğum Tarihi</p>
+                  <p className="font-medium text-gray-900 dark:text-white">
+                    {registration.guest?.person?.birthDate 
+                      ? new Date(registration.guest.person.birthDate).toLocaleDateString('tr-TR') 
+                      : '15.06.2013'}
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-700/30 rounded-lg">
+                <div className="p-2 rounded-lg bg-indigo-100 dark:bg-indigo-900/20">
+                  <GraduationCap className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Öğrenci Tipi</p>
+                  <p className="font-medium text-gray-900 dark:text-white">
+                    {registration.guest?.guestType === 'STUDENT' ? 'Öğrenci' : 
+                    registration.guest?.guestType === 'EMPLOYEE' ? 'Çalışan' : 'Diğer'}
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-700/30 rounded-lg">
+                <div className="p-2 rounded-lg bg-cyan-100 dark:bg-cyan-900/20">
+                  <School className="w-5 h-5 text-cyan-600 dark:text-cyan-400" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Okul/Bölüm</p>
+                  <p className="font-medium text-gray-900 dark:text-white">
+                    {registration.guest?.professionDepartment || 'Ümraniye Ortaokulu - 6. Sınıf'}
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-700/30 rounded-lg">
+                <div className="p-2 rounded-lg bg-emerald-100 dark:bg-emerald-900/20">
+                  <Flag className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Durum</p>
+                  <p className="font-medium text-gray-900 dark:text-white">
+                    {registration.guest?.status === 'ACTIVE' ? 'Aktif' : 
+                    registration.guest?.status === 'INACTIVE' ? 'Pasif' : 
+                    registration.guest?.status === 'SUSPENDED' ? 'Askıda' : 'Aktif'}
+                  </p>
+                </div>
+              </div>
+              </>
+            )}
+             
           </div>
+           {/* Emergency Contact */}
+           {registration.guest?.emergencyContact && (
+                  <div className="mt-6">
+                    <EmergencyContactCard emergencyContact={registration.guest.emergencyContact} />
+                  </div>
+                )}
+          <button 
+                onClick={() => setShowDetails(!showDetails)}
+                className="mt-4 flex mx-auto text-sm items-center gap-2 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors"
+              >
+                {showDetails ? (
+                  <>
+                    <ChevronUp className="w-4 h-4" />
+                    <span>Daha Az Bilgi</span>
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown className="w-4 h-4" />
+                    <span>Daha Fazla Bilgi</span>
+                  </>
+                )}
+              </button>
         </div>
         
         {/* Financial Summary */}
@@ -104,38 +215,45 @@ export default function RegistrationHeader({ registration }: RegistrationHeaderP
           <div className="space-y-4 flex-grow">
             <div className="flex justify-between">
               <span className="text-gray-600 dark:text-gray-400">Toplam Tutar:</span>
-              <span className="font-medium text-gray-900 dark:text-white">₺491.903,00</span>
+              <span className="font-medium text-gray-900 dark:text-white">{formatCurrency(financialSummary.totalAmount)}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600 dark:text-gray-400">Ödenen:</span>
-              <span className="font-medium text-green-600 dark:text-green-400">₺98.381,00</span>
+              <span className="font-medium text-green-600 dark:text-green-400">{formatCurrency(financialSummary.paidAmount)}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600 dark:text-gray-400">Kalan:</span>
-              <span className="font-medium text-gray-900 dark:text-white">₺393.522,00</span>
+              <span className="font-medium text-gray-900 dark:text-white">{formatCurrency(financialSummary.remainingAmount)}</span>
             </div>
             
             <div className="pt-3 mt-2 border-t border-gray-200 dark:border-gray-600">
               <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2.5">
-                <div className="bg-blue-600 h-2.5 rounded-full" style={{ width: '20%' }}></div>
+                <div 
+                  className="bg-blue-600 h-2.5 rounded-full" 
+                  style={{ width: `${financialSummary.paymentProgress}%` }}
+                ></div>
               </div>
               <div className="flex justify-between mt-1">
                 <span className="text-xs text-gray-500 dark:text-gray-400">Ödeme İlerleme</span>
-                <span className="text-xs font-medium text-gray-700 dark:text-gray-300">%20</span>
+                <span className="text-xs font-medium text-gray-700 dark:text-gray-300">%{financialSummary.paymentProgress}</span>
               </div>
             </div>
           </div>
           
-          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-sm text-gray-600 dark:text-gray-400">Sonraki Ödeme:</span>
-              <span className="text-sm font-medium text-gray-900 dark:text-white">05 Şubat 2025</span>
+          {nextPayment && (
+            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-sm text-gray-600 dark:text-gray-400">Sonraki Ödeme:</span>
+                <span className="text-sm font-medium text-gray-900 dark:text-white">
+                  {new Date(nextPayment.date).toLocaleDateString('tr-TR')}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600 dark:text-gray-400">Tutar:</span>
+                <span className="text-sm font-medium text-gray-900 dark:text-white">{formatCurrency(nextPayment.amount)}</span>
+              </div>
             </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600 dark:text-gray-400">Tutar:</span>
-              <span className="text-sm font-medium text-gray-900 dark:text-white">₺49.191,00</span>
-            </div>
-          </div>
+          )}
         </div>
       </div>
     </div>

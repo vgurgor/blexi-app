@@ -416,6 +416,13 @@ export interface ISeasonRegistration {
       name: string;
       floor?: string;
       status: string;
+      apart?: {
+        id: string;
+        name: string;
+        address: string;
+        genderType: string;
+        status: string;
+      };
     };
   };
   season?: {

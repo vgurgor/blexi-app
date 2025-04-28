@@ -392,4 +392,50 @@ export const paymentPlansApi = {
       data: undefined,
     };
   },
+  
+  /**
+   * Belirli bir kayıt için ödeme planlarını getirir
+   * @param registrationId - Sezon kaydı ID'si
+   * @param page - Sayfa numarası
+   * @param perPage - Sayfa başına öğe sayısı
+   */
+  getByRegistrationId: async (
+    registrationId: string | number,
+    page: number = 1,
+    perPage: number = 50
+  ): Promise<PaginatedResponse<IPaymentPlan>> => {
+    const params = new URLSearchParams();
+    params.append('page', page.toString());
+    params.append('per_page', perPage.toString());
+    
+    const url = `/api/v1/season-registrations/${registrationId}/payment-plans?${params.toString()}`;
+    const response = await api.get<PaymentPlanDto[]>(url);
+    
+    if (response.success && response.data) {
+      return {
+        ...response,
+        data: response.data.map(mapPaymentPlanDtoToModel),
+        page,
+        limit: perPage,
+        total: response.meta?.total || 0,
+      };
+    }
+    
+    return {
+      ...response,
+      data: [],
+      page,
+      limit: perPage,
+      total: 0,
+    };
+  },
+  
+  /**
+   * Belirli bir kayıt için ödeme özetini getirir
+   * @param registrationId - Sezon kaydı ID'si 
+   */
+  getPaymentSummary: async (registrationId: string | number): Promise<ApiResponse<any>> => {
+    const url = `/api/v1/season-registrations/${registrationId}/payment-summary`;
+    return await api.get(url);
+  }
 }; 
