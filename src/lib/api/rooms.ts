@@ -149,6 +149,7 @@ export const roomsApi = {
         success: response.success,
         status: 200,
         data: modelData,
+        meta: response.meta,
       };
     }
     
