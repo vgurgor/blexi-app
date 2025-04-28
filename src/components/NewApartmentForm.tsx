@@ -55,12 +55,12 @@ export default function NewApartmentForm({ onSubmit }: { onSubmit: (data: any) =
     
     try {
       // Prepare API request data
-      const apartmentData: Partial<IApartment> = {
+      const apartmentData: CreateApartRequest = {
         name: formData.name,
         address: formData.address,
-        companyId: formData.firm_id,
-        genderType: formData.gender_type,
-        openingDate: formData.opening_date,
+        firm_id: parseInt(formData.firm_id, 10),
+        gender_type: formData.gender_type,
+        opening_date: formData.opening_date,
         status: formData.status
       };
       

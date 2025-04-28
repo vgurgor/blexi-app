@@ -99,7 +99,6 @@ export const featuresApi = {
     
     // API yanıt yapısı
     interface FeaturesResponse {
-      map(mapDtoToModel: (dto: FeatureDto) => IFeature): IFeature[];
       success: boolean;
       data: FeatureDto[];
       meta?: {
@@ -153,7 +152,7 @@ export const featuresApi = {
       return {
         success: response.success,
         status: 200,
-        data: mapDtoToModel(response.data.data),
+        data: mapDtoToModel(response.data),
       };
     }
     
@@ -183,7 +182,7 @@ export const featuresApi = {
       return {
         success: response.success,
         status: 201,
-        data: mapDtoToModel(response.data.data),
+        data: mapDtoToModel(response.data),
       };
     }
     
@@ -213,7 +212,7 @@ export const featuresApi = {
       return {
         success: response.success,
         status: 200,
-        data: mapDtoToModel(response.data.data),
+        data: mapDtoToModel(response.data),
       };
     }
     

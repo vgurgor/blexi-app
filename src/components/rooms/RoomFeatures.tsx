@@ -13,7 +13,7 @@ interface Feature {
 }
 
 interface RoomFeaturesProps {
-  roomId: string;
+  roomId: string | number;
 }
 
 export default function RoomFeatures({ roomId }: RoomFeaturesProps) {

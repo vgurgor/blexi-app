@@ -274,7 +274,7 @@ export const roomsApi = {
       return {
         success: response.success,
         status: 200,
-        data: response.data.data,
+        data: response.data,
       };
     }
     
