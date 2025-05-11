@@ -1,95 +1,95 @@
-# BLEXI - Apart Management System
+# BLEXI - Apart Yönetim Sistemi
 
-A comprehensive dormitory and apartment management system built with Next.js, React, and TypeScript. The application includes features for managing buildings, rooms, students, registrations, financial transactions, and more.
+Next.js, React ve TypeScript ile geliştirilmiş kapsamlı bir apart ve yurt yönetim sistemi. Uygulama, binalar, odalar, öğrenciler, kayıtlar, finansal işlemler ve daha fazlasını yönetmek için gerekli özellikleri içerir.
 
-## Features
+## Özellikler
 
-- **Dashboard**: Overview of properties, residents, and financial status
-- **Property Management**: Manage apartments, rooms, and beds with inventory tracking
-- **Student Registration**: Complete registration wizard with accommodation booking
-- **Financial Management**: Handle invoices, payments, discounts, and tax types
-- **Authorization System**: Role-based access control with user management
-- **Responsive UI**: Dark/light theme support with modern design
+- **Dashboard**: Mülkler, sakinler ve finansal durum genel görünümü
+- **Mülk Yönetimi**: Apartlar, odalar ve yatakları envanter takibi ile yönetme
+- **Öğrenci Kaydı**: Konaklama rezervasyonu içeren eksiksiz kayıt sihirbazı
+- **Finansal Yönetim**: Faturalar, ödemeler, indirimler ve vergi türlerini yönetme
+- **Yetkilendirme Sistemi**: Rol tabanlı erişim kontrolü ve kullanıcı yönetimi
+- **Duyarlı Arayüz**: Modern tasarımla karanlık/aydınlık tema desteği
 
-## Tech Stack
+## Teknoloji Stack'i
 
 - **Framework**: Next.js 14 (App Router)
 - **Frontend**: React 18, TypeScript
-- **State Management**: Zustand
-- **Data Fetching**: TanStack React Query
-- **Forms**: React Hook Form with Zod validation
-- **Styling**: Tailwind CSS
-- **Authentication**: JWT with custom auth implementation
-- **UI Components**: Custom UI library with Tailwind
+- **Durum Yönetimi**: Zustand
+- **Veri Çekme**: TanStack React Query
+- **Formlar**: React Hook Form ve Zod doğrulama
+- **Stil**: Tailwind CSS
+- **Kimlik Doğrulama**: JWT ile özel auth implementasyonu
+- **UI Bileşenleri**: Tailwind ile özel UI kütüphanesi
 
-## Getting Started
+## Başlangıç
 
-### Prerequisites
+### Gereksinimler
 
-- Node.js 18+ and npm
+- Node.js 18+ ve npm
 
-### Installation
+### Kurulum
 
 ```bash
-# Clone the repository
+# Repo'yu klonlayın
 git clone https://github.com/vgurgor/blexi-app.git
 cd blexi-app
 
-# Install dependencies
+# Bağımlılıkları yükleyin
 npm install
 ```
 
-### Development
+### Geliştirme
 
 ```bash
-# Start development server
+# Geliştirme sunucusunu başlatın
 npm run dev
 ```
 
-The application will be available at [http://localhost:3000](http://localhost:3000).
+Uygulama [http://localhost:3000](http://localhost:3000) adresinde kullanılabilir olacaktır.
 
-### Build for Production
+### Prodüksiyon için Build
 
 ```bash
-# Create optimized production build
+# Optimize edilmiş prodüksiyon build'i oluşturun
 npm run build
 
-# Start production server
+# Prodüksiyon sunucusunu başlatın
 npm run start
 ```
 
 ### Linting
 
 ```bash
-# Run linter
+# Linter'ı çalıştırın
 npm run lint
 ```
 
-## Application Structure
+## Uygulama Yapısı
 
-- `/app`: Next.js App Router pages and layouts
-- `/components`: Reusable React components
-- `/context`: React context providers (Theme, Toast, ReactQuery)
-- `/hooks`: Custom React hooks including API query hooks
-- `/lib`: Utilities and API integration functions
-- `/store`: Zustand state management stores
-- `/styles`: Global CSS and Tailwind configuration
-- `/types`: TypeScript type definitions
-- `/utils`: Helper functions, validators, and formatters
+- `/app`: Next.js App Router sayfaları ve layout'ları
+- `/components`: Yeniden kullanılabilir React bileşenleri
+- `/context`: React context sağlayıcıları (Theme, Toast, ReactQuery)
+- `/hooks`: API sorgu hook'ları dahil özel React hook'ları
+- `/lib`: Yardımcı fonksiyonlar ve API entegrasyon fonksiyonları
+- `/store`: Zustand durum yönetimi store'ları
+- `/styles`: Global CSS ve Tailwind yapılandırması
+- `/types`: TypeScript tip tanımlamaları
+- `/utils`: Yardımcı fonksiyonlar, doğrulayıcılar ve biçimlendiriciler
 
-## Key Modules
+## Temel Modüller
 
-- **Apartments**: Manage properties and buildings
-- **Rooms/Beds**: Track room types, bed assignments, and features
-- **Students**: Student profiles and registration management
-- **Finance**: Invoicing, payment processing, and financial reporting
-- **Inventory**: Track property and room inventory items
-- **Settings**: System configuration and user management
+- **Apartmanlar**: Mülkler ve binaların yönetimi
+- **Odalar/Yataklar**: Oda türleri, yatak atamaları ve özellikleri takibi
+- **Öğrenciler**: Öğrenci profilleri ve kayıt yönetimi
+- **Finans**: Faturalama, ödeme işleme ve finansal raporlama
+- **Envanter**: Mülk ve oda envanter öğelerini takip etme
+- **Ayarlar**: Sistem yapılandırması ve kullanıcı yönetimi
 
-## License
+## Lisans
 
-Proprietary - All rights reserved.
+Tescilli - Tüm hakları saklıdır.
 
-## Contributors
+## Katkıda Bulunanlar
 
 - Volkan Gürgör
