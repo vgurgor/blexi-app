@@ -24,7 +24,7 @@ export default function RegistrationStats() {
     const fetchStats = async () => {
       try {
         setIsLoading(true);
-        const response = await seasonRegistrationsApi.getStats();
+        const response = await seasonRegistrationsApi.getSummary();
         if (response.success && response.data) {
           setStats(response.data);
         } else {
