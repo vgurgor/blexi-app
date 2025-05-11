@@ -148,7 +148,7 @@ const mapSeasonRegistrationDtoToModel = (dto: SeasonRegistrationDto): ISeasonReg
       buildingId: dto.bed.room && dto.bed.room.apart ? dto.bed.room.apart.id.toString() : undefined,
       room: dto.bed.room ? {
         id: dto.bed.room.id.toString(),
-        name: dto.bed.room.room_number,
+        name: dto.bed.room.name,
         floor: dto.bed.room.floor?.toString(),
         status: dto.bed.room.status,
         apart: dto.bed.room.apart ? {
@@ -177,11 +177,51 @@ const mapSeasonRegistrationDtoToModel = (dto: SeasonRegistrationDto): ISeasonReg
 export const seasonRegistrationsApi = {
   /**
    * Sezon kayıtları ile ilgili özet istatistikleri getirir
+   * @param guestId - Misafir ID filtresi (isteğe bağlı)
+   * @param bedId - Yatak ID filtresi (isteğe bağlı)
+   * @param seasonCode - Sezon kodu filtresi (isteğe bağlı)
+   * @param status - Durum filtresi (isteğe bağlı)
+   * @param startDate - Başlangıç tarihi filtresi (isteğe bağlı)
+   * @param endDate - Bitiş tarihi filtresi (isteğe bağlı)
    */
-  getStats: async (): Promise<ApiResponse<any>> => {
-    const url = '/api/v1/season-registrations/stats';
+  getSummary: async (
+    guestId?: string | number,
+    bedId?: string | number,
+    seasonCode?: string,
+    status?: 'active' | 'cancelled' | 'completed',
+    startDate?: string,
+    endDate?: string
+  ): Promise<ApiResponse<any>> => {
+    const params = new URLSearchParams();
+    
+    if (guestId) {
+      params.append('guest_id', guestId.toString());
+    }
+    
+    if (bedId) {
+      params.append('bed_id', bedId.toString());
+    }
+    
+    if (seasonCode) {
+      params.append('season_code', seasonCode);
+    }
+    
+    if (status) {
+      params.append('status', status);
+    }
+    
+    if (startDate) {
+      params.append('start_date', startDate);
+    }
+    
+    if (endDate) {
+      params.append('end_date', endDate);
+    }
+    
+    const url = `/api/v1/season-registrations/summary?${params.toString()}`;
     return await api.get(url);
   },
+  
   /**
    * Tüm sezon kayıtlarını listeler, filtreleme opsiyonları ile
    * @param guestId - Misafir ID filtresi (isteğe bağlı)
@@ -192,6 +232,8 @@ export const seasonRegistrationsApi = {
    * @param endDate - Bitiş tarihi filtresi (isteğe bağlı)
    * @param page - Sayfa numarası
    * @param perPage - Sayfa başına kayıt sayısı
+   * @param sortField - Sıralama alanı (isteğe bağlı)
+   * @param sortDirection - Sıralama yönü (isteğe bağlı)
    */
   getAll: async (
     guestId?: string | number,
@@ -201,7 +243,9 @@ export const seasonRegistrationsApi = {
     startDate?: string,
     endDate?: string,
     page: number = 1,
-    perPage: number = 15
+    perPage: number = 15,
+    sortField?: string,
+    sortDirection?: 'asc' | 'desc'
   ): Promise<PaginatedResponse<ISeasonRegistration>> => {
     const params = new URLSearchParams();
     
@@ -227,6 +271,14 @@ export const seasonRegistrationsApi = {
     
     if (endDate) {
       params.append('end_date', endDate);
+    }
+    
+    if (sortField) {
+      params.append('sort_by', sortField);
+      
+      if (sortDirection) {
+        params.append('sort_direction', sortDirection);
+      }
     }
     
     params.append('page', page.toString());

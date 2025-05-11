@@ -44,37 +44,43 @@ import { downloadCSV, downloadExcel, formatDataForExport, getStudentRegistration
 const formatProfessionDepartment = (prof: any): string => {
   if (!prof) return '';
   
-  // Nesne ise
-  if (typeof prof === 'object' && prof !== null) {
-    try {
-      // school_name ve education_level'i kullan
-      const schoolName = prof.school_name || '';
-      const educationLevel = prof.education_level || '';
-      if (schoolName && educationLevel) {
-        return `${schoolName} / ${educationLevel}`;
-      } else if (schoolName) {
-        return schoolName;
-      } else if (educationLevel) {
-        return educationLevel;
-      }
-      
-      // Diğer durumlarda JSON'a dönüştür
-      return JSON.stringify(prof);
-    } catch {
-      return String(prof);
-    }
-  }
-  
   // String ise ve JSON olabilir
   if (typeof prof === 'string') {
     try {
       const parsed = JSON.parse(prof);
       if (typeof parsed === 'object' && parsed !== null) {
-        return formatProfessionDepartment(parsed);
+        const schoolName = parsed.school_name || '';
+        const educationLevel = parsed.education_level || '';
+        const department = parsed.department || '';
+
+        const parts = [schoolName, educationLevel, department].filter(Boolean);
+        if (parts.length > 0) {
+          return parts.join(' / ');
+        }
       }
       return prof;
     } catch {
+      // JSON değilse direkt string olarak dön
       return prof;
+    }
+  }
+  
+  // Nesne ise
+  if (typeof prof === 'object' && prof !== null) {
+    const schoolName = prof.school_name || prof.schoolName || '';
+    const educationLevel = prof.education_level || prof.educationLevel || '';
+    const department = prof.department || '';
+    
+    const parts = [schoolName, educationLevel, department].filter(Boolean);
+    if (parts.length > 0) {
+      return parts.join(' / ');
+    }
+    
+    // Obje yapısını anlamlandıramadıysak JSON'a dönüştür
+    try {
+      return JSON.stringify(prof);
+    } catch {
+      return String(prof);
     }
   }
   
@@ -160,6 +166,21 @@ export default function StudentRegistrationsPage() {
     }
   }, [isAuthenticated, currentPage, perPage, sortField, sortDirection]);
 
+  // Filtre değişikliklerinde veriler yüklensin
+  useEffect(() => {
+    if (isAuthenticated) {
+      // Sayfanın ilk yüklenmesinde çift çağrıyı önlemek için bir kontrol ekleyelim
+      const isInitialRender = !filters.studentId && !filters.apartId && 
+                             !filters.seasonCode && !filters.status && 
+                             !filters.startDate && !filters.endDate;
+      
+      if (!isInitialRender) {
+        fetchRegistrations();
+      }
+    }
+  }, [isAuthenticated, filters.studentId, filters.apartId, filters.seasonCode, 
+      filters.status, filters.startDate, filters.endDate]);
+
   // Fetch reference data (students, apartments, seasons)
   const fetchReferenceData = async () => {
     setIsLoadingReferenceData(true);
@@ -212,6 +233,13 @@ export default function StudentRegistrationsPage() {
       const startDate = filters.startDate || undefined;
       const endDate = filters.endDate || undefined;
       
+      // Sıralama parametrelerini ekle
+      const params = new URLSearchParams();
+      if (sortField) {
+        params.append('sort_by', sortField);
+        params.append('sort_direction', sortDirection);
+      }
+      
       const response = await seasonRegistrationsApi.getAll(
         guestId,
         apartId,
@@ -220,7 +248,9 @@ export default function StudentRegistrationsPage() {
         startDate,
         endDate,
         currentPage,
-        perPage
+        perPage,
+        sortField,
+        sortDirection
       );
       
       if (response.success && response.data) {
@@ -258,6 +288,13 @@ export default function StudentRegistrationsPage() {
     fetchRegistrations();
   };
 
+  const handleSearchKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSearch();
+    }
+  };
+
   const handleClearFilters = () => {
     setFilters({
       search: '',
@@ -277,15 +314,28 @@ export default function StudentRegistrationsPage() {
       guardianName: '',
     });
     setCurrentPage(1);
+    
+    // Filtreleri temizledikten sonra verileri yeniden yükle
+    setTimeout(() => {
+      fetchRegistrations();
+    }, 0);
   };
 
   const handleSort = (field: string) => {
+    // Sayfa numarasını sıfırlayalım
+    setCurrentPage(1);
+    
     if (sortField === field) {
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
     } else {
       setSortField(field);
       setSortDirection('asc');
     }
+    
+    // Sıralama değiştiğinde hemen verileri çekelim
+    setTimeout(() => {
+      fetchRegistrations();
+    }, 0);
   };
 
   const handleSelectAll = () => {
@@ -353,20 +403,9 @@ export default function StudentRegistrationsPage() {
 
   // Filter registrations by search term
   const filteredRegistrations = useMemo(() => {
-    if (!filters.search) return registrations;
-    
-    return registrations.filter(registration => {
-      // Search in guest name, apart name, or season name
-      return (
-        (registration.guest?.person?.name && 
-         registration.guest.person.name.toLowerCase().includes(filters.search.toLowerCase())) ||
-        ((registration.bed?.room?.apart?.name || registration.apart?.name) && 
-         (registration.bed?.room?.apart?.name || registration.apart?.name).toLowerCase().includes(filters.search.toLowerCase())) ||
-        (registration.season?.name && 
-         registration.season.name.toLowerCase().includes(filters.search.toLowerCase()))
-      );
-    });
-  }, [registrations, filters.search]);
+    // API'dan gelen verileri doğrudan kullanıyoruz, çünkü filtreleme API tarafında yapılıyor
+    return registrations;
+  }, [registrations]);
 
   // Apply advanced filters client-side
   const finalFilteredRegistrations = useMemo(() => {
@@ -533,6 +572,7 @@ export default function StudentRegistrationsPage() {
             placeholder="Öğrenci adı, apart veya sezon ara..."
             value={filters.search}
             onChange={(e) => setFilters({...filters, search: e.target.value})}
+            onKeyDown={handleSearchKeyDown}
             className="w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
           />
         </div>
@@ -982,7 +1022,7 @@ export default function StudentRegistrationsPage() {
                       >
                         <div className="flex items-center">
                           <div className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline">
-                            {registration.guest?.person?.name+' '+registration.guest?.person?.surname || 'Bilinmeyen Öğrenci'}
+                            {registration.guest?.person ? `${registration.guest.person.name} ${registration.guest.person.surname}` : 'Bilinmeyen Öğrenci'}
                           </div>
                         </div>
                         
@@ -1001,7 +1041,7 @@ export default function StudentRegistrationsPage() {
                           <div className="flex items-center mt-1">
                             <Bed className="flex-shrink-0 mr-2 h-4 w-4 text-gray-500 dark:text-gray-400" />
                             <div className="text-xs text-gray-500 dark:text-gray-400">
-                              {registration.bed?.room?.name+'-'+registration.bed?.bedNumber || 'Yatak belirtilmemiş'}
+                              {registration.bed?.room?.name ? `${registration.bed.room.name} / Yatak ${registration.bed.bedNumber}` : 'Yatak belirtilmemiş'}
                             </div>
                           </div>
                           <div className="flex items-center mt-1">

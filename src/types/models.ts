@@ -751,6 +751,27 @@ export interface IInvoiceTaxDetail {
   updatedAt: string;
 }
 
+export interface ISeasonRegistrationSummary {
+  totalStudents: number;
+  activeStudents: number;
+  studentsWithUnpaidPayments: number;
+  unpaidPaymentsCount: number;
+  studentsWithExpiringContracts: number;
+  unpaidPaymentsAmount: number;
+  month: string;
+  studentsByRegistrationStatus: {
+    active: number;
+    cancelled: number;
+    completed: number;
+  };
+  studentsByGuestType: {
+    STUDENT: number;
+    EMPLOYEE: number;
+    OTHER: number;
+  };
+  recentRegistrations: ISeasonRegistration[];
+}
+
 export interface ICountry {
   id: string;
   code: string;

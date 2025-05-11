@@ -6922,1368 +6922,6 @@
                 ]
             }
         },
-        "/api/v1/invoices/{id}/send-to-einvoice": {
-            "post": {
-                "tags": [
-                    "Invoices"
-                ],
-                "summary": "Send invoice to e-invoice system",
-                "operationId": "9785b3a026a49ad0b3778b5a229a3f55",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "description": "Invoice ID",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "properties": {
-                                    "is_archive": {
-                                        "description": "Whether to send as archive invoice",
-                                        "type": "boolean",
-                                        "example": false
-                                    },
-                                    "provider": {
-                                        "description": "Optional provider override",
-                                        "type": "string",
-                                        "example": "isnet"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Invoice sent successfully",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "status": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Invoice sent successfully"
-                                        },
-                                        "data": {
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Invoice not found"
-                    },
-                    "422": {
-                        "description": "Invalid request or invoice cannot be sent"
-                    }
-                },
-                "security": [
-                    {
-                        "jwt": []
-                    }
-                ]
-            }
-        },
-        "/api/v1/invoices/{id}/cancel-in-einvoice": {
-            "post": {
-                "tags": [
-                    "Invoices"
-                ],
-                "summary": "Cancel invoice in e-invoice system",
-                "operationId": "ff19a14e23d130fe7eda967613bd3225",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "description": "Invoice ID",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "properties": {
-                                    "reason": {
-                                        "type": "string",
-                                        "example": "Customer requested cancellation"
-                                    },
-                                    "is_archive": {
-                                        "description": "Whether it's an archive invoice",
-                                        "type": "boolean",
-                                        "example": false
-                                    },
-                                    "provider": {
-                                        "description": "Optional provider override",
-                                        "type": "string",
-                                        "example": "isnet"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Invoice cancelled successfully",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "status": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Invoice cancelled successfully"
-                                        },
-                                        "data": {
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Invoice not found"
-                    },
-                    "422": {
-                        "description": "Invalid request or invoice cannot be cancelled"
-                    }
-                },
-                "security": [
-                    {
-                        "jwt": []
-                    }
-                ]
-            }
-        },
-        "/api/v1/invoices/{id}/send-email": {
-            "post": {
-                "tags": [
-                    "Invoices"
-                ],
-                "summary": "Send invoice email via e-invoice system",
-                "operationId": "55bcaa8d23824b8d479133f1faaf4eb5",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "description": "Invoice ID",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "properties": {
-                                    "email": {
-                                        "type": "string",
-                                        "format": "email",
-                                        "example": "customer@example.com"
-                                    },
-                                    "provider": {
-                                        "description": "Optional provider override",
-                                        "type": "string",
-                                        "example": "isnet"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Email sent successfully",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "status": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Email sent successfully"
-                                        },
-                                        "data": {
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Invoice not found"
-                    },
-                    "422": {
-                        "description": "Invalid request or email cannot be sent"
-                    }
-                },
-                "security": [
-                    {
-                        "jwt": []
-                    }
-                ]
-            }
-        },
-        "/api/v1/invoices/search-in-einvoice": {
-            "post": {
-                "tags": [
-                    "Invoices"
-                ],
-                "summary": "Search for invoices in e-invoice system",
-                "operationId": "7c26a7217c13a6a9da3be9ce7119c3ea",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "properties": {
-                                    "search_params": {
-                                        "type": "object",
-                                        "example": {
-                                            "start_date": "2025-01-01",
-                                            "end_date": "2025-12-31"
-                                        }
-                                    },
-                                    "is_archive": {
-                                        "description": "Whether to search in archive",
-                                        "type": "boolean",
-                                        "example": false
-                                    },
-                                    "provider": {
-                                        "description": "Optional provider override",
-                                        "type": "string",
-                                        "example": "isnet"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Search results",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "status": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Search completed"
-                                        },
-                                        "data": {
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "Invalid request"
-                    }
-                },
-                "security": [
-                    {
-                        "jwt": []
-                    }
-                ]
-            }
-        },
-        "/api/v1/invoices/taxpayer/{taxCode}": {
-            "get": {
-                "tags": [
-                    "Invoices"
-                ],
-                "summary": "Check if a tax code belongs to an e-invoice taxpayer",
-                "operationId": "3f51d650e60fae0b8acdbcbcb4fc0c06",
-                "parameters": [
-                    {
-                        "name": "taxCode",
-                        "in": "path",
-                        "description": "Tax code to check",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "provider",
-                        "in": "query",
-                        "description": "Optional provider override",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Taxpayer information",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "status": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Tax payer information retrieved successfully"
-                                        },
-                                        "data": {
-                                            "properties": {
-                                                "is_einvoice_user": {
-                                                    "type": "boolean",
-                                                    "example": true
-                                                },
-                                                "is_earchive_user": {
-                                                    "type": "boolean",
-                                                    "example": false
-                                                },
-                                                "tax_code": {
-                                                    "type": "string",
-                                                    "example": "1234567890"
-                                                },
-                                                "tax_name": {
-                                                    "type": "string",
-                                                    "example": "Test Company"
-                                                },
-                                                "registration_date": {
-                                                    "type": "string",
-                                                    "example": "2021-01-01"
-                                                },
-                                                "inbox_tags": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "type": "string"
-                                                    }
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "Invalid request or taxpayer not found"
-                    }
-                },
-                "security": [
-                    {
-                        "jwt": []
-                    }
-                ]
-            }
-        },
-        "/api/v1/invoices/address-data": {
-            "get": {
-                "tags": [
-                    "Invoices"
-                ],
-                "summary": "Get address data (cities and tax offices) for e-invoice",
-                "operationId": "efafba94fca946926a23eddbda0ae8a4",
-                "parameters": [
-                    {
-                        "name": "provider",
-                        "in": "query",
-                        "description": "Optional provider override",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Address data",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "status": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Address data retrieved successfully"
-                                        },
-                                        "data": {
-                                            "properties": {
-                                                "cities": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "type": "object"
-                                                    }
-                                                },
-                                                "tax_offices": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "type": "object"
-                                                    }
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "Invalid request or error retrieving address data"
-                    }
-                },
-                "security": [
-                    {
-                        "jwt": []
-                    }
-                ]
-            }
-        },
-        "/api/v1/invoices/cities/{cityCode}/towns": {
-            "get": {
-                "tags": [
-                    "Invoices"
-                ],
-                "summary": "Get towns for a specific city",
-                "operationId": "477cf816ae63f3aa3fa14b8d79767ccc",
-                "parameters": [
-                    {
-                        "name": "cityCode",
-                        "in": "path",
-                        "description": "City code",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    },
-                    {
-                        "name": "provider",
-                        "in": "query",
-                        "description": "Optional provider override",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Town list",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "status": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Town list retrieved successfully"
-                                        },
-                                        "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "type": "object"
-                                            }
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "Invalid request or error retrieving town list"
-                    }
-                },
-                "security": [
-                    {
-                        "jwt": []
-                    }
-                ]
-            }
-        },
-        "/api/v1/invoices/archive/send-xml": {
-            "post": {
-                "tags": [
-                    "Invoices"
-                ],
-                "summary": "Send archive invoice XML to e-archive system",
-                "operationId": "ca71cdc7f2c9755ec9a97120ad488772",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "properties": {
-                                    "xml": {
-                                        "type": "string",
-                                        "example": "<xml>...</xml>"
-                                    },
-                                    "params": {
-                                        "type": "object",
-                                        "example": {
-                                            "CompanyVendorNumber": "1234"
-                                        }
-                                    },
-                                    "provider": {
-                                        "type": "string",
-                                        "example": "isnet"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Archive invoice sent successfully",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "status": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Archive invoice sent successfully"
-                                        },
-                                        "data": {
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "Invalid request or XML cannot be sent"
-                    }
-                },
-                "security": [
-                    {
-                        "jwt": []
-                    }
-                ]
-            }
-        },
-        "/api/v1/invoices/archive/send-xml-without-number": {
-            "post": {
-                "tags": [
-                    "Invoices"
-                ],
-                "summary": "Send archive invoice XML without invoice number to e-archive system",
-                "operationId": "b2193ef5280ba1ef4ea46cb601beb2e0",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "properties": {
-                                    "xml": {
-                                        "type": "string",
-                                        "example": "<xml>...</xml>"
-                                    },
-                                    "params": {
-                                        "type": "object",
-                                        "example": {
-                                            "CompanyVendorNumber": "1234"
-                                        }
-                                    },
-                                    "provider": {
-                                        "type": "string",
-                                        "example": "isnet"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Archive invoice sent successfully",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "status": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Archive invoice sent successfully"
-                                        },
-                                        "data": {
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "Invalid request or XML cannot be sent"
-                    }
-                },
-                "security": [
-                    {
-                        "jwt": []
-                    }
-                ]
-            }
-        },
-        "/api/v1/invoices/archive/send-report": {
-            "post": {
-                "tags": [
-                    "Invoices"
-                ],
-                "summary": "Send archive invoice report to GIB",
-                "operationId": "4f42e87d3f603f48442e3c66809c7262",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "properties": {
-                                    "last_date": {
-                                        "type": "string",
-                                        "example": "2025-12-31"
-                                    },
-                                    "provider": {
-                                        "type": "string",
-                                        "example": "isnet"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Archive invoice report sent successfully",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "status": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Archive invoice report sent successfully"
-                                        },
-                                        "data": {
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "Invalid request or report cannot be sent"
-                    }
-                },
-                "security": [
-                    {
-                        "jwt": []
-                    }
-                ]
-            }
-        },
-        "/api/v1/invoices/archive/search-report": {
-            "get": {
-                "tags": [
-                    "Invoices"
-                ],
-                "summary": "Search for archive invoice report",
-                "operationId": "e6cb45a8fba5418fdc8ea775369cfa3b",
-                "parameters": [
-                    {
-                        "name": "report_number",
-                        "in": "query",
-                        "description": "Report number",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "group_number",
-                        "in": "query",
-                        "description": "Group number",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "provider",
-                        "in": "query",
-                        "description": "Optional provider override",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Archive invoice report search results",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "status": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Archive invoice report found"
-                                        },
-                                        "data": {
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "Invalid request"
-                    }
-                },
-                "security": [
-                    {
-                        "jwt": []
-                    }
-                ]
-            }
-        },
-        "/api/v1/invoices/document-viewer-link": {
-            "get": {
-                "tags": [
-                    "Invoices"
-                ],
-                "summary": "Get document viewer link",
-                "operationId": "1c8904f026adf5c89e187a9f9da6f672",
-                "parameters": [
-                    {
-                        "name": "ettn",
-                        "in": "query",
-                        "description": "ETTN of the document",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "direction",
-                        "in": "query",
-                        "description": "Direction of the invoice (INCOMING or OUTGOING)",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "enum": [
-                                "INCOMING",
-                                "OUTGOING"
-                            ]
-                        }
-                    },
-                    {
-                        "name": "document_type",
-                        "in": "query",
-                        "description": "Document type (EINVOICE or EARCHIVE)",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "enum": [
-                                "EINVOICE",
-                                "EARCHIVE"
-                            ]
-                        }
-                    },
-                    {
-                        "name": "provider",
-                        "in": "query",
-                        "description": "Optional provider override",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Document viewer link",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "status": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Document viewer link retrieved successfully"
-                                        },
-                                        "data": {
-                                            "properties": {
-                                                "link": {
-                                                    "type": "string",
-                                                    "example": "https://example.com/view/123456"
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "Invalid request"
-                    }
-                },
-                "security": [
-                    {
-                        "jwt": []
-                    }
-                ]
-            }
-        },
-        "/api/v1/invoices/send-xml": {
-            "post": {
-                "tags": [
-                    "Invoices"
-                ],
-                "summary": "Send invoice XML to e-invoice system",
-                "operationId": "9c4a817043688d9088ae6b4070898734",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "properties": {
-                                    "xml": {
-                                        "type": "string",
-                                        "example": "<xml>...</xml>"
-                                    },
-                                    "params": {
-                                        "type": "object",
-                                        "example": {
-                                            "CompanyVendorNumber": "1234"
-                                        }
-                                    },
-                                    "provider": {
-                                        "type": "string",
-                                        "example": "isnet"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Invoice sent successfully",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "status": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Invoice sent successfully"
-                                        },
-                                        "data": {
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "Invalid request or XML cannot be sent"
-                    }
-                },
-                "security": [
-                    {
-                        "jwt": []
-                    }
-                ]
-            }
-        },
-        "/api/v1/invoices/send-xml-without-number": {
-            "post": {
-                "tags": [
-                    "Invoices"
-                ],
-                "summary": "Send invoice XML without invoice number to e-invoice system",
-                "operationId": "b423987bef5b29c1cc9a10533b8e8dd0",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "properties": {
-                                    "xml": {
-                                        "type": "string",
-                                        "example": "<xml>...</xml>"
-                                    },
-                                    "params": {
-                                        "type": "object",
-                                        "example": {
-                                            "CompanyVendorNumber": "1234"
-                                        }
-                                    },
-                                    "provider": {
-                                        "type": "string",
-                                        "example": "isnet"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Invoice sent successfully",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "status": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Invoice sent successfully"
-                                        },
-                                        "data": {
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "Invalid request or XML cannot be sent"
-                    }
-                },
-                "security": [
-                    {
-                        "jwt": []
-                    }
-                ]
-            }
-        },
-        "/api/v1/invoices/send-reply": {
-            "post": {
-                "tags": [
-                    "Invoices"
-                ],
-                "summary": "Send reply to an invoice (accept or reject)",
-                "operationId": "3078a28640161132ec2e2ad831718d31",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "properties": {
-                                    "ettn": {
-                                        "type": "string",
-                                        "example": "12345-ABCDE-67890"
-                                    },
-                                    "response_type": {
-                                        "type": "string",
-                                        "enum": [
-                                            "ACCEPT",
-                                            "REJECT"
-                                        ],
-                                        "example": "ACCEPT"
-                                    },
-                                    "note": {
-                                        "type": "string",
-                                        "example": "Invoice accepted",
-                                        "nullable": true
-                                    },
-                                    "provider": {
-                                        "type": "string",
-                                        "example": "isnet",
-                                        "nullable": true
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Reply sent successfully",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "status": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Reply sent successfully"
-                                        },
-                                        "data": {
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "Invalid request or reply cannot be sent"
-                    }
-                },
-                "security": [
-                    {
-                        "jwt": []
-                    }
-                ]
-            }
-        },
-        "/api/v1/invoices/update-state": {
-            "put": {
-                "tags": [
-                    "Invoices"
-                ],
-                "summary": "Update invoice state in e-invoice system",
-                "operationId": "f98707e4f1f88825e254d72fcde95664",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "properties": {
-                                    "ettn": {
-                                        "type": "string",
-                                        "example": "12345-ABCDE-67890"
-                                    },
-                                    "status": {
-                                        "type": "string",
-                                        "example": "READ"
-                                    },
-                                    "provider": {
-                                        "type": "string",
-                                        "example": "isnet",
-                                        "nullable": true
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Invoice state updated successfully",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "status": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Invoice state updated successfully"
-                                        },
-                                        "data": {
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "Invalid request or state cannot be updated"
-                    }
-                },
-                "security": [
-                    {
-                        "jwt": []
-                    }
-                ]
-            }
-        },
-        "/api/v1/invoices/direct": {
-            "post": {
-                "tags": [
-                    "Invoices"
-                ],
-                "summary": "Direct invoice to another branch/vendor",
-                "operationId": "08e77785f49d26390ccad73312454593",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "properties": {
-                                    "ettn_list": {
-                                        "type": "array",
-                                        "items": {
-                                            "type": "string"
-                                        },
-                                        "example": "12345-ABCDE-67890"
-                                    },
-                                    "vendor_number": {
-                                        "type": "string",
-                                        "example": "12345"
-                                    },
-                                    "provider": {
-                                        "type": "string",
-                                        "example": "isnet",
-                                        "nullable": true
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Invoice directed successfully",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "status": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Invoice directed successfully"
-                                        },
-                                        "data": {
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "Invalid request or invoice cannot be directed"
-                    }
-                },
-                "security": [
-                    {
-                        "jwt": []
-                    }
-                ]
-            }
-        },
-        "/api/v1/invoices/archive": {
-            "post": {
-                "tags": [
-                    "Invoices"
-                ],
-                "summary": "Archive an e-invoice",
-                "operationId": "ecd564ef32765fbceb42aba54b4801aa",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "properties": {
-                                    "ettn": {
-                                        "type": "string",
-                                        "example": "12345-ABCDE-67890"
-                                    },
-                                    "provider": {
-                                        "type": "string",
-                                        "example": "isnet",
-                                        "nullable": true
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Invoice archived successfully",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "status": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Invoice archived successfully"
-                                        },
-                                        "data": {
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "Invalid request or invoice cannot be archived"
-                    }
-                },
-                "security": [
-                    {
-                        "jwt": []
-                    }
-                ]
-            }
-        },
-        "/api/v1/invoices/de-archive": {
-            "post": {
-                "tags": [
-                    "Invoices"
-                ],
-                "summary": "De-archive an e-invoice",
-                "operationId": "3b9f3fbb691edde00cdfcd5f87dec079",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "properties": {
-                                    "ettn": {
-                                        "type": "string",
-                                        "example": "12345-ABCDE-67890"
-                                    },
-                                    "provider": {
-                                        "type": "string",
-                                        "example": "isnet",
-                                        "nullable": true
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Invoice de-archived successfully",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "status": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Invoice de-archived successfully"
-                                        },
-                                        "data": {
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "Invalid request or invoice cannot be de-archived"
-                    }
-                },
-                "security": [
-                    {
-                        "jwt": []
-                    }
-                ]
-            }
-        },
         "/api/v1/invoices/{invoiceId}/details": {
             "get": {
                 "tags": [
@@ -16339,6 +14977,283 @@
                     },
                     "400": {
                         "description": "Bad Request - Business rule validation failed"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "500": {
+                        "description": "Server Error"
+                    }
+                },
+                "security": [
+                    {
+                        "jwt": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/season-registrations/batch-import": {
+            "post": {
+                "tags": [
+                    "Season Registrations"
+                ],
+                "summary": "Batch import season registrations from Excel",
+                "description": "Process multiple season registrations from an Excel file with user-friendly field names",
+                "operationId": "fc64378e0f0f17bd2519c94caafb6137",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "properties": {
+                                    "file": {
+                                        "description": "Excel file (xlsx or xls) containing guest registrations",
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "season_code": {
+                                        "description": "Code of the season for all registrations in the file",
+                                        "type": "string",
+                                        "example": "2425"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Batch import processed successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Batch import completed with 47 successful registrations and 3 failures"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "total_rows": {
+                                                    "type": "integer",
+                                                    "example": 50
+                                                },
+                                                "successful_imports": {
+                                                    "type": "integer",
+                                                    "example": 47
+                                                },
+                                                "failed_imports": {
+                                                    "type": "integer",
+                                                    "example": 3
+                                                },
+                                                "registration_ids": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "integer",
+                                                        "example": 123
+                                                    }
+                                                },
+                                                "errors": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "row": {
+                                                                "type": "integer",
+                                                                "example": 5
+                                                            },
+                                                            "guest_tc_id": {
+                                                                "type": "string",
+                                                                "example": "12345678901"
+                                                            },
+                                                            "errors": {
+                                                                "properties": {
+                                                                    "apart_name": {
+                                                                        "type": "string",
+                                                                        "example": "Apart 'Sunset Villa' not found in the system"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error"
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "500": {
+                        "description": "Server Error"
+                    }
+                },
+                "security": [
+                    {
+                        "jwt": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/season-registrations/batch-import/template": {
+            "get": {
+                "tags": [
+                    "Season Registrations"
+                ],
+                "summary": "Download CSV template package for batch import",
+                "description": "Download a ZIP package containing CSV template and instructions for batch importing guest registrations",
+                "operationId": "308cb8b8744d5fb821886d49ad98fbb1",
+                "parameters": [
+                    {
+                        "name": "season_code",
+                        "in": "query",
+                        "description": "Season code to filter products in the template",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "ZIP file containing CSV template and README",
+                        "content": {
+                            "application/zip": {}
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "500": {
+                        "description": "Server Error"
+                    }
+                },
+                "security": [
+                    {
+                        "jwt": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/season-registrations/summary": {
+            "get": {
+                "tags": [
+                    "Season Registrations"
+                ],
+                "summary": "Get student registration summary statistics",
+                "description": "Retrieve summary statistics for student registrations including active students, unpaid payments, expiring contracts",
+                "operationId": "8c37de993b5fb1edda88b5c5b0387886",
+                "parameters": [
+                    {
+                        "name": "guest_id",
+                        "in": "query",
+                        "description": "Filter by guest ID",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "bed_id",
+                        "in": "query",
+                        "description": "Filter by bed ID",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "season_code",
+                        "in": "query",
+                        "description": "Filter by season code",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Filter by status",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "active",
+                                "cancelled",
+                                "completed"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "start_date",
+                        "in": "query",
+                        "description": "Filter by start date (format: Y-m-d)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "end_date",
+                        "in": "query",
+                        "description": "Filter by end date (format: Y-m-d)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Season registration summary statistics retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/SeasonRegistrationSummaryResource"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
                     "401": {
                         "description": "Unauthenticated"
@@ -28758,6 +27673,12 @@
                     "planned_payment_type": {
                         "$ref": "#/components/schemas/PaymentPlanPaymentTypeResource"
                     },
+                    "payments": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/PaymentResourceSchema"
+                        }
+                    },
                     "planned_amount": {
                         "type": "number",
                         "format": "float",
@@ -29562,6 +28483,82 @@
                     },
                     "season": {
                         "$ref": "#/components/schemas/FinanceSeasonResource"
+                    }
+                },
+                "type": "object"
+            },
+            "SeasonRegistrationSummaryResource": {
+                "title": "Season Registration Summary Resource",
+                "description": "Season Registration summary statistics",
+                "properties": {
+                    "total_students": {
+                        "type": "integer",
+                        "example": 150
+                    },
+                    "active_students": {
+                        "type": "integer",
+                        "example": 120
+                    },
+                    "students_with_unpaid_payments": {
+                        "type": "integer",
+                        "example": 25
+                    },
+                    "unpaid_payments_count": {
+                        "type": "integer",
+                        "example": 42
+                    },
+                    "students_with_expiring_contracts": {
+                        "type": "integer",
+                        "example": 15
+                    },
+                    "unpaid_payments_amount": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 25000.5
+                    },
+                    "month": {
+                        "type": "string",
+                        "example": "April 2025"
+                    },
+                    "students_by_registration_status": {
+                        "properties": {
+                            "active": {
+                                "type": "integer",
+                                "example": 120
+                            },
+                            "cancelled": {
+                                "type": "integer",
+                                "example": 10
+                            },
+                            "completed": {
+                                "type": "integer",
+                                "example": 20
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "students_by_guest_type": {
+                        "properties": {
+                            "STUDENT": {
+                                "type": "integer",
+                                "example": 130
+                            },
+                            "EMPLOYEE": {
+                                "type": "integer",
+                                "example": 10
+                            },
+                            "OTHER": {
+                                "type": "integer",
+                                "example": 10
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "recent_registrations": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/FinanceSeasonRegistrationResource"
+                        }
                     }
                 },
                 "type": "object"

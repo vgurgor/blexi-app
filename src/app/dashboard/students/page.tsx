@@ -17,7 +17,8 @@ import {
   UserPlus,
   Clock,
   CheckCircle,
-  AlertTriangle
+  AlertTriangle,
+  Eye
 } from 'lucide-react';
 import { guestsApi } from '@/lib/api/guests';
 import { seasonRegistrationsApi } from '@/lib/api/seasonRegistrations';
@@ -110,44 +111,32 @@ export default function StudentsOverviewPage() {
   const fetchDashboardData = async () => {
     setIsLoading(true);
     try {
-      // Paralel veri çekme işlemlerini gerçekleştirelim
-      const [
-        registrationsResponse,
-        registrationStatsResponse,
-        overduePaymentsResponse,
-        upcomingRegistrationsResponse
-      ] = await Promise.all([
-        // Fetch recent registrations (son 5 kayıt)
-        seasonRegistrationsApi.getAll(
-          undefined, undefined, undefined, 'active', undefined, undefined, 1, 5
-        ),
-        
-        // Fetch registration stats - öğrenci sayıları için
-        seasonRegistrationsApi.getStats(),
-        
-        // Fetch overdue payments count
-        overduePaymentsApi.getTotalOverduePayments(),
-        
-        // Fetch upcoming registrations count
-        overduePaymentsApi.getUpcomingRegistrationsCount()
-      ]);
+      // getSummary endpointini kullanarak tüm verileri çekelim
+      const summaryResponse = await seasonRegistrationsApi.getSummary();
       
-      // Öğrenci sayısı istatistiklerini alma
-      const totalStudents = registrationStatsResponse.success 
-        ? registrationStatsResponse.data.totalGuestCount || 0 
-        : 0;
-        
-      const activeStudents = registrationStatsResponse.success 
-        ? registrationStatsResponse.data.activeGuestCount || 0 
-        : 0;
+      // API yanıtını logla - hata ayıklama için
+      console.log('API Yanıtı:', summaryResponse);
       
-      setStats({
-        totalStudents,
-        activeStudents,
-        pendingPayments: overduePaymentsResponse.success && overduePaymentsResponse.data ? overduePaymentsResponse.data.count : 0,
-        upcomingRegistrations: upcomingRegistrationsResponse.success && upcomingRegistrationsResponse.data ? upcomingRegistrationsResponse.data.count : 0,
-        recentRegistrations: registrationsResponse.data || []
-      });
+      if (summaryResponse.success && summaryResponse.data) {
+        const summary = summaryResponse.data;
+        
+        // API'den dönen gerçek alan adlarına göre verileri ayarlayalım
+        const statsData = {
+          totalStudents: summary.total_students || 0,
+          activeStudents: summary.active_students || 0,
+          pendingPayments: summary.unpaid_payments_count || 0,
+          upcomingRegistrations: summary.students_with_expiring_contracts || 0,
+          recentRegistrations: summary.recent_registrations || []
+        };
+        
+        setStats(statsData);
+        
+        // Verileri doğru şekilde aldığımızı kontrol edelim
+        console.log('İşlenen veriler:', statsData);
+      } else {
+        console.error('API başarılı yanıt vermedi:', summaryResponse);
+        toast.error('Özet veriler yüklenemedi');
+      }
     } catch (error) {
       console.error('Dashboard verileri çekilirken hata oluştu:', error);
       toast.error('Veriler yüklenirken bir hata oluştu');
@@ -369,10 +358,10 @@ export default function StudentsOverviewPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900 dark:text-white">
-                          {new Date(registration.checkInDate).toLocaleDateString('tr-TR')}
+                          {new Date(registration.check_in_date).toLocaleDateString('tr-TR')}
                         </div>
                         <div className="text-sm text-gray-500 dark:text-gray-400">
-                          {new Date(registration.checkOutDate).toLocaleDateString('tr-TR')}
+                          {new Date(registration.check_out_date).toLocaleDateString('tr-TR')}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -392,7 +381,7 @@ export default function StudentsOverviewPage() {
                           onClick={() => router.push(`/dashboard/students/registrations/${registration.id}`)}
                           className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
                         >
-                          <FileText className="w-5 h-5" />
+                          <Eye className="w-5 h-5" />
                         </button>
                       </td>
                     </tr>
