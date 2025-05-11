@@ -17,3 +17,29 @@ export type ApiErrorResponse = {
   code?: string;
   details?: Record<string, string[]>;
 }
+
+/**
+ * İstatistik verileri için tür tanımı
+ */
+export interface RegistrationStats {
+  totalRegistrations: number;
+  activeRegistrations: number;
+  completedRegistrations: number;
+  cancelledRegistrations: number;
+  totalRevenue: number;
+  collectedRevenue: number;
+  pendingRevenue: number;
+  occupancyRate: number;
+  registrationsByMonth: {
+    [key: string]: number;
+  };
+  registrationsByStatus: {
+    [key: string]: number;
+  };
+  registrationsByApartment: {
+    [key: string]: number;
+  };
+  revenueByMonth: {
+    [key: string]: number;
+  };
+}

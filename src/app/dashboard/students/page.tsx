@@ -26,6 +26,48 @@ import { useToast } from '@/hooks/useToast';
 import { Button } from '@/components/ui/atoms/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/atoms/Card';
 
+// Yardımcı fonksiyon - professionDepartment alanı için
+const formatProfessionDepartment = (prof: any): string => {
+  if (!prof) return '';
+  
+  // Nesne ise
+  if (typeof prof === 'object' && prof !== null) {
+    try {
+      // school_name ve education_level'i kullan
+      const schoolName = prof.school_name || '';
+      const educationLevel = prof.education_level || '';
+      if (schoolName && educationLevel) {
+        return `${schoolName} / ${educationLevel}`;
+      } else if (schoolName) {
+        return schoolName;
+      } else if (educationLevel) {
+        return educationLevel;
+      }
+      
+      // Diğer durumlarda JSON'a dönüştür
+      return JSON.stringify(prof);
+    } catch {
+      return String(prof);
+    }
+  }
+  
+  // String ise ve JSON olabilir
+  if (typeof prof === 'string') {
+    try {
+      const parsed = JSON.parse(prof);
+      if (typeof parsed === 'object' && parsed !== null) {
+        return formatProfessionDepartment(parsed);
+      }
+      return prof;
+    } catch {
+      return prof;
+    }
+  }
+  
+  // Son çare - her zaman string'e dönüştür
+  return String(prof);
+};
+
 export default function StudentsOverviewPage() {
   const router = useRouter();
   const { isAuthenticated, checkAuth } = useAuth();
@@ -305,10 +347,10 @@ export default function StudentsOverviewPage() {
                           </div>
                           <div className="ml-4">
                             <div className="text-sm font-medium text-gray-900 dark:text-white">
-                              {registration.guest?.person ? `${registration.guest.person.name} ${registration.guest.person.surname}` : 'İsimsiz Öğrenci'}
+                              {registration.guest?.person?.name} {registration.guest?.person?.surname}
                             </div>
                             <div className="text-sm text-gray-500 dark:text-gray-400">
-                              {registration.guest?.professionDepartment || 'Bölüm belirtilmemiş'}
+                              {formatProfessionDepartment(registration.guest?.professionDepartment) || 'Bölüm belirtilmemiş'}
                             </div>
                           </div>
                         </div>

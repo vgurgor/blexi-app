@@ -6,6 +6,48 @@ import StatusBadge from './StatusBadge';
 import EmergencyContactCard from './EmergencyContactCard';
 import { useState } from 'react';
 
+// Yardımcı fonksiyon
+const formatProfessionDepartment = (prof: any): string => {
+  if (!prof) return '';
+  
+  // Nesne ise
+  if (typeof prof === 'object' && prof !== null) {
+    try {
+      // school_name ve education_level'i kullan
+      const schoolName = prof.school_name || '';
+      const educationLevel = prof.education_level || '';
+      if (schoolName && educationLevel) {
+        return `${schoolName} / ${educationLevel}`;
+      } else if (schoolName) {
+        return schoolName;
+      } else if (educationLevel) {
+        return educationLevel;
+      }
+      
+      // Diğer durumlarda JSON'a dönüştür
+      return JSON.stringify(prof);
+    } catch {
+      return String(prof);
+    }
+  }
+  
+  // String ise ve JSON olabilir
+  if (typeof prof === 'string') {
+    try {
+      const parsed = JSON.parse(prof);
+      if (typeof parsed === 'object' && parsed !== null) {
+        return formatProfessionDepartment(parsed);
+      }
+      return prof;
+    } catch {
+      return prof;
+    }
+  }
+  
+  // Son çare - her zaman string'e dönüştür
+  return String(prof);
+};
+
 interface RegistrationHeaderProps {
   registration: ISeasonRegistration;
 }
@@ -60,7 +102,7 @@ export default function RegistrationHeader({ registration }: RegistrationHeaderP
                 {registration.guest?.person?.name} {registration.guest?.person?.surname}
               </h2>
               <p className="text-gray-600 dark:text-gray-400 text-lg">
-                {registration.guest?.professionDepartment || registration.guest?.profession || (registration.guest?.guestType === 'STUDENT' ? 'Öğrenci' : registration.guest?.guestType === 'EMPLOYEE' ? 'Çalışan' : 'Misafir')}
+                {registration.guest?.guestType === 'STUDENT' ? 'Öğrenci' : registration.guest?.guestType === 'EMPLOYEE' ? 'Çalışan' : 'Misafir'}
               </p>
               <div className="flex flex-wrap gap-3 mt-2">
                 {registration.guest?.person?.phone && (
@@ -91,7 +133,7 @@ export default function RegistrationHeader({ registration }: RegistrationHeaderP
               <div>
                 <div className="text-sm text-gray-500 dark:text-gray-400">Apart</div>
                 <div className="font-medium text-gray-900 dark:text-white">
-                  {registration.apartment?.name || registration.bed?.room?.apartment?.name || '-'}
+                  {registration.bed?.room?.apart?.name || '-'}
                 </div>
               </div>
             </div>
@@ -103,7 +145,7 @@ export default function RegistrationHeader({ registration }: RegistrationHeaderP
               <div>
                 <div className="text-sm text-gray-500 dark:text-gray-400">Oda/Yatak</div>
                 <div className="font-medium text-gray-900 dark:text-white">
-                  {registration.room?.name || registration.bed?.room?.name || '-'} / {registration.bed?.name || registration.bed?.bedNumber || '-'}
+                  {registration.bed?.room?.name || '-'} / {registration.bed?.bedNumber || '-'}
                 </div>
               </div>
             </div>
@@ -169,7 +211,7 @@ export default function RegistrationHeader({ registration }: RegistrationHeaderP
                 <div>
                   <p className="text-sm text-gray-500 dark:text-gray-400">Okul/Bölüm</p>
                   <p className="font-medium text-gray-900 dark:text-white">
-                    {registration.guest?.professionDepartment || registration.guest?.profession || '-'}
+                    {formatProfessionDepartment(registration.guest?.professionDepartment) || '-'}
                   </p>
                 </div>
               </div>
