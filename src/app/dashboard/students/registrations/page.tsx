@@ -3,31 +3,33 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
-import { 
-  Plus, 
-  Search, 
-  Filter, 
-  ChevronLeft, 
-  ChevronRight, 
-  FileText, 
-  User, 
-  Calendar, 
-  Building2, 
-  Download, 
-  SlidersHorizontal, 
-  X, 
-  Check, 
-  FileDown, 
-  FileSpreadsheet, 
-  FileIcon, 
-  ArrowUpDown, 
-  ArrowUp, 
-  ArrowDown, 
+import {
+  Plus,
+  Search,
+  Filter,
+  ChevronLeft,
+  ChevronRight,
+  FileText,
+  User,
+  Calendar,
+  Building2,
+  Download,
+  SlidersHorizontal,
+  X,
+  Check,
+  FileDown,
+  FileSpreadsheet,
+  FileIcon,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
   Users,
   Bed,
   DollarSign,
-  Tag
+  Tag,
+  BarChart
 } from 'lucide-react';
+import RegistrationStats from '@/components/registrations/RegistrationStats';
 import { seasonRegistrationsApi } from '@/lib/api/seasonRegistrations';
 import { guestsApi } from '@/lib/api/guests';
 import { apartsApi } from '@/lib/api/apartments';
@@ -37,6 +39,48 @@ import { Button } from '@/components/ui/atoms/Button';
 import { FormInput, FormSelect } from '@/components/ui';
 import { formatCurrency, formatDate } from '@/utils/format';
 import { downloadCSV, downloadExcel, formatDataForExport, getStudentRegistrationExportHeaders } from '@/utils/export';
+
+// Yardımcı fonksiyon - professionDepartment alanı için
+const formatProfessionDepartment = (prof: any): string => {
+  if (!prof) return '';
+  
+  // Nesne ise
+  if (typeof prof === 'object' && prof !== null) {
+    try {
+      // school_name ve education_level'i kullan
+      const schoolName = prof.school_name || '';
+      const educationLevel = prof.education_level || '';
+      if (schoolName && educationLevel) {
+        return `${schoolName} / ${educationLevel}`;
+      } else if (schoolName) {
+        return schoolName;
+      } else if (educationLevel) {
+        return educationLevel;
+      }
+      
+      // Diğer durumlarda JSON'a dönüştür
+      return JSON.stringify(prof);
+    } catch {
+      return String(prof);
+    }
+  }
+  
+  // String ise ve JSON olabilir
+  if (typeof prof === 'string') {
+    try {
+      const parsed = JSON.parse(prof);
+      if (typeof parsed === 'object' && parsed !== null) {
+        return formatProfessionDepartment(parsed);
+      }
+      return prof;
+    } catch {
+      return prof;
+    }
+  }
+  
+  // Son çare - her zaman string'e dönüştür
+  return String(prof);
+};
 
 export default function StudentRegistrationsPage() {
   const router = useRouter();
@@ -49,6 +93,7 @@ export default function StudentRegistrationsPage() {
   const [totalRecords, setTotalRecords] = useState(0);
   const [showFilters, setShowFilters] = useState(false);
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [showStats, setShowStats] = useState(false);
   const toast = useToast();
 
   // Reference data
@@ -337,7 +382,8 @@ export default function StudentRegistrationsPage() {
       
       // Department filter
       if (advancedFilters.department && registration.guest?.professionDepartment) {
-        matches = matches && registration.guest.professionDepartment.toLowerCase().includes(advancedFilters.department.toLowerCase());
+        const formattedDept = formatProfessionDepartment(registration.guest.professionDepartment);
+        matches = matches && formattedDept.toLowerCase().includes(advancedFilters.department.toLowerCase());
       }
       
       // Age filter
@@ -423,43 +469,60 @@ export default function StudentRegistrationsPage() {
           Öğrenci Kayıtları
         </h1>
         <div className="flex gap-2">
-          <Button 
+          <Button
             onClick={() => router.push('/dashboard/students/registrations/new')}
             variant="primary"
             leftIcon={<Plus className="w-5 h-5" />}
           >
             Yeni Öğrenci Kaydı
           </Button>
-          
-          <div className="relative group">
-            <Button 
-              onClick={() => {}}
-              variant="secondary"
-              leftIcon={<Download className="w-5 h-5" />}
+
+          <div className="flex gap-2">
+            <Button
+              onClick={() => setShowStats(!showStats)}
+              variant={showStats ? "primary" : "secondary"}
+              leftIcon={<BarChart className="w-5 h-5" />}
             >
-              Dışa Aktar
+              {showStats ? "İstatistikleri Gizle" : "İstatistikler"}
             </Button>
-            <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 hidden group-hover:block z-10">
-              <div className="py-1">
-                <button 
-                  onClick={() => handleBulkAction('export-excel')}
-                  className="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
-                >
-                  <FileSpreadsheet className="w-4 h-4 mr-2" />
-                  Excel'e Aktar
-                </button>
-                <button 
-                  onClick={() => handleBulkAction('export-pdf')}
-                  className="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
-                >
-                  <FileIcon className="w-4 h-4 mr-2" />
-                  PDF'e Aktar
-                </button>
+
+            <div className="relative group">
+              <Button
+                onClick={() => {}}
+                variant="secondary"
+                leftIcon={<Download className="w-5 h-5" />}
+              >
+                Dışa Aktar
+              </Button>
+              <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 hidden group-hover:block z-10">
+                <div className="py-1">
+                  <button
+                    onClick={() => handleBulkAction('export-excel')}
+                    className="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  >
+                    <FileSpreadsheet className="w-4 h-4 mr-2" />
+                    Excel'e Aktar
+                  </button>
+                  <button
+                    onClick={() => handleBulkAction('export-pdf')}
+                    className="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  >
+                    <FileIcon className="w-4 h-4 mr-2" />
+                    PDF'e Aktar
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* İstatistikler */}
+      {showStats && (
+        <div className="mb-6">
+          <RegistrationStats />
+        </div>
+      )}
 
       {/* Search and Basic Filters */}
       <div className="mb-6 flex flex-col md:flex-row gap-4">
