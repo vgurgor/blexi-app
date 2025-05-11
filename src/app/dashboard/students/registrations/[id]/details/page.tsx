@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
+import LoadingSpinner from '@/components/ui/atoms/LoadingSpinner';
 
 export default function RegistrationDetailsRedirectPage({ params }: { params: { id: string } }) {
   const router = useRouter();
@@ -11,9 +12,5 @@ export default function RegistrationDetailsRedirectPage({ params }: { params: { 
     router.replace(`/dashboard/students/registrations/${params.id}`);
   }, [router, params.id]);
 
-  return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-    </div>
-  );
+  return <LoadingSpinner size="md" fullScreen />;
 }

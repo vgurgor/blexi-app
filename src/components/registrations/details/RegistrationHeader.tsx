@@ -14,36 +14,35 @@ export default function RegistrationHeader({ registration }: RegistrationHeaderP
   // Prepare financial summary data
   const registrationAny = registration as any;
   const financialSummary = registrationAny.financialSummary || {
-    totalAmount: parseFloat(registrationAny.totalAmount) || 491903,
-    paidAmount: parseFloat(registrationAny.paidAmount) || 98381,
-    remainingAmount: (parseFloat(registrationAny.totalAmount) || 491903) - (parseFloat(registrationAny.paidAmount) || 98381),
-    paymentProgress: Math.round(((parseFloat(registrationAny.paidAmount) || 98381) / (parseFloat(registrationAny.totalAmount) || 491903)) * 100)
+    totalAmount: parseFloat(registrationAny.totalAmount) || 0,
+    paidAmount: parseFloat(registrationAny.paidAmount) || 0,
+    remainingAmount: (parseFloat(registrationAny.totalAmount) || 0) - (parseFloat(registrationAny.paidAmount) || 0),
+    paymentProgress: Math.round(((parseFloat(registrationAny.paidAmount) || 0) / Math.max(parseFloat(registrationAny.totalAmount) || 1, 1)) * 100)
   };
 
+  // Define payment type for TypeScript
+  interface PaymentScheduleItem {
+    id?: string;
+    date: string;
+    amount: string | number;
+    paidAmount?: string | number;
+    status?: string;
+  }
+
   // Prepare payment schedule data for next payment
-  const paymentSchedule = registrationAny.paymentSchedule?.map((payment: any) => ({
+  const paymentSchedule = (registrationAny.paymentSchedule as PaymentScheduleItem[] || []).map((payment) => ({
     id: payment.id || String(Math.random()),
     date: payment.date,
-    amount: parseFloat(payment.amount) || 0,
-    paidAmount: parseFloat(payment.paidAmount) || 0,
-    remainingAmount: parseFloat(payment.amount) - parseFloat(payment.paidAmount) || 0,
-    isPaid: parseFloat(payment.paidAmount) >= parseFloat(payment.amount)
+    amount: parseFloat(payment.amount as string) || 0,
+    paidAmount: parseFloat(payment.paidAmount as string) || 0,
+    remainingAmount: (parseFloat(payment.amount as string) || 0) - (parseFloat(payment.paidAmount as string) || 0),
+    isPaid: payment.status === 'paid' || (parseFloat(payment.paidAmount as string) || 0) >= (parseFloat(payment.amount as string) || 0)
   })) || [];
-
-  // Define payment type for TypeScript
-  interface Payment {
-    id: string;
-    date: string;
-    amount: number;
-    paidAmount: number;
-    remainingAmount: number;
-    isPaid: boolean;
-  }
 
   // Find next payment
   const nextPayment = paymentSchedule
-    .filter((payment: Payment) => !payment.isPaid)
-    .sort((a: Payment, b: Payment) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
+    .filter(payment => !payment.isPaid)
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
 
   const [showDetails, setShowDetails] = useState(false);
 
@@ -61,7 +60,7 @@ export default function RegistrationHeader({ registration }: RegistrationHeaderP
                 {registration.guest?.person?.name} {registration.guest?.person?.surname}
               </h2>
               <p className="text-gray-600 dark:text-gray-400 text-lg">
-                {registration.guest?.professionDepartment || 'Öğrenci'}
+                {registration.guest?.professionDepartment || registration.guest?.profession || (registration.guest?.guestType === 'STUDENT' ? 'Öğrenci' : registration.guest?.guestType === 'EMPLOYEE' ? 'Çalışan' : 'Misafir')}
               </p>
               <div className="flex flex-wrap gap-3 mt-2">
                 {registration.guest?.person?.phone && (
@@ -92,7 +91,7 @@ export default function RegistrationHeader({ registration }: RegistrationHeaderP
               <div>
                 <div className="text-sm text-gray-500 dark:text-gray-400">Apart</div>
                 <div className="font-medium text-gray-900 dark:text-white">
-                  {registration.bed?.room?.apart?.name || registration.bed?.room?.name || '-'}
+                  {registration.apartment?.name || registration.bed?.room?.apartment?.name || '-'}
                 </div>
               </div>
             </div>
@@ -104,7 +103,7 @@ export default function RegistrationHeader({ registration }: RegistrationHeaderP
               <div>
                 <div className="text-sm text-gray-500 dark:text-gray-400">Oda/Yatak</div>
                 <div className="font-medium text-gray-900 dark:text-white">
-                  {registration.bed?.room?.name || '-'} / {registration.bed?.bedNumber || '-'}
+                  {registration.room?.name || registration.bed?.room?.name || '-'} / {registration.bed?.name || registration.bed?.bedNumber || '-'}
                 </div>
               </div>
             </div>
@@ -135,7 +134,7 @@ export default function RegistrationHeader({ registration }: RegistrationHeaderP
 
             {/* Detailed Information (Collapsible) */}
             {showDetails && (
-              <   >
+              <>
               <div className="flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-700/30 rounded-lg">
                 <div className="p-2 rounded-lg bg-red-100 dark:bg-red-900/20">
                   <Calendar className="w-5 h-5 text-red-600 dark:text-red-400" />
@@ -143,9 +142,9 @@ export default function RegistrationHeader({ registration }: RegistrationHeaderP
                 <div>
                   <p className="text-sm text-gray-500 dark:text-gray-400">Doğum Tarihi</p>
                   <p className="font-medium text-gray-900 dark:text-white">
-                    {registration.guest?.person?.birthDate 
-                      ? new Date(registration.guest.person.birthDate).toLocaleDateString('tr-TR') 
-                      : '15.06.2013'}
+                    {registration.guest?.person?.birthDate
+                      ? new Date(registration.guest.person.birthDate).toLocaleDateString('tr-TR')
+                      : '-'}
                   </p>
                 </div>
               </div>
@@ -170,7 +169,7 @@ export default function RegistrationHeader({ registration }: RegistrationHeaderP
                 <div>
                   <p className="text-sm text-gray-500 dark:text-gray-400">Okul/Bölüm</p>
                   <p className="font-medium text-gray-900 dark:text-white">
-                    {registration.guest?.professionDepartment || 'Ümraniye Ortaokulu - 6. Sınıf'}
+                    {registration.guest?.professionDepartment || registration.guest?.profession || '-'}
                   </p>
                 </div>
               </div>

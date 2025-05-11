@@ -19,6 +19,7 @@ import DeleteConfirmationModal from '@/components/DeleteConfirmationModal';
 import RegistrationTabs from '@/components/registrations/details/RegistrationTabs';
 import RegistrationHeader from '@/components/registrations/details/RegistrationHeader';
 import RegistrationDetailsContent from '@/components/registrations/details/RegistrationDetailsContent';
+import LoadingSpinner from '@/components/ui/atoms/LoadingSpinner';
 import { ISeasonRegistration } from '@/types/models';
 
 export default function RegistrationDetailsPage({ params }: { params: { id: string } }) {
@@ -152,11 +153,7 @@ export default function RegistrationDetailsPage({ params }: { params: { id: stri
   };
 
   if (isChecking) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    );
+    return <LoadingSpinner size="md" fullScreen />;
   }
 
   if (!isAuthenticated) {
@@ -164,11 +161,7 @@ export default function RegistrationDetailsPage({ params }: { params: { id: stri
   }
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    );
+    return <LoadingSpinner size="md" fullScreen />;
   }
 
   if (!registration) {
