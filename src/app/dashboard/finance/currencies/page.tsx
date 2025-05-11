@@ -323,7 +323,7 @@ export default function CurrenciesPage() {
       });
       
       if (response.success && response.data) {
-        setCurrencies(prev => [...prev, response.data]);
+        setCurrencies(prev => [...prev, response.data as ICurrency]);
         setShowAddCurrencyModal(false);
         resetCurrencyForm();
       } else {
@@ -434,7 +434,7 @@ export default function CurrenciesPage() {
       });
       
       if (response.success && response.data) {
-        setExchangeRates(prev => [...prev, response.data]);
+        setExchangeRates(prev => [...prev, response.data as IExchangeRate]);
         setShowAddRateModal(false);
         resetRateForm();
       } else {

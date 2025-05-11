@@ -3,10 +3,10 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
-import { 
-  ArrowLeft, 
-  CheckCircle, 
-  XCircle, 
+import {
+  ArrowLeft,
+  CheckCircle,
+  XCircle,
   Edit
 } from 'lucide-react';
 import { seasonRegistrationsApi } from '@/lib/api/seasonRegistrations';
@@ -16,12 +16,13 @@ import DeleteConfirmationModal from '@/components/DeleteConfirmationModal';
 import RegistrationTabs from '@/components/registrations/details/RegistrationTabs';
 import RegistrationHeader from '@/components/registrations/details/RegistrationHeader';
 import RegistrationPaymentsContent from '@/components/registrations/details/RegistrationPaymentsContent';
+import { ISeasonRegistration } from '@/types/models';
 
 export default function RegistrationPaymentsPage({ params }: { params: { id: string } }) {
   const router = useRouter();
   const { isAuthenticated, checkAuth } = useAuth();
   const [isChecking, setIsChecking] = useState(true);
-  const [registration, setRegistration] = useState<any>(null);
+  const [registration, setRegistration] = useState<ISeasonRegistration | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -81,7 +82,7 @@ export default function RegistrationPaymentsPage({ params }: { params: { id: str
       
       if (response.success) {
         toast.success('Kayıt başarıyla iptal edildi');
-        setRegistration(prev => ({ ...prev, status: 'cancelled' }));
+        setRegistration((prev: ISeasonRegistration | null) => prev ? ({ ...prev, status: 'cancelled' }) : null);
         setShowDeleteModal(false);
       } else {
         throw new Error(response.error || 'Kayıt iptal edilirken bir hata oluştu');
@@ -100,7 +101,7 @@ export default function RegistrationPaymentsPage({ params }: { params: { id: str
       
       if (response.success) {
         toast.success('Kayıt başarıyla tamamlandı');
-        setRegistration(prev => ({ ...prev, status: 'completed' }));
+        setRegistration((prev: ISeasonRegistration | null) => prev ? ({ ...prev, status: 'completed' }) : null);
       } else {
         toast.error(response.error || 'Kayıt tamamlanırken bir hata oluştu');
       }

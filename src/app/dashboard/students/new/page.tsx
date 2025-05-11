@@ -213,11 +213,11 @@ export default function NewStudentPage() {
 
   const onSubmit = async (data: StudentFormData) => {
     setIsSubmitting(true);
-    
+
     try {
       // Update formatted address before submission
       updateFormattedAddress();
-      
+
       // First create the person
       const personData = {
         name: data.name,
@@ -227,10 +227,23 @@ export default function NewStudentPage() {
         phone: data.phone,
         email: data.email,
         birth_date: data.birth_date,
-        address: data.address,
         city: '',
+        // Create proper address object structure
+        address: {
+          country_id: parseInt(data.country_id),
+          province_id: parseInt(data.province_id),
+          district_id: parseInt(data.district_id),
+          neighborhood: data.neighborhood || undefined,
+          street: data.street || undefined,
+          building_no: data.building_no || undefined,
+          apartment_no: data.apartment_no || undefined,
+          postal_code: data.postal_code || undefined,
+          address_type: 'home' as const,
+          is_default: true,
+          status: 'active' as const
+        }
       };
-      
+
       const personResponse = await peopleApi.create(personData);
       
       if (!personResponse.success || !personResponse.data) {
@@ -245,11 +258,11 @@ export default function NewStudentPage() {
       };
       
       const guestResponse = await guestsApi.create(guestData);
-      
-      if (!guestResponse.success) {
+
+      if (!guestResponse.success || !guestResponse.data) {
         throw new Error(guestResponse.error || 'Öğrenci kaydı oluşturulurken bir hata oluştu');
       }
-      
+
       // If self guardian is checked, create a guardian record
       if (data.is_self_guardian) {
         const guardianData = {

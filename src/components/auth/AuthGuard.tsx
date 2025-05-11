@@ -26,6 +26,30 @@ export default function AuthGuard({ children }: AuthGuardProps) {
   useEffect(() => {
     const handleAuth = async () => {
       try {
+        // In case the Zustand store hasn't hydrated yet, manually try to read from localStorage
+        if (!isAuthenticated && !isPublicPath && typeof window !== 'undefined') {
+          console.log('Checking auth state on path:', pathname);
+
+          // Try to get auth data from localStorage
+          try {
+            const storedAuth = localStorage.getItem('blexi-auth-storage');
+            if (storedAuth) {
+              const parsedAuth = JSON.parse(storedAuth);
+              console.log('Found stored auth data:', {
+                hasToken: !!parsedAuth?.state?.token,
+                isAuthenticated: !!parsedAuth?.state?.isAuthenticated
+              });
+
+              // If we have stored auth data but Zustand isn't hydrated, manually rehydrate
+              if (parsedAuth?.state?.token && parsedAuth?.state?.isAuthenticated) {
+                useAuthStore.persist.rehydrate();
+              }
+            }
+          } catch (e) {
+            console.error('Error reading from localStorage:', e);
+          }
+        }
+
         // If it's a public path and user is authenticated, redirect to dashboard
         if (isPublicPath && isAuthenticated) {
           router.replace('/dashboard');
@@ -34,14 +58,18 @@ export default function AuthGuard({ children }: AuthGuardProps) {
 
         // If path requires auth and user is not authenticated
         if (!isPublicPath && !isAuthenticated) {
+          console.log('Auth needed but not authenticated, checking token...');
           // First try to verify token - maybe we have a valid token but state is not updated
           const authenticated = await checkAuth();
-          
+
           if (!authenticated) {
+            console.log('Token verification failed, redirecting to login');
             // Save the original URL to redirect back after login
             const callbackUrl = encodeURIComponent(pathname);
             router.replace(`/auth/login?callbackUrl=${callbackUrl}`);
             return;
+          } else {
+            console.log('Token verification succeeded');
           }
         }
 

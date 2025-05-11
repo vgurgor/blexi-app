@@ -12,11 +12,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { ZodSchema } from 'zod';
 import { cn } from '@/utils/cn';
 
-interface FormProps<TFormValues extends FieldValues> extends React.FormHTMLAttributes<HTMLFormElement> {
+interface FormProps<TFormValues extends FieldValues> {
   form: UseFormReturn<TFormValues>;
   onSubmit: SubmitHandler<TFormValues>;
   onError?: SubmitErrorHandler<TFormValues>;
   children: React.ReactNode;
+  className?: string;
 }
 
 function Form<TFormValues extends FieldValues>({
@@ -26,7 +27,7 @@ function Form<TFormValues extends FieldValues>({
   children,
   className,
   ...props
-}: FormProps<TFormValues>) {
+}: FormProps<TFormValues> & Omit<React.ComponentProps<'form'>, 'onSubmit' | 'children' | 'className'>) {
   return (
     <FormProvider {...form}>
       <form

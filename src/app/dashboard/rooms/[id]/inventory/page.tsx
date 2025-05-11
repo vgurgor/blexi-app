@@ -48,8 +48,8 @@ export default function RoomInventoryPage({ params }: { params: { id: string } }
           // Fetch inventory for this room
           const inventoryResponse = await roomsApi.getInventory(params.id);
           
-          if (inventoryResponse.success) {
-            setInventory(inventoryResponse.data);
+          if (inventoryResponse.success && inventoryResponse.data) {
+            setInventory(inventoryResponse.data as IInventoryItem[]);
           } else {
             console.error('Envanter bilgileri alınamadı:', inventoryResponse.error);
             setError('Envanter bilgileri yüklenirken bir hata oluştu.');
@@ -79,8 +79,8 @@ export default function RoomInventoryPage({ params }: { params: { id: string } }
         per_page: 100
       });
       
-      if (response.success) {
-        setAvailableInventory(response.data);
+      if (response.success && response.data) {
+        setAvailableInventory(response.data as IInventoryItem[]);
       } else {
         console.error('Kullanılabilir envanter verileri alınamadı:', response.error);
         setError('Kullanılabilir envanter yüklenirken bir hata oluştu.');

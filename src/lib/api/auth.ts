@@ -1,4 +1,4 @@
-import { api } from './base';
+import { api, fetchApi } from './base';
 import { ApiResponse } from '@/types/api';
 import { IUser } from '@/types/models';
 
@@ -156,7 +156,8 @@ export async function resendVerificationEmail(): Promise<ApiResponse<{ message: 
  * @returns Token geçerliliği ve kullanıcı bilgileri
  */
 export async function validateToken(token: string): Promise<ApiResponse<IUser>> {
-  return api.get<IUser>('/api/v1/auth/me', {
+  // Create a custom fetch to include the authorization header
+  return fetchApi<IUser>('/api/v1/auth/me', {
     headers: {
       Authorization: `Bearer ${token}`
     }

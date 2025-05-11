@@ -10,8 +10,17 @@ import { loginSchema, LoginFormData } from '@/utils/validations/user';
 import { Form, FormInput, FormCheckbox } from '@/components/ui';
 import { Button } from '@/components/ui/atoms/Button';
 import { useAuthStore } from '@/store/authStore';
+import { SearchParamsProvider } from '@/components/ClientOnly';
 
 export default function LoginPage() {
+  return (
+    <SearchParamsProvider>
+      <LoginContent />
+    </SearchParamsProvider>
+  );
+}
+
+function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { login, isAuthenticated, isLoading } = useAuth();

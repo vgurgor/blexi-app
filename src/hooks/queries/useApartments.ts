@@ -30,21 +30,21 @@ export function useApartments() {
 
   const create = useCallback(
     async (data: Partial<IApartment>) => {
-      return createApi.execute(apartsApi.create(data));
+      return createApi.execute(apartsApi.create(data as any));
     },
     [createApi]
   );
 
   const update = useCallback(
     async (id: string, data: Partial<IApartment>) => {
-      return updateApi.execute(apartsApi.update(id, data));
+      return updateApi.execute(apartsApi.update(id, data as any));
     },
     [updateApi]
   );
 
   const remove = useCallback(
     async (id: string) => {
-      return deleteApi.execute(apartsApi.delete(id));
+      return deleteApi.execute(apartsApi.remove(id));
     },
     [deleteApi]
   );

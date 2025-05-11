@@ -280,7 +280,7 @@ export default function PaymentTypesPage() {
       });
       
       if (response.success && response.data) {
-        setCategories(prev => [...prev, response.data]);
+        setCategories(prev => [...prev, response.data as IPaymentTypeCategory]);
         setShowAddCategoryModal(false);
         resetCategoryForm();
       } else {
@@ -364,7 +364,7 @@ export default function PaymentTypesPage() {
       });
       
       if (response.success && response.data) {
-        setPaymentTypes(prev => [...prev, response.data]);
+        setPaymentTypes(prev => [...prev, response.data as IPaymentType]);
         setShowAddPaymentTypeModal(false);
         resetPaymentTypeForm();
       } else {
@@ -407,8 +407,8 @@ export default function PaymentTypesPage() {
       });
       
       if (response.success && response.data) {
-        setPaymentTypes(prev => prev.map(p => 
-          p.id === currentPaymentType.id ? response.data : p
+        setPaymentTypes(prev => prev.map(p =>
+          p.id === currentPaymentType.id ? response.data as IPaymentType : p
         ));
         setShowEditPaymentTypeModal(false);
       } else {

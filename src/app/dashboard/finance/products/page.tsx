@@ -220,7 +220,7 @@ export default function ProductsPage() {
       });
       
       if (response.success && response.data) {
-        setProducts(prev => [...prev, response.data]);
+        setProducts(prev => [...prev, response.data as IProduct]);
         setShowAddModal(false);
         setFormData({
           name: '',
@@ -325,7 +325,7 @@ export default function ProductsPage() {
       });
       
       if (response.success && response.data) {
-        setCategories(prev => [...prev, response.data]);
+        setCategories(prev => [...prev, response.data as IProductCategory]);
         setShowCategoryModal(false);
         setCategoryFormData({
           name: '',

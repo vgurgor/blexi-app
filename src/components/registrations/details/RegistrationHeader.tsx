@@ -12,15 +12,16 @@ interface RegistrationHeaderProps {
 
 export default function RegistrationHeader({ registration }: RegistrationHeaderProps) {
   // Prepare financial summary data
-  const financialSummary = registration.financialSummary || {
-    totalAmount: parseFloat(registration.totalAmount) || 491903,
-    paidAmount: parseFloat(registration.paidAmount) || 98381,
-    remainingAmount: (parseFloat(registration.totalAmount) || 491903) - (parseFloat(registration.paidAmount) || 98381),
-    paymentProgress: Math.round(((parseFloat(registration.paidAmount) || 98381) / (parseFloat(registration.totalAmount) || 491903)) * 100)
+  const registrationAny = registration as any;
+  const financialSummary = registrationAny.financialSummary || {
+    totalAmount: parseFloat(registrationAny.totalAmount) || 491903,
+    paidAmount: parseFloat(registrationAny.paidAmount) || 98381,
+    remainingAmount: (parseFloat(registrationAny.totalAmount) || 491903) - (parseFloat(registrationAny.paidAmount) || 98381),
+    paymentProgress: Math.round(((parseFloat(registrationAny.paidAmount) || 98381) / (parseFloat(registrationAny.totalAmount) || 491903)) * 100)
   };
 
   // Prepare payment schedule data for next payment
-  const paymentSchedule = registration.paymentSchedule?.map(payment => ({
+  const paymentSchedule = registrationAny.paymentSchedule?.map((payment: any) => ({
     id: payment.id || String(Math.random()),
     date: payment.date,
     amount: parseFloat(payment.amount) || 0,
@@ -29,10 +30,20 @@ export default function RegistrationHeader({ registration }: RegistrationHeaderP
     isPaid: parseFloat(payment.paidAmount) >= parseFloat(payment.amount)
   })) || [];
 
+  // Define payment type for TypeScript
+  interface Payment {
+    id: string;
+    date: string;
+    amount: number;
+    paidAmount: number;
+    remainingAmount: number;
+    isPaid: boolean;
+  }
+
   // Find next payment
   const nextPayment = paymentSchedule
-    .filter(payment => !payment.isPaid)
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
+    .filter((payment: Payment) => !payment.isPaid)
+    .sort((a: Payment, b: Payment) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
 
   const [showDetails, setShowDetails] = useState(false);
 

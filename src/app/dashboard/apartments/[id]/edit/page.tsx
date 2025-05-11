@@ -20,8 +20,9 @@ export default function EditApartmentPage({ params }: { params: { id: string } }
     const fetchApartment = async () => {
       setIsLoading(true);
       try {
-        const response = await apartsApi.getById(params.id);
-        
+        const apartId = parseInt(params.id, 10);
+        const response = await apartsApi.getById(apartId);
+
         if (response.success && response.data) {
           setApartment(response.data);
         } else {

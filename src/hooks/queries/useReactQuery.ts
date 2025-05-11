@@ -28,7 +28,7 @@ export function useReactQuery<T = any>(options?: UseReactQueryOptions<T>) {
             toast.success(mergedOptions.successMessage);
           }
           
-          mergedOptions.onSuccess?.(response.data);
+          mergedOptions.onSuccess?.(response.data as any);
           return response.data;
         } else {
           const errorMessage = response.error || 'Bir hata oluştu';

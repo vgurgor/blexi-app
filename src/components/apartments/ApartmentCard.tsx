@@ -45,7 +45,7 @@ export default function ApartmentCard({ apartment, getCompanyName, onStatusChang
     setDeleteError('');
     
     try {
-      const response = await apartsApi.delete(apartment.id.toString());
+      const response = await apartsApi.remove(apartment.id.toString());
       
       if (response.success) {
         onDelete(apartment.id);
@@ -231,7 +231,7 @@ export default function ApartmentCard({ apartment, getCompanyName, onStatusChang
            <div className="col-span-2 pt-4 border-t border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between">
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                Açılış Tarihi: {new Date(apartment.opening_date).toLocaleDateString('tr-TR')}
+                Açılış Tarihi: {apartment.opening_date ? new Date(apartment.opening_date).toLocaleDateString('tr-TR') : 'Belirtilmemiş'}
               </p>
             </div>
           </div>

@@ -301,15 +301,15 @@ export default function InvoiceInfoStep() {
                           type="text"
                           placeholder="Ad"
                           className={`w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border ${
-                            errors.invoice_titles?.[index]?.first_name ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'
+                            (errors as any).invoice_titles?.[index]?.first_name ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'
                           } rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all`}
                           onChange={(e) => handleInputChange(e, `invoice_titles.${index}.first_name`)}
                         />
                       )}
                     />
-                    {errors.invoice_titles?.[index]?.first_name && (
+                    {(errors as any).invoice_titles?.[index]?.first_name && (
                       <p className="mt-1 text-sm text-red-600 dark:text-red-400">
-                        {errors.invoice_titles?.[index]?.first_name?.message as string}
+                        {(errors as any).invoice_titles?.[index]?.first_name?.message}
                       </p>
                     )}
                   </div>
@@ -330,15 +330,15 @@ export default function InvoiceInfoStep() {
                           type="text"
                           placeholder="Soyad"
                           className={`w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border ${
-                            errors.invoice_titles?.[index]?.last_name ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'
+                            (errors as any).invoice_titles?.[index]?.last_name ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'
                           } rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all`}
                           onChange={(e) => handleInputChange(e, `invoice_titles.${index}.last_name`)}
                         />
                       )}
                     />
-                    {errors.invoice_titles?.[index]?.last_name && (
+                    {(errors as any).invoice_titles?.[index]?.last_name && (
                       <p className="mt-1 text-sm text-red-600 dark:text-red-400">
-                        {errors.invoice_titles?.[index]?.last_name?.message as string}
+                        {(errors as any).invoice_titles?.[index]?.last_name?.message}
                       </p>
                     )}
                   </div>
@@ -359,14 +359,14 @@ export default function InvoiceInfoStep() {
                           type="text"
                           placeholder="TC Kimlik No"
                           className={`w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border ${
-                            errors.invoice_titles?.[index]?.identity_number ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'
+                            (errors as any).invoice_titles?.[index]?.identity_number ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'
                           } rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all`}
                         />
                       )}
                     />
-                    {errors.invoice_titles?.[index]?.identity_number && (
+                    {(errors as any).invoice_titles?.[index]?.identity_number && (
                       <p className="mt-1 text-sm text-red-600 dark:text-red-400">
-                        {errors.invoice_titles?.[index]?.identity_number?.message as string}
+                        {(errors as any).invoice_titles?.[index]?.identity_number?.message as string}
                       </p>
                     )}
                   </div>
@@ -387,7 +387,7 @@ export default function InvoiceInfoStep() {
                           type="tel"
                           placeholder="(5XX) XXX XX XX"
                           className={`w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border ${
-                            errors.invoice_titles?.[index]?.phone ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'
+                            (errors as any).invoice_titles?.[index]?.phone ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'
                           } rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all`}
                           onChange={(e) => {
                             // Format phone number
@@ -396,9 +396,9 @@ export default function InvoiceInfoStep() {
                         />
                       )}
                     />
-                    {errors.invoice_titles?.[index]?.phone && (
+                    {(errors as any).invoice_titles?.[index]?.phone && (
                       <p className="mt-1 text-sm text-red-600 dark:text-red-400">
-                        {errors.invoice_titles?.[index]?.phone?.message as string}
+                        {(errors as any).invoice_titles?.[index]?.phone?.message as string}
                       </p>
                     )}
                   </div>
@@ -419,14 +419,14 @@ export default function InvoiceInfoStep() {
                           type="email"
                           placeholder="E-posta"
                           className={`w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border ${
-                            errors.invoice_titles?.[index]?.email ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'
+                            (errors as any).invoice_titles?.[index]?.email ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'
                           } rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all`}
                         />
                       )}
                     />
-                    {errors.invoice_titles?.[index]?.email && (
+                    {(errors as any).invoice_titles?.[index]?.email && (
                       <p className="mt-1 text-sm text-red-600 dark:text-red-400">
-                        {errors.invoice_titles?.[index]?.email?.message as string}
+                        {(errors as any).invoice_titles?.[index]?.email?.message as string}
                       </p>
                     )}
                   </div>
@@ -449,15 +449,15 @@ export default function InvoiceInfoStep() {
                           type="text"
                           placeholder="Şirket Adı"
                           className={`w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border ${
-                            errors.invoice_titles?.[index]?.company_name ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'
+                            (errors as any).invoice_titles?.[index]?.company_name ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'
                           } rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all`}
                           onChange={(e) => handleInputChange(e, `invoice_titles.${index}.company_name`)}
                         />
                       )}
                     />
-                    {errors.invoice_titles?.[index]?.company_name && (
+                    {(errors as any).invoice_titles?.[index]?.company_name && (
                       <p className="mt-1 text-sm text-red-600 dark:text-red-400">
-                        {errors.invoice_titles?.[index]?.company_name?.message as string}
+                        {(errors as any).invoice_titles?.[index]?.company_name?.message as string}
                       </p>
                     )}
                   </div>
@@ -478,15 +478,15 @@ export default function InvoiceInfoStep() {
                           type="text"
                           placeholder="Vergi Dairesi"
                           className={`w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border ${
-                            errors.invoice_titles?.[index]?.tax_office ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'
+                            (errors as any).invoice_titles?.[index]?.tax_office ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'
                           } rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all`}
                           onChange={(e) => handleInputChange(e, `invoice_titles.${index}.tax_office`)}
                         />
                       )}
                     />
-                    {errors.invoice_titles?.[index]?.tax_office && (
+                    {(errors as any).invoice_titles?.[index]?.tax_office && (
                       <p className="mt-1 text-sm text-red-600 dark:text-red-400">
-                        {errors.invoice_titles?.[index]?.tax_office?.message as string}
+                        {(errors as any).invoice_titles?.[index]?.tax_office?.message as string}
                       </p>
                     )}
                   </div>
@@ -507,14 +507,14 @@ export default function InvoiceInfoStep() {
                           type="text"
                           placeholder="Vergi Numarası"
                           className={`w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border ${
-                            errors.invoice_titles?.[index]?.tax_number ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'
+                            (errors as any).invoice_titles?.[index]?.tax_number ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'
                           } rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all`}
                         />
                       )}
                     />
-                    {errors.invoice_titles?.[index]?.tax_number && (
+                    {(errors as any).invoice_titles?.[index]?.tax_number && (
                       <p className="mt-1 text-sm text-red-600 dark:text-red-400">
-                        {errors.invoice_titles?.[index]?.tax_number?.message as string}
+                        {(errors as any).invoice_titles?.[index]?.tax_number?.message as string}
                       </p>
                     )}
                   </div>
@@ -535,7 +535,7 @@ export default function InvoiceInfoStep() {
                           type="tel"
                           placeholder="(5XX) XXX XX XX"
                           className={`w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border ${
-                            errors.invoice_titles?.[index]?.phone ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'
+                            (errors as any).invoice_titles?.[index]?.phone ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'
                           } rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all`}
                           onChange={(e) => {
                             // Format phone number
@@ -544,9 +544,9 @@ export default function InvoiceInfoStep() {
                         />
                       )}
                     />
-                    {errors.invoice_titles?.[index]?.phone && (
+                    {(errors as any).invoice_titles?.[index]?.phone && (
                       <p className="mt-1 text-sm text-red-600 dark:text-red-400">
-                        {errors.invoice_titles?.[index]?.phone?.message as string}
+                        {(errors as any).invoice_titles?.[index]?.phone?.message as string}
                       </p>
                     )}
                   </div>
@@ -567,14 +567,14 @@ export default function InvoiceInfoStep() {
                           type="email"
                           placeholder="E-posta"
                           className={`w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border ${
-                            errors.invoice_titles?.[index]?.email ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'
+                            (errors as any).invoice_titles?.[index]?.email ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'
                           } rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all`}
                         />
                       )}
                     />
-                    {errors.invoice_titles?.[index]?.email && (
+                    {(errors as any).invoice_titles?.[index]?.email && (
                       <p className="mt-1 text-sm text-red-600 dark:text-red-400">
-                        {errors.invoice_titles?.[index]?.email?.message as string}
+                        {(errors as any).invoice_titles?.[index]?.email?.message as string}
                       </p>
                     )}
                   </div>
@@ -816,9 +816,9 @@ export default function InvoiceInfoStep() {
                   />
                 )}
               />
-              {errors.invoice_titles?.[index]?.address && (
+              {(errors as any).invoice_titles?.[index]?.address && (
                 <p className="mt-1 text-sm text-red-600 dark:text-red-400">
-                  {errors.invoice_titles?.[index]?.address?.message as string}
+                  {(errors as any).invoice_titles?.[index]?.address?.message as string}
                 </p>
               )}
             </div>
@@ -858,9 +858,9 @@ export default function InvoiceInfoStep() {
         </div>
 
         {/* Error message if no invoice titles */}
-        {errors.invoice_titles && (
+        {(errors as any).invoice_titles && (
           <p className="mt-2 text-sm text-red-600 dark:text-red-400">
-            {errors.invoice_titles.message as string}
+            {(errors as any).invoice_titles.message as string}
           </p>
         )}
       </div>

@@ -47,7 +47,7 @@ interface PaymentType {
 
 export default function PaymentScheduleSection({ registrationId, paymentPlans }: PaymentScheduleSectionProps) {
   const [expandedPlan, setExpandedPlan] = useState<string | null>(null);
-  const [paymentDetails, setPaymentDetails] = useState<Record<string, Payment[]>>({});
+  const [paymentDetails, setPaymentDetails] = useState<Record<string, any[]>>({});
   const [isLoading, setIsLoading] = useState<Record<string, boolean>>({});
   const [paymentTypes, setPaymentTypes] = useState<PaymentType[]>([]);
   const [isLoadingPaymentTypes, setIsLoadingPaymentTypes] = useState(false);
@@ -79,13 +79,14 @@ export default function PaymentScheduleSection({ registrationId, paymentPlans }:
         const response = await paymentTypesApi.getAll(undefined, 'active');
         
         if (response.success && response.data) {
-          setPaymentTypes(response.data);
-          
+          const paymentTypeData = response.data;
+          setPaymentTypes(paymentTypeData);
+
           // Set first payment type as default if available
-          if (response.data.length > 0) {
+          if (paymentTypeData.length > 0) {
             setPaymentForm(prev => ({
               ...prev,
-              paymentTypeId: response.data[0].id
+              paymentTypeId: paymentTypeData[0]?.id || ''
             }));
           }
         }
@@ -125,9 +126,10 @@ export default function PaymentScheduleSection({ registrationId, paymentPlans }:
       try {
         const response = await paymentsApi.getByPlanId(planId);
         if (response.success && response.data) {
+          const payments = response.data || [];
           setPaymentDetails(prev => ({
             ...prev,
-            [planId]: response.data
+            [planId]: payments
           }));
         }
       } catch (error) {

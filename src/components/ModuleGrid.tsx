@@ -14,7 +14,19 @@ import {
   HelpCircle
 } from 'lucide-react';
 
-const modules = [
+type ModuleColor = 'blue' | 'purple' | 'green' | 'red' | 'orange' | 'pink' | 'yellow' | 'indigo' | 'gray';
+
+interface Module {
+  name: string;
+  description: string;
+  icon: React.ElementType;
+  count: string;
+  color: ModuleColor;
+  details: string[];
+  path: string;
+}
+
+const modules: Module[] = [
   {
     name: 'Apartlar',
     description: 'Toplam Apart Sayısı',
@@ -98,7 +110,7 @@ const modules = [
   }
 ];
 
-const colorVariants = {
+const colorVariants: Record<ModuleColor, { bg: string; light: string; text: string; border: string; hover: string }> = {
   blue: {
     bg: 'bg-gradient-to-br from-blue-400 to-blue-600',
     light: 'bg-gradient-to-br from-blue-400/10 to-blue-600/10',
@@ -126,6 +138,13 @@ const colorVariants = {
     text: 'text-orange-600 dark:text-orange-400',
     border: 'border-orange-400/20',
     hover: 'hover:bg-orange-400/5'
+  },
+  red: {
+    bg: 'bg-gradient-to-br from-red-400 to-red-600',
+    light: 'bg-gradient-to-br from-red-400/10 to-red-600/10',
+    text: 'text-red-600 dark:text-red-400',
+    border: 'border-red-400/20',
+    hover: 'hover:bg-red-400/5'
   },
   pink: {
     bg: 'bg-gradient-to-br from-pink-400 to-pink-600',

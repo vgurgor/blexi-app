@@ -37,8 +37,8 @@ export default function RoomBedsPage({ params }: { params: { id: string } }) {
             per_page: 100 
           });
           
-          if (bedsResponse.success) {
-            setBeds(bedsResponse.data);
+          if (bedsResponse.success && bedsResponse.data) {
+            setBeds(bedsResponse.data as IBed[]);
           } else {
             console.error('Yatak bilgileri alınamadı:', bedsResponse.error);
             setError('Yatak bilgileri yüklenirken bir hata oluştu.');
@@ -105,7 +105,7 @@ export default function RoomBedsPage({ params }: { params: { id: string } }) {
       
       if (response.success) {
         // Add new bed to the list
-        setBeds(prev => [...prev, response.data]);
+        setBeds(prev => [...prev, response.data as IBed]);
         setShowAddBedForm(false);
       } else {
         throw new Error(response.error || 'Yatak eklenirken bir hata oluştu');

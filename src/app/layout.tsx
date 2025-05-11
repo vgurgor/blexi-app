@@ -5,6 +5,7 @@ import { ReactQueryProvider } from '@/context/ReactQueryProvider';
 import PageTransition from '@/components/PageTransition';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import AuthGuard from '@/components/auth/AuthGuard';
+import AuthStateHydrator from '@/components/auth/AuthStateHydrator';
 import '@/styles/globals.css';
 
 export const metadata: Metadata = {
@@ -24,6 +25,7 @@ export default function RootLayout({
           <ReactQueryProvider>
             <ThemeProvider>
               <ToastProvider>
+                <AuthStateHydrator />
                 <PageTransition>
                   <AuthGuard>
                     {children}

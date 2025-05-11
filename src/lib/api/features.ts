@@ -119,7 +119,7 @@ export const featuresApi = {
     const response = await api.get<FeaturesResponse>(`/api/v1/features?${params.toString()}`);
     
     if (response.success && response.data) {
-      const modelData: IFeature[] = response.data.map(mapDtoToModel);
+      const modelData: IFeature[] = response.data.data.map(mapDtoToModel);
       return {
         success: response.success,
         status: 200,
@@ -147,12 +147,12 @@ export const featuresApi = {
     }
     
     const response = await api.get<FeatureResponse>(`/api/v1/features/${id}`);
-    
+
     if (response.success && response.data) {
       return {
         success: response.success,
         status: 200,
-        data: mapDtoToModel(response.data),
+        data: mapDtoToModel(response.data.data),
       };
     }
     
@@ -177,12 +177,12 @@ export const featuresApi = {
     }
     
     const response = await api.post<FeatureResponse>('/api/v1/features', dto);
-    
+
     if (response.success && response.data) {
       return {
         success: response.success,
         status: 201,
-        data: mapDtoToModel(response.data),
+        data: mapDtoToModel(response.data.data),
       };
     }
     
@@ -207,12 +207,12 @@ export const featuresApi = {
     }
     
     const response = await api.put<FeatureResponse>(`/api/v1/features/${id}`, dto);
-    
+
     if (response.success && response.data) {
       return {
         success: response.success,
         status: 200,
-        data: mapDtoToModel(response.data),
+        data: mapDtoToModel(response.data.data),
       };
     }
     

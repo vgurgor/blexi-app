@@ -246,11 +246,11 @@ export default function ApartmentsPage() {
 
   const handleApartmentStatusChange = async (id: number, status: 'active' | 'inactive') => {
     try {
-      const response = await apartsApi.update(id.toString(), { status } as UpdateApartRequest);
-      
+      const response = await apartsApi.update(id, { status } as UpdateApartRequest);
+
       if (response.success) {
         // Update local state
-        setApartments(prev => prev.map(a => 
+        setApartments(prev => prev.map(a =>
           a.id === id ? { ...a, status } : a
         ));
         // Refresh data from server
@@ -263,14 +263,14 @@ export default function ApartmentsPage() {
     }
   };
 
-  const handleCompanyStatusChange = async (id: number, status: 'active' | 'inactive') => {
+  const handleCompanyStatusChange = async (id: string, status: 'active' | 'inactive') => {
     try {
-      const response = await firmsApi.update(id.toString(), { status } as unknown as FormData);
+      const response = await firmsApi.update(id, { status } as unknown as FormData);
       
       if (response.success) {
         // Update local state
-        setCompanies(prev => prev.map(c => 
-          c.id === id ? { ...c, status } : c
+        setCompanies(prev => prev.map(c =>
+          c.id === parseInt(id) ? { ...c, status } : c
         ));
         // Refresh data from server
         fetchData();
@@ -284,8 +284,8 @@ export default function ApartmentsPage() {
 
   const handleApartmentDelete = async (id: number) => {
     try {
-      const response = await apartsApi.delete(id.toString());
-      
+      const response = await apartsApi.remove(id.toString());
+
       if (response.success) {
         // Update local state
         setApartments(prev => prev.filter(a => a.id !== id));
@@ -299,13 +299,13 @@ export default function ApartmentsPage() {
     }
   };
 
-  const handleCompanyDelete = async (id: number) => {
+  const handleCompanyDelete = async (id: string) => {
     try {
-      const response = await firmsApi.delete(id.toString());
+      const response = await firmsApi.delete(id);
       
       if (response.success) {
         // Update local state
-        setCompanies(prev => prev.filter(c => c.id !== id));
+        setCompanies(prev => prev.filter(c => c.id !== parseInt(id)));
         // Refresh data from server
         fetchData();
       } else {

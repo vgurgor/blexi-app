@@ -110,7 +110,14 @@ export function useAuth() {
       setError(null);
       
       try {
-        const response = await authApi.register(name, email, password);
+        const response = await authApi.register({
+          name,
+          surname: name, // assuming surname is required but we only have name
+          email,
+          password,
+          password_confirmation: password,
+          role: 'user',
+        });
         
         if (response.success && response.data) {
           storeLogin(response.data.token, response.data.user);

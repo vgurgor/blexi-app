@@ -193,7 +193,7 @@ export default function TaxTypesPage() {
       });
       
       if (response.success && response.data) {
-        setTaxTypes(prev => [...prev, response.data]);
+        setTaxTypes(prev => [...prev, response.data as ITaxType]);
         setShowAddModal(false);
         setFormData({
           name: '',

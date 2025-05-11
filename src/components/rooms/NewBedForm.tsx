@@ -86,7 +86,7 @@ export default function NewBedForm({ onSubmit }: NewBedFormProps) {
           </label>
           <select
             value={formData.bed_type}
-            onChange={(e) => setFormData({ ...formData, bed_type: e.target.value })}
+            onChange={(e) => setFormData({ ...formData, bed_type: e.target.value as 'SINGLE' | 'DOUBLE' | 'BUNK' })}
             className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
             required
           >
@@ -102,7 +102,7 @@ export default function NewBedForm({ onSubmit }: NewBedFormProps) {
           </label>
           <select
             value={formData.status}
-            onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+            onChange={(e) => setFormData({ ...formData, status: e.target.value as 'available' | 'occupied' | 'maintenance' | 'reserved' })}
             className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
             required
           >

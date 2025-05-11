@@ -82,7 +82,7 @@ const mapSeasonRegistrationProductDtoToModel = (dto: SeasonRegistrationProductDt
     registration: dto.registration ? {
       id: dto.registration.id.toString(),
       guestId: dto.registration.guest_id.toString(),
-      apartId: dto.registration.apart_id.toString(),
+      bedId: dto.registration.apart_id.toString(), // Changed to bedId from apartId
       seasonCode: dto.registration.season_code,
       checkInDate: dto.registration.check_in_date,
       checkOutDate: dto.registration.check_out_date,

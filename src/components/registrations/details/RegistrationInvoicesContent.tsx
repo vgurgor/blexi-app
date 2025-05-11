@@ -27,7 +27,7 @@ export default function RegistrationInvoicesContent({ registrationId }: Registra
     try {
       const response = await invoicesApi.getByRegistrationId(registrationId);
       
-      if (response.success) {
+      if (response.success && response.data) {
         setInvoices(response.data);
       } else {
         toast.error('Fatura bilgileri yüklenirken bir hata oluştu');
@@ -45,7 +45,7 @@ export default function RegistrationInvoicesContent({ registrationId }: Registra
     try {
       const response = await invoiceTitlesApi.getByRegistrationId(registrationId);
       
-      if (response.success) {
+      if (response.success && response.data) {
         setInvoiceTitles(response.data);
       } else {
         toast.error('Fatura başlıkları yüklenirken bir hata oluştu');

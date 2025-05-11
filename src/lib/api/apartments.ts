@@ -22,10 +22,11 @@ export interface Apartment {
 export type ApartDto = Apartment;
 
 export interface ApartFeature {
-  id: number;
+  id: string;
   name: string;
   description?: string;
   type: string;
+  code: string;
   status: 'active' | 'inactive';
 }
 
@@ -113,7 +114,7 @@ const getAll = async (filters?: ApartFilters): Promise<ApiResponse<Apartment[]>>
   }
 };
 
-const getById = async (id: number): Promise<ApiResponse<Apartment>> => {
+const getById = async (id: string | number): Promise<ApiResponse<Apartment>> => {
   try {
     const response = await api.get(`/api/v1/aparts/${id}`);
     return standardizeResponse<Apartment>(response);
@@ -131,7 +132,7 @@ const create = async (data: CreateApartRequest): Promise<ApiResponse<Apartment>>
   }
 };
 
-const update = async (id: number, data: UpdateApartRequest): Promise<ApiResponse<any>> => {
+const update = async (id: string | number, data: UpdateApartRequest): Promise<ApiResponse<any>> => {
   try {
     const response = await api.put(`/api/v1/aparts/${id}`, data);
     return standardizeResponse<any>(response);
@@ -140,7 +141,7 @@ const update = async (id: number, data: UpdateApartRequest): Promise<ApiResponse
   }
 };
 
-const remove = async (id: number): Promise<ApiResponse<any>> => {
+const remove = async (id: string): Promise<ApiResponse<any>> => {
   try {
     const response = await api.delete(`/api/v1/aparts/${id}`);
     return standardizeResponse<any>(response);
@@ -149,7 +150,7 @@ const remove = async (id: number): Promise<ApiResponse<any>> => {
   }
 };
 
-const getFeatures = async (id: number): Promise<ApiResponse<ApartFeature[]>> => {
+const getFeatures = async (id: string): Promise<ApiResponse<ApartFeature[]>> => {
   try {
     const response = await api.get(`/api/v1/aparts/${id}/features`);
     return standardizeResponse<ApartFeature[]>(response);
@@ -158,7 +159,7 @@ const getFeatures = async (id: number): Promise<ApiResponse<ApartFeature[]>> => 
   }
 };
 
-const addFeature = async (apartId: number, featureId: number): Promise<ApiResponse<any>> => {
+const addFeature = async (apartId: string, featureId: string): Promise<ApiResponse<any>> => {
   try {
     const response = await api.post(`/api/v1/aparts/${apartId}/features/${featureId}`, {});
     return standardizeResponse<any>(response);
@@ -167,7 +168,7 @@ const addFeature = async (apartId: number, featureId: number): Promise<ApiRespon
   }
 };
 
-const removeFeature = async (apartId: number, featureId: number): Promise<ApiResponse<any>> => {
+const removeFeature = async (apartId: string, featureId: string): Promise<ApiResponse<any>> => {
   try {
     const response = await api.delete(`/api/v1/aparts/${apartId}/features/${featureId}`);
     return standardizeResponse<any>(response);
@@ -176,7 +177,7 @@ const removeFeature = async (apartId: number, featureId: number): Promise<ApiRes
   }
 };
 
-const getInventory = async (id: number): Promise<ApiResponse<any>> => {
+const getInventory = async (id: string | number): Promise<ApiResponse<any>> => {
   try {
     const response = await api.get(`/api/v1/aparts/${id}/inventory`);
     return standardizeResponse<any>(response);

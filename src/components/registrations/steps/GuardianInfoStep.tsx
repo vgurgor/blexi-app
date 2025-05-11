@@ -219,9 +219,9 @@ export default function GuardianInfoStep() {
                   </div>
                 )}
               />
-              {errors.guardian?.gender && (
+              {errors.guardian && 'gender' in errors.guardian && (
                 <p className="mt-1 text-sm text-red-600 dark:text-red-400">
-                  {errors.guardian.gender.message as string}
+                  {(errors.guardian.gender as any)?.message}
                 </p>
               )}
             </div>
@@ -238,7 +238,7 @@ export default function GuardianInfoStep() {
                   <select
                     {...field}
                     className={`w-full px-4 py-2 bg-white dark:bg-gray-800 border ${
-                      errors.guardian?.relationship ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'
+                      errors.guardian && 'relationship' in errors.guardian ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'
                     } rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all`}
                   >
                     <option value="">Seçiniz</option>
@@ -251,9 +251,9 @@ export default function GuardianInfoStep() {
                   </select>
                 )}
               />
-              {errors.guardian?.relationship && (
+              {errors.guardian && 'relationship' in errors.guardian && (
                 <p className="mt-1 text-sm text-red-600 dark:text-red-400">
-                  {errors.guardian.relationship.message as string}
+                  {(errors.guardian.relationship as any)?.message}
                 </p>
               )}
             </div>

@@ -21,8 +21,9 @@ export default function EditBedPage({ params }: { params: { id: string } }) {
     const fetchBed = async () => {
       setIsLoading(true);
       try {
-        const response = await bedsApi.getById(params.id);
-        
+        const bedId = parseInt(params.id, 10);
+        const response = await bedsApi.getById(bedId);
+
         if (response.success && response.data) {
           setBed(response.data);
         } else {
@@ -49,8 +50,9 @@ export default function EditBedPage({ params }: { params: { id: string } }) {
   const handleSubmit = async (data: IBed) => {
     setIsSubmitting(true);
     try {
-      const response = await bedsApi.update(params.id, data);
-      
+      const bedId = parseInt(params.id, 10);
+      const response = await bedsApi.update(bedId, data);
+
       if (response.success && response.data) {
         console.log('Yatak güncellendi:', response.data);
         await new Promise(resolve => setTimeout(resolve, 300)); // Kısa bir bekleme

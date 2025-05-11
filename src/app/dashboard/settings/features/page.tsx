@@ -114,7 +114,7 @@ export default function FeaturesPage() {
       // Use the API service instead of direct fetch
       const response = await featuresApi.getAll(filters);
       
-      if (response.success) {
+      if (response.success && response.data) {
         // Add assignments_count if missing (to satisfy our extended interface)
         const featuresWithAssignments = response.data.map(feature => ({
           ...feature,
@@ -288,12 +288,13 @@ export default function FeaturesPage() {
         }, 1500);
       } else {
         // Handle validation errors
-        if (response.errors) {
+        if ((response as any).errors) {
+          const errors = (response as any).errors;
           const serverErrors = {
-            name: response.errors.name?.[0] || '',
-            code: response.errors.code?.[0] || '',
-            type: response.errors.type?.[0] || '',
-            status: response.errors.status?.[0] || ''
+            name: errors.name?.[0] || '',
+            code: errors.code?.[0] || '',
+            type: errors.type?.[0] || '',
+            status: errors.status?.[0] || ''
           };
           setFormErrors(serverErrors);
         } else {

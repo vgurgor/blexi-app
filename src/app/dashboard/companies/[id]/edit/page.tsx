@@ -7,6 +7,26 @@ import { ArrowLeft } from 'lucide-react';
 import EditCompanyForm from '@/components/EditCompanyForm';
 import PageLoader from '@/components/PageLoader';
 import { firmsApi, FirmDto } from '@/lib/api/firms';
+import { ICompany } from '@/types/models';
+
+// Helper function to convert ICompany to FirmDto
+function mapToFirmDto(company: ICompany): FirmDto {
+  return {
+    id: parseInt(company.id),
+    tenant_id: 0, // Default value
+    name: company.name,
+    tax_number: company.taxNumber,
+    tax_office: company.taxOffice,
+    address: company.address,
+    phone: company.phone,
+    email: company.email,
+    status: company.status as 'active' | 'inactive',
+    created_at: company.createdAt,
+    updated_at: company.updatedAt,
+    aparts_count: 0,
+    aparts: []
+  };
+}
 
 export default function EditCompanyPage({ params }: { params: { id: string } }) {
   const router = useRouter();
@@ -20,10 +40,11 @@ export default function EditCompanyPage({ params }: { params: { id: string } }) 
     const fetchCompany = async () => {
       setIsLoading(true);
       try {
-        const response = await firmsApi.getById(params.id);
-        
+        const firmId = parseInt(params.id, 10);
+        const response = await firmsApi.getById(firmId);
+
         if (response.success && response.data) {
-          setCompany(response.data);
+          setCompany(mapToFirmDto(response.data));
         } else {
           console.error('Firma detayları alınamadı:', response.error);
           setError('Firma bilgileri yüklenirken bir hata oluştu.');

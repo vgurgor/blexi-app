@@ -23,7 +23,7 @@ export default function RegistrationProductsContent({ registrationId }: Registra
     try {
       const response = await seasonRegistrationProductsApi.getByRegistrationId(registrationId);
       
-      if (response.success) {
+      if (response.success && response.data) {
         setProducts(response.data);
       } else {
         toast.error('Ürün bilgileri yüklenirken bir hata oluştu');

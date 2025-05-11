@@ -46,8 +46,8 @@ export function FormInput<
   maskOptions,
   ...props
 }: FormInputProps<TFieldValues, TName>) {
-  const { control: formControl } = useFormContext() || { control: undefined };
-  const controlToUse = control || formControl;
+  const formContext = useFormContext<TFieldValues>();
+  const controlToUse = control || (formContext?.control as any);
 
   if (!controlToUse) {
     throw new Error(
@@ -108,8 +108,8 @@ export function FormSelect<
   options,
   ...props
 }: FormSelectProps<TFieldValues, TName>) {
-  const { control: formControl } = useFormContext() || { control: undefined };
-  const controlToUse = control || formControl;
+  const formContext = useFormContext<TFieldValues>();
+  const controlToUse = control || (formContext?.control as any);
 
   if (!controlToUse) {
     throw new Error(
@@ -159,8 +159,8 @@ export function FormTextArea<
   shouldUnregister,
   ...props
 }: FormTextAreaProps<TFieldValues, TName>) {
-  const { control: formControl } = useFormContext() || { control: undefined };
-  const controlToUse = control || formControl;
+  const formContext = useFormContext<TFieldValues>();
+  const controlToUse = control || (formContext?.control as any);
 
   if (!controlToUse) {
     throw new Error(
@@ -209,8 +209,8 @@ export function FormCheckbox<
   shouldUnregister,
   ...props
 }: FormCheckboxProps<TFieldValues, TName>) {
-  const { control: formControl } = useFormContext() || { control: undefined };
-  const controlToUse = control || formControl;
+  const formContext = useFormContext<TFieldValues>();
+  const controlToUse = control || (formContext?.control as any);
 
   if (!controlToUse) {
     throw new Error(

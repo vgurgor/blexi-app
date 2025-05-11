@@ -58,7 +58,7 @@ export default function PaymentPlanStep() {
   // Add deposit payment plan if deposit amount is set
   useEffect(() => {
     // Check if there's already a deposit payment plan
-    const hasDepositPlan = fields.some(field => field.is_deposit);
+    const hasDepositPlan = fields.some(field => (field as any).is_deposit);
     
     if (depositAmount > 0 && !hasDepositPlan) {
       // Add deposit payment plan with today's date
@@ -70,13 +70,13 @@ export default function PaymentPlanStep() {
       });
     } else if (depositAmount > 0 && hasDepositPlan) {
       // Update existing deposit plan amount
-      const depositIndex = fields.findIndex(field => field.is_deposit);
+      const depositIndex = fields.findIndex(field => (field as any).is_deposit);
       if (depositIndex !== -1) {
         setValue(`payment_plans.${depositIndex}.planned_amount`, depositAmount);
       }
     } else if (depositAmount === 0 && hasDepositPlan) {
       // Remove deposit plan if deposit amount is set to 0
-      const depositIndex = fields.findIndex(field => field.is_deposit);
+      const depositIndex = fields.findIndex(field => (field as any).is_deposit);
       if (depositIndex !== -1) {
         remove(depositIndex);
       }
@@ -101,7 +101,7 @@ export default function PaymentPlanStep() {
         if (response.data.length > 0) {
           setGeneratorData(prev => ({
             ...prev,
-            paymentTypeId: response.data[0].id
+            paymentTypeId: response.data?.[0]?.id || ''
           }));
         }
       } else {
@@ -139,7 +139,7 @@ export default function PaymentPlanStep() {
     const newPaymentPlans = [];
     
     // Keep deposit payment if exists
-    const depositPlan = fields.find(field => field.is_deposit);
+    const depositPlan = fields.find(field => (field as any).is_deposit);
     if (depositPlan) {
       newPaymentPlans.push({
         ...depositPlan,
@@ -373,7 +373,7 @@ export default function PaymentPlanStep() {
                       <select
                         {...field}
                         className={`w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border ${
-                          errors.payment_plans?.[index]?.planned_payment_type_id ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'
+                          (errors as any).payment_plans?.[index]?.planned_payment_type_id ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'
                         } rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all`}
                         disabled={isLoadingPaymentTypes}
                         onChange={(e) => field.onChange(parseInt(e.target.value))}
@@ -388,9 +388,9 @@ export default function PaymentPlanStep() {
                     )}
                   />
                 </div>
-                {errors.payment_plans?.[index]?.planned_payment_type_id && (
+                {(errors as any).payment_plans?.[index]?.planned_payment_type_id && (
                   <p className="mt-1 text-sm text-red-600 dark:text-red-400">
-                    {errors.payment_plans?.[index]?.planned_payment_type_id?.message as string}
+                    {(errors as any).payment_plans?.[index]?.planned_payment_type_id?.message}
                   </p>
                 )}
               </div>
@@ -410,15 +410,15 @@ export default function PaymentPlanStep() {
                         type="date"
                         {...field}
                         className={`w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border ${
-                          errors.payment_plans?.[index]?.planned_date ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'
+                          (errors as any).payment_plans?.[index]?.planned_date ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'
                         } rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all`}
                       />
                     )}
                   />
                 </div>
-                {errors.payment_plans?.[index]?.planned_date && (
+                {(errors as any).payment_plans?.[index]?.planned_date && (
                   <p className="mt-1 text-sm text-red-600 dark:text-red-400">
-                    {errors.payment_plans?.[index]?.planned_date?.message as string}
+                    {(errors as any).payment_plans?.[index]?.planned_date?.message}
                   </p>
                 )}
               </div>
@@ -439,16 +439,16 @@ export default function PaymentPlanStep() {
                         step="0.01"
                         {...field}
                         className={`w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border ${
-                          errors.payment_plans?.[index]?.planned_amount ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'
+                          (errors as any).payment_plans?.[index]?.planned_amount ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'
                         } rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all`}
                         onChange={(e) => field.onChange(parseFloat(e.target.value))}
                       />
                     )}
                   />
                 </div>
-                {errors.payment_plans?.[index]?.planned_amount && (
+                {(errors as any).payment_plans?.[index]?.planned_amount && (
                   <p className="mt-1 text-sm text-red-600 dark:text-red-400">
-                    {errors.payment_plans?.[index]?.planned_amount?.message as string}
+                    {(errors as any).payment_plans?.[index]?.planned_amount?.message}
                   </p>
                 )}
               </div>

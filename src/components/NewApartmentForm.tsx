@@ -22,7 +22,7 @@ export default function NewApartmentForm({ onSubmit }: { onSubmit: (data: any) =
     opening_date: new Date().toISOString().split('T')[0],
     status: 'active' as 'active' | 'inactive'
   });
-  const [firms, setFirms] = useState<FirmDto[]>([]);
+  const [firms, setFirms] = useState<any[]>([]);
   const [isLoadingFirms, setIsLoadingFirms] = useState(false);
   const [error, setError] = useState('');
   const [newApartmentId, setNewApartmentId] = useState<number | null>(null);
@@ -35,7 +35,21 @@ export default function NewApartmentForm({ onSubmit }: { onSubmit: (data: any) =
         const response = await firmsApi.getAll({ per_page: 100 });
         
         if (response.success && response.data) {
-          setFirms(response.data);
+          setFirms(response.data.map((company: any) => ({
+            id: company.id,
+            tenant_id: 1,
+            name: company.name,
+            tax_number: company.taxNumber,
+            tax_office: company.taxOffice,
+            address: company.address,
+            phone: company.phone,
+            email: company.email,
+            status: company.status,
+            created_at: company.createdAt,
+            updated_at: company.updatedAt,
+            aparts_count: company.aparts_count || 0,
+            aparts: []
+          })));
         } else {
           console.error('Firma verileri alınamadı:', response.error);
         }
@@ -70,9 +84,11 @@ export default function NewApartmentForm({ onSubmit }: { onSubmit: (data: any) =
         throw new Error(response.error || 'Apart eklenirken bir hata oluştu');
       }
       
-      setNewApartmentId(parseInt(response.data.id, 10));
+      if (response.data && response.data.id) {
+        setNewApartmentId(parseInt(response.data.id.toString(), 10));
+      }
       setIsSubmitted(true);
-      onSubmit(response.data);
+      onSubmit(response.data || {});
     } catch (error: any) {
       console.error('Apart ekleme hatası:', error);
       setError(error.message || 'Apart eklenirken bir hata oluştu');
@@ -156,7 +172,7 @@ export default function NewApartmentForm({ onSubmit }: { onSubmit: (data: any) =
           </label>
           <select
             value={formData.gender_type}
-            onChange={(e) => setFormData({ ...formData, gender_type: e.target.value })}
+            onChange={(e) => setFormData({ ...formData, gender_type: e.target.value as 'MALE' | 'FEMALE' | 'MIXED' })}
             className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
             required
             disabled={isSubmitted}
@@ -190,7 +206,7 @@ export default function NewApartmentForm({ onSubmit }: { onSubmit: (data: any) =
           </label>
           <select
             value={formData.status}
-            onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+            onChange={(e) => setFormData({ ...formData, status: e.target.value as 'active' | 'inactive' })}
             className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
             required
             disabled={isSubmitted}

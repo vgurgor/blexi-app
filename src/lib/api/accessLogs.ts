@@ -62,6 +62,7 @@ const mapAccessLogDtoToModel = (dto: AccessLogDto): IAccessLog => {
     person: {
       id: dto.person.id.toString(),
       name: dto.person.name,
+      surname: (dto.person as any).surname || dto.person.name, // if surname doesn't exist, fallback to name
       tcNo: dto.person.tc_no,
       phone: dto.person.phone,
       email: dto.person.email
@@ -73,7 +74,8 @@ const mapAccessLogDtoToModel = (dto: AccessLogDto): IAccessLog => {
     } : undefined,
     createdBy: dto.created_by ? {
       id: dto.created_by.id.toString(),
-      name: dto.created_by.name
+      name: dto.created_by.name,
+      surname: (dto.created_by as any).surname || dto.created_by.name
     } : undefined,
     createdAt: dto.created_at
   };
@@ -92,6 +94,7 @@ const mapAccessMetricsDtoToModel = (dto: AccessMetricsDto): IAccessMetrics => {
     mostActiveGuests: dto.most_active_guests?.map(guest => ({
       id: guest.id.toString(),
       name: guest.name,
+      surname: (guest as any).surname || guest.name, // if surname doesn't exist, fallback to name
       visitCount: guest.visit_count
     }))
   };

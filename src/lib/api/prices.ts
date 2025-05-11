@@ -97,8 +97,8 @@ const mapPriceDtoToModel = (dto: PriceDto): IPrice => {
     taxes: dto.taxes ? dto.taxes.map(tax => ({
       id: tax.id.toString(),
       taxTypeId: tax.tax_type_id.toString(),
-      name: tax.tax_type.name,
-      percentage: tax.tax_type.percentage,
+      name: tax.name,
+      percentage: tax.percentage,
     })) : undefined,
     createdAt: dto.created_at || '',
     updatedAt: dto.updated_at || '',

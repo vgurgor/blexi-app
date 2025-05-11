@@ -84,10 +84,40 @@ const mapUserDtoToModel = (dto: UserDto): IUser => {
   };
 };
 
+// Create user request interface
+export interface CreateUserRequest {
+  username: string;
+  email: string;
+  name: string;
+  password: string;
+  password_confirmation: string;
+  role: 'super-admin' | 'admin' | 'manager' | 'user';
+}
+
 /**
  * Kullanıcılar API servisi
  */
 export const usersApi = {
+  /**
+   * Yeni kullanıcı oluşturur
+   * @param userData - Kullanıcı bilgileri
+   */
+  create: async (userData: CreateUserRequest): Promise<ApiResponse<IUser>> => {
+    const response = await api.post<UserDto>('/api/v1/users', userData);
+
+    if (response.success && response.data) {
+      return {
+        ...response,
+        data: mapUserDtoToModel(response.data),
+      };
+    }
+
+    return {
+      ...response,
+      data: undefined,
+    };
+  },
+
   /**
    * Tüm kullanıcıları listeler
    * @param page - Sayfa numarası

@@ -49,7 +49,7 @@ export default function RoomFeatures({ roomId }: RoomFeaturesProps) {
     try {
       const response = await roomsApi.getFeatures(roomId);
       
-      if (response.success) {
+      if (response.success && response.data) {
         setFeatures(response.data);
       } else {
         console.error('Özellik verileri alınamadı:', response.error);
@@ -70,11 +70,11 @@ export default function RoomFeatures({ roomId }: RoomFeaturesProps) {
         per_page: 100
       });
       
-      if (response.success) {
+      if (response.success && response.data) {
         // Filter out features that are already assigned to the room
         // AND only include features with type 'ROOM'
         const featureIds = features.map(f => f.id);
-        const filtered = response.data.filter((f) => 
+        const filtered = response.data.filter((f) =>
           !featureIds.includes(Number(f.id)) && f.type === 'ROOM'
         );
         setAvailableFeatures(filtered.map(f => ({

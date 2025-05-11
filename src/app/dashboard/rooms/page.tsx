@@ -113,10 +113,10 @@ export default function RoomsPage() {
       
       const response = await roomsApi.getAll(apiFilters);
       
-      if (response.success) {
+      if (response.success && response.data) {
         // If we have multiple status filters, filter client-side
         if (filters.status.length > 1) {
-          setRooms(response.data.filter(room => 
+          setRooms(response.data.filter(room =>
             filters.status.includes(room.status)
           ));
         } else {

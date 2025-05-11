@@ -3,7 +3,18 @@
 import React from 'react';
 import { Home, Wallet, Users, BedDouble } from 'lucide-react';
 
-const stats = [
+type StatColor = 'blue' | 'purple' | 'green' | 'orange';
+
+interface StatItem {
+  label: string;
+  value: string;
+  change: string;
+  icon: React.ElementType;
+  color: StatColor;
+  detail: string;
+}
+
+const stats: StatItem[] = [
   {
     label: 'Doluluk Oranı',
     value: '%92',
@@ -38,7 +49,7 @@ const stats = [
   }
 ];
 
-const colorVariants = {
+const colorVariants: Record<StatColor, string> = {
   blue: 'bg-gradient-to-br from-blue-400/10 to-blue-600/10 text-blue-600 dark:text-blue-400',
   purple: 'bg-gradient-to-br from-purple-400/10 to-purple-600/10 text-purple-600 dark:text-purple-400',
   green: 'bg-gradient-to-br from-emerald-400/10 to-emerald-600/10 text-emerald-600 dark:text-emerald-400',

@@ -261,7 +261,7 @@ export default function PricesPage() {
           }
         }
         
-        setPrices(prev => [...prev, response.data]);
+        setPrices(prev => [...prev, response.data as IPrice]);
         setShowAddModal(false);
         resetForm();
       } else {

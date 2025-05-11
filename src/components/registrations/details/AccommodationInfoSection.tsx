@@ -43,7 +43,7 @@ export default function AccommodationInfoSection({ registration }: Accommodation
         <div>
           <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Depozito</p>
           <p className="font-medium text-gray-900 dark:text-white">
-            {registration.depositAmount ? formatCurrency(parseFloat(registration.depositAmount)) : '-'}
+            {registration.depositAmount ? formatCurrency(parseFloat(registration.depositAmount.toString())) : '-'}
           </p>
         </div>
         <div>

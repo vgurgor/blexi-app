@@ -1,4 +1,27 @@
-const [inventory, setInventory] = useState<InventoryItem[]>([]);
+import React, { useState, useEffect } from 'react';
+import { Plus, Trash2, Package } from 'lucide-react';
+import DeleteConfirmationModal from '../DeleteConfirmationModal';
+
+interface InventoryItem {
+  id: number;
+  assignable_type?: string;
+  assignable_id?: string | number;
+  item_type: 'furniture' | 'appliance' | 'linen' | 'electronic' | 'kitchenware' | 'decoration';
+  status: 'in_use' | 'in_storage' | 'maintenance' | 'disposed';
+  tracking_number: string;
+  brand: string;
+  model: string;
+  purchase_date: string;
+  warranty_end?: string;
+}
+
+interface BedInventoryProps {
+  bedId: string | number;
+  token: string;
+}
+
+export default function BedInventory({ bedId, token }: BedInventoryProps) {
+  const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
@@ -330,3 +353,4 @@ const [inventory, setInventory] = useState<InventoryItem[]>([]);
       />
     </div>
   );
+}

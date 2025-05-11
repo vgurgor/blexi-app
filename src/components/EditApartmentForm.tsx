@@ -22,7 +22,7 @@ export default function EditApartmentForm({ apartment, onSubmit }: EditApartment
     opening_date: '',
     status: 'active' as 'active' | 'inactive'
   });
-  const [firms, setFirms] = useState<FirmDto[]>([]);
+  const [firms, setFirms] = useState<any[]>([]);
   const [isLoadingFirms, setIsLoadingFirms] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -35,7 +35,21 @@ export default function EditApartmentForm({ apartment, onSubmit }: EditApartment
         const response = await firmsApi.getAll({ per_page: 100 });
         
         if (response.success && response.data) {
-          setFirms(response.data);
+          setFirms(response.data.map((company: any) => ({
+            id: company.id,
+            tenant_id: 1,
+            name: company.name,
+            tax_number: company.taxNumber,
+            tax_office: company.taxOffice,
+            address: company.address,
+            phone: company.phone,
+            email: company.email,
+            status: company.status,
+            created_at: company.createdAt,
+            updated_at: company.updatedAt,
+            aparts_count: company.aparts_count || 0,
+            aparts: []
+          })));
         } else {
           console.error('Firma verileri alınamadı:', response.error);
         }
@@ -54,7 +68,7 @@ export default function EditApartmentForm({ apartment, onSubmit }: EditApartment
     const fetchApartmentDetails = async () => {
       setIsLoading(true);
       try {
-        const response = await apartsApi.getById(apartment.id.toString());
+        const response = await apartsApi.getById(apartment.id);
         
         if (response.success && response.data) {
           setFormData({
@@ -62,7 +76,7 @@ export default function EditApartmentForm({ apartment, onSubmit }: EditApartment
             name: response.data.name,
             address: response.data.address,
             gender_type: response.data.gender_type,
-            opening_date: response.data.opening_date,
+            opening_date: response.data.opening_date || '',
             status: response.data.status
           });
         } else {
@@ -83,7 +97,7 @@ export default function EditApartmentForm({ apartment, onSubmit }: EditApartment
       name: apartment.name,
       address: apartment.address,
       gender_type: apartment.gender_type as 'MALE' | 'FEMALE' | 'MIXED',
-      opening_date: apartment.opening_date,
+      opening_date: apartment.opening_date || '',
       status: apartment.status as 'active' | 'inactive'
     });
 
@@ -108,7 +122,14 @@ export default function EditApartmentForm({ apartment, onSubmit }: EditApartment
         status: formData.status
       };
       
-      const response = await apartsApi.update(apartment.id.toString(), apartmentData);
+      const updateData = {
+        name: formData.name,
+        address: formData.address,
+        gender_type: formData.gender_type,
+        opening_date: formData.opening_date,
+        status: formData.status
+      };
+      const response = await apartsApi.update(apartment.id, updateData);
       
       if (!response.success) {
         throw new Error(response.error || 'Apart güncellenirken bir hata oluştu');
@@ -230,7 +251,7 @@ export default function EditApartmentForm({ apartment, onSubmit }: EditApartment
               </label>
               <select
                 value={formData.gender_type}
-                onChange={(e) => setFormData({ ...formData, gender_type: e.target.value })}
+                onChange={(e) => setFormData({ ...formData, gender_type: e.target.value as 'MALE' | 'FEMALE' | 'MIXED' })}
                 className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
                 required
               >
@@ -262,7 +283,7 @@ export default function EditApartmentForm({ apartment, onSubmit }: EditApartment
               </label>
               <select
                 value={formData.status}
-                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                onChange={(e) => setFormData({ ...formData, status: e.target.value as 'active' | 'inactive' })}
                 className="w-full px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
                 required
               >

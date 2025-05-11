@@ -43,8 +43,8 @@ export interface CreateInventoryRequest {
   model?: string;
   purchase_date: string;
   warranty_end?: string;
-  assignable_type?: string;
-  assignable_id?: number;
+  assignable_type?: string | null;
+  assignable_id?: number | string | null;
 }
 
 // Envanter güncelleme isteği için model
@@ -56,8 +56,8 @@ export interface UpdateInventoryRequest {
   model?: string;
   purchase_date?: string;
   warranty_end?: string;
-  assignable_type?: string;
-  assignable_id?: number;
+  assignable_type?: string | null;
+  assignable_id?: number | string | null;
 }
 
 /**

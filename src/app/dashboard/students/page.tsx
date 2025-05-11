@@ -36,7 +36,7 @@ export default function StudentsOverviewPage() {
     activeStudents: 0,
     pendingPayments: 0,
     upcomingRegistrations: 0,
-    recentRegistrations: []
+    recentRegistrations: [] as any[]
   });
   const toast = useToast();
 
@@ -102,8 +102,8 @@ export default function StudentsOverviewPage() {
       setStats({
         totalStudents,
         activeStudents,
-        pendingPayments: overduePaymentsResponse.success ? overduePaymentsResponse.data.count : 0,
-        upcomingRegistrations: upcomingRegistrationsResponse.success ? upcomingRegistrationsResponse.data.count : 0,
+        pendingPayments: overduePaymentsResponse.success && overduePaymentsResponse.data ? overduePaymentsResponse.data.count : 0,
+        upcomingRegistrations: upcomingRegistrationsResponse.success && upcomingRegistrationsResponse.data ? upcomingRegistrationsResponse.data.count : 0,
         recentRegistrations: registrationsResponse.data || []
       });
     } catch (error) {

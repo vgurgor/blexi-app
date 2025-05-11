@@ -183,9 +183,9 @@ export default function GuestInfoStep() {
               </div>
             )}
           />
-          {errors.guest?.gender && (
+          {errors.guest && 'gender' in errors.guest && (
             <p className="mt-1 text-sm text-red-600 dark:text-red-400">
-              {errors.guest.gender.message as string}
+              {(errors.guest.gender as any)?.message}
             </p>
           )}
         </div>
@@ -237,7 +237,7 @@ export default function GuestInfoStep() {
               <select
                 {...field}
                 className={`w-full px-4 py-2 bg-white dark:bg-gray-800 border ${
-                  errors.guest?.guest_type ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'
+                  errors.guest && 'guest_type' in errors.guest ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'
                 } rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all`}
               >
                 <option value="STUDENT">Öğrenci</option>
@@ -246,9 +246,9 @@ export default function GuestInfoStep() {
               </select>
             )}
           />
-          {errors.guest?.guest_type && (
+          {errors.guest && 'guest_type' in errors.guest && (
             <p className="mt-1 text-sm text-red-600 dark:text-red-400">
-              {errors.guest.guest_type.message as string}
+              {(errors.guest.guest_type as any)?.message}
             </p>
           )}
         </div>

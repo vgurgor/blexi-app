@@ -39,22 +39,23 @@ export default function BedInventoryPage({ params }: { params: { id: string } })
       setIsLoading(true);
       try {
         // Fetch bed details using API service
-        const bedResponse = await bedsApi.getById(params.id);
-        
+        const bedId = parseInt(params.id, 10);
+        const bedResponse = await bedsApi.getById(bedId);
+
         if (!bedResponse.success || !bedResponse.data) {
           throw new Error(bedResponse.error || 'Yatak bilgileri yüklenirken bir hata oluştu.');
         }
-        
+
         setBed(bedResponse.data);
-        
+
         // Use bed API service for inventory
-        const inventoryResponse = await bedsApi.getInventory(params.id);
-        
+        const inventoryResponse = await bedsApi.getInventory(bedId);
+
         if (!inventoryResponse.success) {
           throw new Error(inventoryResponse.error || 'Envanter bilgileri yüklenirken bir hata oluştu.');
         }
-        
-        setInventory(inventoryResponse.data);
+
+        setInventory(inventoryResponse.data || []);
       } catch (error: any) {
         console.error('Veri çekilirken hata oluştu:', error);
         setError(error.message || 'Bilgiler yüklenirken bir hata oluştu.');

@@ -103,6 +103,7 @@ export default function NewStudentRegistrationPage() {
         check_out_date: data.check_out_date,
         deposit_amount: data.deposit_amount || 0,
         notes: data.notes || '',
+        payment_plans: [],
         products: data.products.map((product: any) => ({
           product_id: parseInt(product.product_id),
           quantity: parseInt(product.quantity),

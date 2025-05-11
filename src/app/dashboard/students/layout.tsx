@@ -18,10 +18,11 @@ export default function StudentsLayout({ children }: StudentsLayoutProps) {
   const [collapsed, setCollapsed] = useState(false);
 
   const menuItems = [
-    { 
-      name: 'Öğrenci Kayıtları', 
-      path: '/dashboard/students/registrations', 
-      icon: <List className="w-5 h-5" /> 
+    {
+      name: 'Öğrenci Kayıtları',
+      path: '/dashboard/students/registrations',
+      icon: <List className="w-5 h-5" />,
+      exact: false
     }
   ];
 

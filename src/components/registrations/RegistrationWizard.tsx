@@ -162,7 +162,7 @@ export default function RegistrationWizard({ onSubmit }: RegistrationWizardProps
       emergency_contact_name: '',
       emergency_contact_phone: '',
       emergency_contact_relationship: '',
-      country_id: '', // Turkey
+      country_id: 1, // Turkey
     },
     is_self_guardian: false,
     guardian: {
@@ -176,7 +176,7 @@ export default function RegistrationWizard({ onSubmit }: RegistrationWizardProps
       birth_date: '',
       occupation: '',
       workplace: '',
-      country_id: '', // Turkey
+      country_id: 1, // Turkey
     },
     products: [],
     invoice_titles: [],
@@ -195,14 +195,14 @@ export default function RegistrationWizard({ onSubmit }: RegistrationWizardProps
   // Update form data when step changes
   useEffect(() => {
     const subscription = methods.watch((value) => {
-      setFormData(current => ({ ...current, ...value }));
+      setFormData(current => ({ ...current, ...(value as Partial<RegistrationFormData>) }));
     });
     return () => subscription.unsubscribe();
   }, [methods]);
 
   // Handle next step
   const handleNext = async () => {
-    const isValid = await methods.trigger(getFieldsForStep(currentStep));
+    const isValid = await methods.trigger(getFieldsForStep(currentStep) as any);
     
     if (isValid) {
       if (currentStep < STEPS.length - 1) {
@@ -236,7 +236,7 @@ export default function RegistrationWizard({ onSubmit }: RegistrationWizardProps
   };
 
   // Get fields to validate for the current step
-  const getFieldsForStep = (step: number): string[] => {
+  const getFieldsForStep = (step: number) => {
     switch (step) {
       case 0: // Guest Info
         return [

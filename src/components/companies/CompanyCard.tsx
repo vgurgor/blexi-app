@@ -10,8 +10,8 @@ import { ICompany } from '@/types/models';
 
 interface CompanyCardProps {
   company: ICompany;
-  onStatusChange: (id: number, status: 'active' | 'inactive') => void;
-  onDelete: (id: number) => void;
+  onStatusChange: (id: string, status: 'active' | 'inactive') => void;
+  onDelete: (id: string) => void;
 }
 
 export default function CompanyCard({ company, onStatusChange, onDelete }: CompanyCardProps) {

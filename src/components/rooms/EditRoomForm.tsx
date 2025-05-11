@@ -86,7 +86,9 @@ export default function EditRoomForm({ room, onSubmit }: EditRoomFormProps) {
         throw new Error(response.error || 'Oda güncellenirken bir hata oluştu');
       }
       
-      onSubmit(response.data);
+      if (response.data) {
+        onSubmit(response.data);
+      }
     } catch (error: any) {
       console.error('Oda güncelleme hatası:', error);
       setError(error.message || 'Oda güncellenirken bir hata oluştu');

@@ -125,9 +125,9 @@ export default function InventoryPage() {
       // Use the API service instead of direct fetch
       const response = await inventoryApi.getAll(apiFilters);
       
-      if (response.success) {
-        setInventory(response.data);
-        
+      if (response.success && response.data) {
+        setInventory(response.data as IInventoryItem[]);
+
         // Set pagination meta
         if (response.meta) {
           setPaginationMeta(response.meta as PaginationMeta);
@@ -154,7 +154,7 @@ export default function InventoryPage() {
       }
       
       setSuccess('Envanter başarıyla eklendi.');
-      setInventory(prev => [response.data, ...prev]);
+      setInventory(prev => [response.data as IInventoryItem, ...prev]);
       setShowAddForm(false);
       fetchInventory(); // Refresh the list
     } catch (error: any) {
@@ -179,7 +179,7 @@ export default function InventoryPage() {
       }
       
       setSuccess('Envanter başarıyla güncellendi.');
-      setInventory(prev => prev.map(item => item.id === editingItem.id ? response.data : item));
+      setInventory(prev => prev.map(item => item.id === editingItem.id ? response.data as IInventoryItem : item));
       setShowAddForm(false);
       setEditingItem(null);
       fetchInventory(); // Refresh the list

@@ -61,8 +61,8 @@ export default function UsersPage() {
     try {
       const response = await usersApi.getAll();
       
-      if (response.success) {
-        setUsers(response.data);
+      if (response.success && response.data) {
+        setUsers(response.data as IUser[]);
       } else {
         setError(response.error || 'Kullanıcı verileri yüklenirken bir hata oluştu');
       }

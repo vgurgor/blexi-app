@@ -8,7 +8,10 @@ interface RegistrationGuardianContentProps {
 }
 
 export default function RegistrationGuardianContent({ registration }: RegistrationGuardianContentProps) {
-  const guardians = registration.guest?.guardians || [];
+  // Note: ISeasonRegistration's guest property doesn't include guardians
+  // in the interface, but may be present in the runtime data
+  const guestAny = registration.guest as any;
+  const guardians = guestAny?.guardians || [];
 
   return (
     <div>

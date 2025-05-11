@@ -8,8 +8,8 @@ interface InventoryFormProps {
   onSubmit: (data: CreateInventoryRequest | UpdateInventoryRequest) => Promise<void>;
   initialData?: IInventoryItem | null;
   isEditing?: boolean;
-  assignableType?: string;
-  assignableId?: number | string;
+  assignableType?: string | null;
+  assignableId?: number | string | null;
 }
 
 export default function InventoryForm({ 
@@ -66,7 +66,7 @@ export default function InventoryForm({
             <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <select
               value={formData.item_type}
-              onChange={(e) => setFormData({...formData, item_type: e.target.value})}
+              onChange={(e) => setFormData({...formData, item_type: e.target.value as 'furniture' | 'appliance' | 'linen' | 'electronic' | 'kitchenware' | 'decoration'})}
               className="w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
               required
               disabled={isSubmitting}
@@ -89,7 +89,7 @@ export default function InventoryForm({
             <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <select
               value={formData.status}
-              onChange={(e) => setFormData({...formData, status: e.target.value})}
+              onChange={(e) => setFormData({...formData, status: e.target.value as 'in_use' | 'in_storage' | 'maintenance' | 'disposed'})}
               className="w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
               required
               disabled={isSubmitting}

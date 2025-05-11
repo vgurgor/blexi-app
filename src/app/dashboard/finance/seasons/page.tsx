@@ -181,7 +181,7 @@ export default function SeasonsPage() {
       });
       
       if (response.success && response.data) {
-        setSeasons(prev => [...prev, response.data]);
+        setSeasons(prev => [...prev, response.data as ISeason]);
         setShowAddModal(false);
         setFormData({
           name: '',

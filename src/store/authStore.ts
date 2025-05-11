@@ -211,7 +211,7 @@ export const useAuthStore = create<AuthStore>()(
     {
       name: 'blexi-auth-storage',
       storage: createJSONStorage(() => customStorage),
-      skipHydration: true,
+      skipHydration: false,
       partialize: (state) => ({ 
         token: state.token,
         user: state.user,

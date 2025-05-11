@@ -55,21 +55,22 @@ export default function ApartmentInventoryPage({ params }: { params: { id: strin
       setIsLoading(true);
       try {
         // Fetch apartment details using the API service
-        const apartmentResponse = await apartsApi.getById(params.id);
-        
-        if (!apartmentResponse.success) {
+        const apartId = parseInt(params.id, 10);
+        const apartmentResponse = await apartsApi.getById(apartId);
+
+        if (!apartmentResponse.success || !apartmentResponse.data) {
           throw new Error(apartmentResponse.error || 'Apart bilgileri yüklenirken bir hata oluştu.');
         }
-        
-        setApartment(apartmentResponse.data);
-        
+
+        setApartment(apartmentResponse.data as ApartDto);
+
         // Use the dedicated endpoint for apartment inventory
-        const inventoryResponse = await apartsApi.getInventory(params.id);
-        
+        const inventoryResponse = await apartsApi.getInventory(apartId);
+
         if (!inventoryResponse.success) {
           throw new Error(inventoryResponse.error || 'Envanter bilgileri yüklenirken bir hata oluştu.');
         }
-        
+
         setInventory(inventoryResponse.data);
       } catch (error: any) {
         console.error('Veri çekilirken hata oluştu:', error);

@@ -112,7 +112,7 @@ export default function ApartmentFeatures({ apartmentId }: ApartmentFeaturesProp
     }
   };
 
-  const handleRemoveFeature = async (featureId: number) => {
+  const handleRemoveFeature = async (featureId: string) => {
     setIsRemoving(true);
     setError('');
     setSuccess('');
@@ -125,7 +125,7 @@ export default function ApartmentFeatures({ apartmentId }: ApartmentFeaturesProp
       
       if (response.success) {
         setSuccess('Özellik başarıyla kaldırıldı.');
-        setFeatures(prev => prev.filter(f => f.id !== featureId));
+        setFeatures(prev => prev.filter(f => f.id !== featureId.toString()));
       } else {
         throw new Error(response.error || 'Özellik kaldırılırken bir hata oluştu');
       }

@@ -16,7 +16,7 @@ export default function CompaniesPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilters, setShowFilters] = useState(false);
-  const [selectedStatus, setSelectedStatus] = useState<string>('all');
+  const [selectedStatus, setSelectedStatus] = useState<'all' | 'active' | 'inactive'>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [paginationMeta, setPaginationMeta] = useState<any>(null);
   const [error, setError] = useState('');
@@ -57,12 +57,17 @@ export default function CompaniesPage() {
       };
 
       if (selectedStatus !== 'all') {
-        filters.status = selectedStatus;
+        filters.status = selectedStatus as 'active' | 'inactive';
       }
 
       const response = await firmsApi.getAll(filters);
-      setCompanies(response.data);
-      setPaginationMeta(response.meta);
+      if (response.success && response.data) {
+        setCompanies(response.data);
+        setPaginationMeta(response.meta);
+      } else {
+        setCompanies([]);
+        setPaginationMeta(null);
+      }
     } catch (error: any) {
       console.error('Firma verileri çekilirken hata oluştu:', error);
       setError(error.message || 'Firma verileri yüklenirken bir hata oluştu');
@@ -71,11 +76,27 @@ export default function CompaniesPage() {
     }
   };
 
-  const handleStatusChange = async (id: number, status: 'active' | 'inactive') => {
+  const handleStatusChange = async (id: string, status: 'active' | 'inactive') => {
     try {
-      await firmsApi.update(id, { status });
+      // Create a minimal ICompany object with the required fields and the new status
+      const companyUpdate: ICompany = {
+        id: id,
+        name: "",
+        taxNumber: "",
+        taxOffice: "",
+        address: "",
+        phone: "",
+        email: "",
+        status: status,
+        createdAt: "",
+        updatedAt: "",
+        aparts_count: 0,
+        aparts: []
+      };
+
+      await firmsApi.update(id, companyUpdate);
       // Update local state
-      setCompanies(prev => prev.map(company => 
+      setCompanies(prev => prev.map(company =>
         company.id === id ? { ...company, status } : company
       ));
       // Refresh data from server
@@ -86,7 +107,7 @@ export default function CompaniesPage() {
     }
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: string) => {
     try {
       await firmsApi.delete(id);
       // Update local state
@@ -167,7 +188,7 @@ export default function CompaniesPage() {
         <div className="flex gap-4">
           <select
             value={selectedStatus}
-            onChange={(e) => setSelectedStatus(e.target.value)}
+            onChange={(e) => setSelectedStatus(e.target.value as 'all' | 'active' | 'inactive')}
             className="px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
           >
             <option value="all">Tüm Durumlar</option>

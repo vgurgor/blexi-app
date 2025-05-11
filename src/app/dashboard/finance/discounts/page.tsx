@@ -359,7 +359,7 @@ export default function DiscountsPage() {
       });
       
       if (response.success && response.data) {
-        setCategories(prev => [...prev, response.data]);
+        setCategories(prev => [...prev, response.data as IDiscountCategory]);
         setShowAddCategoryModal(false);
         resetCategoryForm();
       } else {
@@ -404,8 +404,8 @@ export default function DiscountsPage() {
       });
       
       if (response.success && response.data) {
-        setCategories(prev => prev.map(c => 
-          c.id === currentCategory.id ? response.data : c
+        setCategories(prev => prev.map(c =>
+          c.id === currentCategory.id ? (response.data as IDiscountCategory) : c
         ));
         setShowEditCategoryModal(false);
       } else {
@@ -474,7 +474,7 @@ export default function DiscountsPage() {
       });
       
       if (response.success && response.data) {
-        setRules(prev => [...prev, response.data]);
+        setRules(prev => [...prev, response.data as IDiscountRule]);
         setShowAddRuleModal(false);
         resetRuleForm();
       } else {
@@ -543,8 +543,8 @@ export default function DiscountsPage() {
       });
       
       if (response.success && response.data) {
-        setRules(prev => prev.map(r => 
-          r.id === currentRule.id ? response.data : r
+        setRules(prev => prev.map(r =>
+          r.id === currentRule.id ? (response.data as IDiscountRule) : r
         ));
         setShowEditRuleModal(false);
       } else {
