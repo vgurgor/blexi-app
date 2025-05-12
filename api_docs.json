@@ -3278,6 +3278,562 @@
                 ]
             }
         },
+        "/api/dashboard/stats": {
+            "get": {
+                "tags": [
+                    "Dashboard"
+                ],
+                "summary": "Get dashboard statistics",
+                "description": "Retrieve statistics for dashboard components including ModuleGrid and StatsSidebar",
+                "operationId": "41890741de68efc8eba20824b9e84e4c",
+                "responses": {
+                    "200": {
+                        "description": "Dashboard stats retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/DashboardStatsResource"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "nullable": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "jwt": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/dashboard/financial-summary": {
+            "get": {
+                "tags": [
+                    "Dashboard"
+                ],
+                "summary": "Get financial summary",
+                "description": "Retrieve financial summary for the dashboard",
+                "operationId": "d513ebd548dc533b8cfe234c2a8c7cc4",
+                "responses": {
+                    "200": {
+                        "description": "Financial summary retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "income": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 15000
+                                                },
+                                                "expense": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 5000
+                                                },
+                                                "balance": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 10000
+                                                },
+                                                "monthly": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "month": {
+                                                                "type": "string",
+                                                                "example": "2025-05"
+                                                            },
+                                                            "income": {
+                                                                "type": "number",
+                                                                "format": "float",
+                                                                "example": 4500
+                                                            },
+                                                            "expense": {
+                                                                "type": "number",
+                                                                "format": "float",
+                                                                "example": 1200
+                                                            },
+                                                            "balance": {
+                                                                "type": "number",
+                                                                "format": "float",
+                                                                "example": 3300
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "nullable": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "jwt": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/dashboard/payment-status": {
+            "get": {
+                "tags": [
+                    "Dashboard"
+                ],
+                "summary": "Get payment status",
+                "description": "Retrieve payment status summary for the dashboard",
+                "operationId": "131685c6c2f305c09fad7ef362d8e19d",
+                "responses": {
+                    "200": {
+                        "description": "Payment status retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "summary": {
+                                                    "properties": {
+                                                        "upcoming": {
+                                                            "type": "integer",
+                                                            "example": 5
+                                                        },
+                                                        "overdue": {
+                                                            "type": "integer",
+                                                            "example": 2
+                                                        },
+                                                        "completed": {
+                                                            "type": "integer",
+                                                            "example": 10
+                                                        },
+                                                        "total": {
+                                                            "type": "integer",
+                                                            "example": 17
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "payment_plans": {
+                                                    "properties": {
+                                                        "active": {
+                                                            "type": "integer",
+                                                            "example": 7
+                                                        },
+                                                        "completed": {
+                                                            "type": "integer",
+                                                            "example": 10
+                                                        },
+                                                        "cancelled": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "recent_payments": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 123
+                                                            },
+                                                            "payment_plan_id": {
+                                                                "type": "integer",
+                                                                "example": 45
+                                                            },
+                                                            "amount": {
+                                                                "type": "number",
+                                                                "format": "float",
+                                                                "example": 500
+                                                            },
+                                                            "payment_date": {
+                                                                "type": "string",
+                                                                "format": "date",
+                                                                "example": "2025-05-10"
+                                                            },
+                                                            "status": {
+                                                                "type": "string",
+                                                                "example": "completed"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "nullable": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "jwt": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/dashboard/revenue-trends": {
+            "get": {
+                "tags": [
+                    "Dashboard"
+                ],
+                "summary": "Get revenue trends",
+                "description": "Retrieve revenue trends data for the dashboard",
+                "operationId": "0a4bcde2ec943ffb277066e19367ccaa",
+                "responses": {
+                    "200": {
+                        "description": "Revenue trends retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "monthly_revenue": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "month": {
+                                                                "type": "string",
+                                                                "example": "May 2025"
+                                                            },
+                                                            "month_key": {
+                                                                "type": "string",
+                                                                "example": "2025-05"
+                                                            },
+                                                            "invoiced": {
+                                                                "type": "number",
+                                                                "format": "float",
+                                                                "example": 15000
+                                                            },
+                                                            "collected": {
+                                                                "type": "number",
+                                                                "format": "float",
+                                                                "example": 12500
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "year_comparison": {
+                                                    "properties": {
+                                                        "current_year": {
+                                                            "properties": {
+                                                                "year": {
+                                                                    "type": "integer",
+                                                                    "example": 2025
+                                                                },
+                                                                "revenue": {
+                                                                    "type": "number",
+                                                                    "format": "float",
+                                                                    "example": 120000
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        },
+                                                        "previous_year": {
+                                                            "properties": {
+                                                                "year": {
+                                                                    "type": "integer",
+                                                                    "example": 2024
+                                                                },
+                                                                "revenue": {
+                                                                    "type": "number",
+                                                                    "format": "float",
+                                                                    "example": 100000
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        },
+                                                        "growth_rate": {
+                                                            "type": "number",
+                                                            "format": "float",
+                                                            "example": 20
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "by_product_category": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "category": {
+                                                                "type": "string",
+                                                                "example": "Accommodation"
+                                                            },
+                                                            "revenue": {
+                                                                "type": "number",
+                                                                "format": "float",
+                                                                "example": 75000
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "by_payment_type": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "payment_type": {
+                                                                "type": "string",
+                                                                "example": "Credit Card"
+                                                            },
+                                                            "revenue": {
+                                                                "type": "number",
+                                                                "format": "float",
+                                                                "example": 50000
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "nullable": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "jwt": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/dashboard/occupancy-revenue": {
+            "get": {
+                "tags": [
+                    "Dashboard"
+                ],
+                "summary": "Get occupancy and revenue data",
+                "description": "Retrieve occupancy and revenue data for the dashboard",
+                "operationId": "2616935aa183fde98f5691e057736487",
+                "responses": {
+                    "200": {
+                        "description": "Occupancy and revenue data retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "occupancy_by_apart": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "apart_id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "apart_name": {
+                                                                "type": "string",
+                                                                "example": "Golden Aparthouse"
+                                                            },
+                                                            "total_rooms": {
+                                                                "type": "integer",
+                                                                "example": 20
+                                                            },
+                                                            "occupied_rooms": {
+                                                                "type": "integer",
+                                                                "example": 18
+                                                            },
+                                                            "occupancy_rate": {
+                                                                "type": "number",
+                                                                "format": "float",
+                                                                "example": 90
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "occupancy_trend": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "month": {
+                                                                "type": "string",
+                                                                "example": "May 2025"
+                                                            },
+                                                            "month_key": {
+                                                                "type": "string",
+                                                                "example": "2025-05"
+                                                            },
+                                                            "occupancy_rate": {
+                                                                "type": "number",
+                                                                "format": "float",
+                                                                "example": 85.5
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "revenue_by_apart": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "apart_id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "apart_name": {
+                                                                "type": "string",
+                                                                "example": "Golden Aparthouse"
+                                                            },
+                                                            "revenue": {
+                                                                "type": "number",
+                                                                "format": "float",
+                                                                "example": 125000
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "room_type_distribution": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "room_type": {
+                                                                "type": "string",
+                                                                "example": "single"
+                                                            },
+                                                            "count": {
+                                                                "type": "integer",
+                                                                "example": 30
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "overview": {
+                                                    "properties": {
+                                                        "total_rooms": {
+                                                            "type": "integer",
+                                                            "example": 100
+                                                        },
+                                                        "occupied_rooms": {
+                                                            "type": "integer",
+                                                            "example": 85
+                                                        },
+                                                        "occupancy_rate": {
+                                                            "type": "number",
+                                                            "format": "float",
+                                                            "example": 85
+                                                        },
+                                                        "revenue_per_available_room": {
+                                                            "type": "number",
+                                                            "format": "float",
+                                                            "example": 1250
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "nullable": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/Unauthorized"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/Forbidden"
+                    }
+                },
+                "security": [
+                    {
+                        "jwt": []
+                    }
+                ]
+            }
+        },
         "/api/v1/account-transactions": {
             "get": {
                 "tags": [
@@ -12118,227 +12674,6 @@
                                         },
                                         "data": {
                                             "type": "null"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "jwt": []
-                    }
-                ]
-            }
-        },
-        "/api/v1/dashboard/financial-summary": {
-            "get": {
-                "tags": [
-                    "Dashboard"
-                ],
-                "summary": "Get financial summary metrics",
-                "description": "Get dashboard data",
-                "operationId": "aa11ff0531256dc650c06a6626895845",
-                "responses": {
-                    "200": {
-                        "description": "Successful operation",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Dashboard data retrieved successfully"
-                                        },
-                                        "data": {
-                                            "properties": {
-                                                "total_revenue": {
-                                                    "type": "number",
-                                                    "example": 125000
-                                                },
-                                                "monthly_revenue": {
-                                                    "type": "number",
-                                                    "example": 15000
-                                                },
-                                                "overdue_payments": {
-                                                    "type": "number",
-                                                    "example": 3500
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "jwt": []
-                    }
-                ]
-            }
-        },
-        "/api/v1/dashboard/payment-status": {
-            "get": {
-                "tags": [
-                    "Dashboard"
-                ],
-                "summary": "Get payment status metrics",
-                "description": "Get payment status metrics",
-                "operationId": "23a34cf57456c26e02e4f71da8917e91",
-                "responses": {
-                    "200": {
-                        "description": "Successful operation",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Dashboard data retrieved successfully"
-                                        },
-                                        "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "properties": {
-                                                    "status": {
-                                                        "type": "string",
-                                                        "example": "paid"
-                                                    },
-                                                    "count": {
-                                                        "type": "integer",
-                                                        "example": 125
-                                                    },
-                                                    "total_amount": {
-                                                        "type": "number",
-                                                        "example": 75000
-                                                    }
-                                                },
-                                                "type": "object"
-                                            }
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "jwt": []
-                    }
-                ]
-            }
-        },
-        "/api/v1/dashboard/revenue-trends": {
-            "get": {
-                "tags": [
-                    "Dashboard"
-                ],
-                "summary": "Get revenue trend data",
-                "description": "Get revenue trend data",
-                "operationId": "a377e6cf25937280c978a58120787682",
-                "responses": {
-                    "200": {
-                        "description": "Successful operation",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Dashboard data retrieved successfully"
-                                        },
-                                        "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "properties": {
-                                                    "month": {
-                                                        "type": "string",
-                                                        "example": "2025-03"
-                                                    },
-                                                    "amount": {
-                                                        "type": "number",
-                                                        "example": 25000
-                                                    }
-                                                },
-                                                "type": "object"
-                                            }
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "jwt": []
-                    }
-                ]
-            }
-        },
-        "/api/v1/dashboard/occupancy-revenue": {
-            "get": {
-                "tags": [
-                    "Dashboard"
-                ],
-                "summary": "Get occupancy vs revenue data",
-                "description": "Get occupancy vs revenue data",
-                "operationId": "785e91201195c3ce4b0cb4967499e13b",
-                "responses": {
-                    "200": {
-                        "description": "Successful operation",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Dashboard data retrieved successfully"
-                                        },
-                                        "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "properties": {
-                                                    "month": {
-                                                        "type": "string",
-                                                        "example": "2025-03"
-                                                    },
-                                                    "occupancy_rate": {
-                                                        "type": "number",
-                                                        "example": 85.5
-                                                    },
-                                                    "revenue": {
-                                                        "type": "number",
-                                                        "example": 25000
-                                                    }
-                                                },
-                                                "type": "object"
-                                            }
                                         }
                                     },
                                     "type": "object"
@@ -25795,6 +26130,258 @@
                 },
                 "type": "object"
             },
+            "DashboardStatsResource": {
+                "title": "Dashboard Stats Resource",
+                "description": "Dashboard statistics resource for ModuleGrid and StatsSidebar components",
+                "properties": {
+                    "modules": {
+                        "properties": {
+                            "apartments": {
+                                "properties": {
+                                    "total": {
+                                        "type": "integer",
+                                        "example": 10
+                                    },
+                                    "active": {
+                                        "type": "integer",
+                                        "example": 8
+                                    },
+                                    "maintenance": {
+                                        "type": "integer",
+                                        "example": 2
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "rooms": {
+                                "properties": {
+                                    "total": {
+                                        "type": "integer",
+                                        "example": 50
+                                    },
+                                    "occupied": {
+                                        "type": "integer",
+                                        "example": 40
+                                    },
+                                    "available": {
+                                        "type": "integer",
+                                        "example": 10
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "students": {
+                                "properties": {
+                                    "total": {
+                                        "type": "integer",
+                                        "example": 100
+                                    },
+                                    "active": {
+                                        "type": "integer",
+                                        "example": 95
+                                    },
+                                    "new": {
+                                        "type": "integer",
+                                        "example": 12
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "finance": {
+                                "properties": {
+                                    "monthlyRevenue": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 15000
+                                    },
+                                    "collected": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 12500
+                                    },
+                                    "pending": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 2500
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "notifications": {
+                                "properties": {
+                                    "total": {
+                                        "type": "integer",
+                                        "example": 15
+                                    },
+                                    "general": {
+                                        "type": "integer",
+                                        "example": 12
+                                    },
+                                    "urgent": {
+                                        "type": "integer",
+                                        "example": 3
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "inventory": {
+                                "properties": {
+                                    "total": {
+                                        "type": "integer",
+                                        "example": 250
+                                    },
+                                    "active": {
+                                        "type": "integer",
+                                        "example": 235
+                                    },
+                                    "repair": {
+                                        "type": "integer",
+                                        "example": 15
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "reports": {
+                                "properties": {
+                                    "total": {
+                                        "type": "integer",
+                                        "example": 25
+                                    },
+                                    "financial": {
+                                        "type": "integer",
+                                        "example": 15
+                                    },
+                                    "operational": {
+                                        "type": "integer",
+                                        "example": 10
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "settings": {
+                                "properties": {
+                                    "total": {
+                                        "type": "integer",
+                                        "example": 45
+                                    },
+                                    "general": {
+                                        "type": "integer",
+                                        "example": 30
+                                    },
+                                    "custom": {
+                                        "type": "integer",
+                                        "example": 15
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "support": {
+                                "properties": {
+                                    "total": {
+                                        "type": "integer",
+                                        "example": 5
+                                    },
+                                    "pending": {
+                                        "type": "integer",
+                                        "example": 2
+                                    },
+                                    "inProgress": {
+                                        "type": "integer",
+                                        "example": 3
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "stats": {
+                        "properties": {
+                            "occupancyRate": {
+                                "properties": {
+                                    "percentage": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 80
+                                    },
+                                    "total": {
+                                        "type": "integer",
+                                        "example": 50
+                                    },
+                                    "occupied": {
+                                        "type": "integer",
+                                        "example": 40
+                                    },
+                                    "change": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 5
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "monthlyRevenue": {
+                                "properties": {
+                                    "amount": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 15000
+                                    },
+                                    "pending": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 2500
+                                    },
+                                    "change": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 7.5
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "newRegistrations": {
+                                "properties": {
+                                    "count": {
+                                        "type": "integer",
+                                        "example": 12
+                                    },
+                                    "period": {
+                                        "type": "string",
+                                        "example": "May 2025"
+                                    },
+                                    "change": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 20
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "availableRooms": {
+                                "properties": {
+                                    "count": {
+                                        "type": "integer",
+                                        "example": 10
+                                    },
+                                    "reserved": {
+                                        "type": "integer",
+                                        "example": 3
+                                    },
+                                    "change": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": -5
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        },
+                        "type": "object"
+                    }
+                },
+                "type": "object"
+            },
             "PaymentPlanPaginationMeta": {
                 "properties": {
                     "current_page": {
@@ -30611,6 +31198,10 @@
             "description": "API Endpoints for people management"
         },
         {
+            "name": "Dashboard",
+            "description": "API Endpoints for dashboard statistics"
+        },
+        {
             "name": "Account Transactions",
             "description": "API Endpoints for managing account transactions"
         },
@@ -30705,10 +31296,6 @@
         {
             "name": "1. Aparts",
             "description": "API Endpoints for apart management"
-        },
-        {
-            "name": "Dashboard",
-            "description": "Dashboard"
         }
     ],
     "security": [

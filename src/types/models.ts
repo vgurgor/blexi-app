@@ -834,3 +834,212 @@ export interface IAddress {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface IDashboardSummary {
+  totalStudents?: number;
+  activeStudents?: number;
+  inactiveStudents?: number;
+  totalApartments?: number;
+  activeApartments?: number;
+  inactiveApartments?: number;
+  totalRooms?: number;
+  occupiedRooms?: number;
+  availableRooms?: number;
+  unpaidPaymentsCount?: number;
+  unpaidPaymentsAmount?: number;
+  studentsWithExpiringContracts?: number;
+  recentRegistrations?: IRecentRegistration[];
+  monthlyStats?: IMonthlyStats;
+  paymentSummary?: IPaymentSummary;
+  popularRooms?: IPopularRoom[];
+}
+
+export interface IMonthlyStats {
+  labels: string[];
+  data: number[];
+}
+
+export interface IPaymentSummary {
+  total: number;
+  paid: number;
+  pending: number;
+  overdue: number;
+}
+
+export interface IPopularRoom {
+  roomType: string;
+  count: number;
+  percentage: number;
+}
+
+export interface IRecentRegistration {
+  id: string;
+  guestId: string;
+  guestName: string;
+  roomId?: string;
+  roomName?: string;
+  apartmentId?: string;
+  apartmentName?: string;
+  startDate: string;
+  endDate: string;
+  status: string;
+  createdAt: string;
+}
+
+export interface IDashboardStats {
+  modules: {
+    apartments: {
+      total: number;
+      active: number;
+      maintenance: number;
+    };
+    rooms: {
+      total: number;
+      occupied: number;
+      available: number;
+    };
+    students: {
+      total: number;
+      active: number;
+      new: number;
+    };
+    finance: {
+      monthlyRevenue: number;
+      collected: number;
+      pending: number;
+    };
+    notifications: {
+      total: number;
+      general: number;
+      urgent: number;
+    };
+    inventory: {
+      total: number;
+      active: number;
+      repair: number;
+    };
+    reports: {
+      total: number;
+      financial: number;
+      operational: number;
+    };
+    settings: {
+      total: number;
+      general: number;
+      custom: number;
+    };
+    support: {
+      total: number;
+      pending: number;
+      inProgress: number;
+    };
+  };
+  stats: {
+    occupancyRate: {
+      percentage: number;
+      total: number;
+      occupied: number;
+      change: number;
+    };
+    monthlyRevenue: {
+      amount: number;
+      pending: number;
+      change: number;
+    };
+    newRegistrations: {
+      count: number;
+      period: string;
+      change: number;
+    };
+    availableRooms: {
+      count: number;
+      reserved: number;
+      change: number;
+    };
+  };
+}
+
+export interface IFinancialSummary {
+  income: number;
+  expense: number;
+  balance: number;
+  monthly: Array<{
+    month: string;
+    income: number;
+    expense: number;
+    balance: number;
+  }>;
+}
+
+export interface IPaymentStatus {
+  summary: {
+    upcoming: number;
+    overdue: number;
+    completed: number;
+    total: number;
+  };
+  payment_plans: {
+    active: number;
+    completed: number;
+    cancelled: number;
+  };
+  recent_payments: Array<{
+    id: number;
+    payment_plan_id: number;
+    amount: number;
+    payment_date: string;
+    status: string;
+  }>;
+}
+
+export interface IRevenueTrend {
+  monthly_revenue: Array<{
+    month: string;
+    month_key: string;
+    invoiced: number;
+    collected: number;
+  }>;
+  year_comparison: {
+    current_year: {
+      year: number;
+      revenue: number;
+    };
+    previous_year: {
+      year: number;
+      revenue: number;
+    };
+    growth_rate: number;
+  };
+  by_product_category: Array<{
+    category: string;
+    revenue: number;
+  }>;
+  by_payment_type: Array<{
+    payment_type: string;
+    revenue: number;
+  }>;
+}
+
+export interface IOccupancyRevenue {
+  occupancy_by_apart: Array<{
+    apart_id: number;
+    apart_name: string;
+    total_rooms: number;
+    occupied_rooms: number;
+    occupancy_rate: number;
+  }>;
+  occupancy_trend: Array<{
+    month: string;
+    month_key: string;
+    occupancy_rate: number;
+  }>;
+  revenue_by_apart: Array<{
+    apart_id: number;
+    apart_name: string;
+    revenue: number;
+  }>;
+  room_type_distribution: Array<{
+    room_type: string;
+    count: number;
+  }>;
+}

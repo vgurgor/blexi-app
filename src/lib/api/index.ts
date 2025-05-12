@@ -41,3 +41,4 @@ export * from './countries';
 export * from './provinces';
 export * from './districts';
 export * from './addresses';
+export * from './dashboard';

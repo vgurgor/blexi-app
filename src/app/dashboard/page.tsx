@@ -56,7 +56,7 @@ export default function DashboardPage() {
         </div>
         <ModuleGrid />
       </div>
-      
+
       <StatsSidebar />
     </div>
   );
