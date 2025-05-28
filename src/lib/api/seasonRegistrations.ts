@@ -226,6 +226,7 @@ export const seasonRegistrationsApi = {
    * Tüm sezon kayıtlarını listeler, filtreleme opsiyonları ile
    * @param guestId - Misafir ID filtresi (isteğe bağlı)
    * @param bedId - Yatak ID filtresi (isteğe bağlı)
+   * @param apartId - Apart ID filtresi (isteğe bağlı)
    * @param seasonCode - Sezon kodu filtresi (isteğe bağlı)
    * @param status - Durum filtresi (isteğe bağlı)
    * @param startDate - Başlangıç tarihi filtresi (isteğe bağlı)
@@ -238,6 +239,7 @@ export const seasonRegistrationsApi = {
   getAll: async (
     guestId?: string | number,
     bedId?: string | number,
+    apartId?: string | number,
     seasonCode?: string,
     status?: 'active' | 'cancelled' | 'completed', 
     startDate?: string,
@@ -255,6 +257,10 @@ export const seasonRegistrationsApi = {
     
     if (bedId) {
       params.append('bed_id', bedId.toString());
+    }
+    
+    if (apartId) {
+      params.append('apart_id', apartId.toString());
     }
     
     if (seasonCode) {

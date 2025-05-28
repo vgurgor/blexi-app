@@ -244,6 +244,7 @@ export default function StudentRegistrationsPage() {
         guestId,
         apartId,
         seasonCode,
+        apartId,
         status as any,
         startDate,
         endDate,
