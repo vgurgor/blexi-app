@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/authExport';
-import { Plus, Building2, Building, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Building2, Building, ChevronLeft, ChevronRight, Grid3X3, TableIcon } from 'lucide-react';
 import ApartmentCard from '@/components/apartments/ApartmentCard';
 import CompanyCard from '@/components/companies/CompanyCard';
 import SearchAndFilters from '@/components/shared/SearchAndFilters';
@@ -65,6 +65,7 @@ export default function ApartmentsPage() {
   const [apartments, setApartments] = useState<ApartDto[]>([]);
   const [companies, setCompanies] = useState<FirmDto[]>([]);
   const [showFilters, setShowFilters] = useState(false);
+  const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
   const [filters, setFilters] = useState<Filters>({
     status: [],
     occupancyRange: 'all',
@@ -418,6 +419,8 @@ export default function ApartmentsPage() {
         onSearchChange={setSearchTerm}
         showFilters={showFilters}
         onToggleFilters={() => setShowFilters(!showFilters)}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
         filters={filters}
         onFilterChange={setFilters}
         activeTab={activeTab}
@@ -430,40 +433,199 @@ export default function ApartmentsPage() {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {activeTab === 'apartments' ? (
-              filteredApartments.length > 0 ? (
-                filteredApartments.map(apartment => (
-                  <ApartmentCard
-                    key={apartment.id}
-                    apartment={apartment}
-                    getCompanyName={getCompanyName}
-                    onStatusChange={handleApartmentStatusChange}
-                    onDelete={handleApartmentDelete}
-                  />
-                ))
+          {viewMode === 'grid' ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {activeTab === 'apartments' ? (
+                filteredApartments.length > 0 ? (
+                  filteredApartments.map(apartment => (
+                    <ApartmentCard
+                      key={apartment.id}
+                      apartment={apartment}
+                      getCompanyName={getCompanyName}
+                      onStatusChange={handleApartmentStatusChange}
+                      onDelete={handleApartmentDelete}
+                    />
+                  ))
+                ) : (
+                  <div className="col-span-3 py-12 text-center text-gray-500 dark:text-gray-400">
+                    Henüz apart kaydı bulunmamaktadır.
+                  </div>
+                )
               ) : (
-                <div className="col-span-3 py-12 text-center text-gray-500 dark:text-gray-400">
-                  Henüz apart kaydı bulunmamaktadır.
-                </div>
-              )
-            ) : (
-              filteredCompanyData.length > 0 ? (
-                filteredCompanyData.map(company => (
-                  <CompanyCard
-                    key={company.id}
-                    company={company as unknown as ICompany}
-                    onStatusChange={handleCompanyStatusChange}
-                    onDelete={handleCompanyDelete}
-                  />
-                ))
-              ) : (
-                <div className="col-span-3 py-12 text-center text-gray-500 dark:text-gray-400">
-                  Henüz firma kaydı bulunmamaktadır. (Yüklenen: {companies.length}, Filtrelenen: {filteredCompanies.length})
-                </div>
-              )
-            )}
-          </div>
+                filteredCompanyData.length > 0 ? (
+                  filteredCompanyData.map(company => (
+                    <CompanyCard
+                      key={company.id}
+                      company={company as unknown as ICompany}
+                      onStatusChange={handleCompanyStatusChange}
+                      onDelete={handleCompanyDelete}
+                    />
+                  ))
+                ) : (
+                  <div className="col-span-3 py-12 text-center text-gray-500 dark:text-gray-400">
+                    Henüz firma kaydı bulunmamaktadır.
+                  </div>
+                )
+              )}
+            </div>
+          ) : (
+            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50 dark:bg-gray-900">
+                    <tr>
+                      {activeTab === 'apartments' ? (
+                        <>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            Apart Adı
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            Firma
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            Adres
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            Cinsiyet Tipi
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            Durum
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            İşlemler
+                          </th>
+                        </>
+                      ) : (
+                        <>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            Firma Adı
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            E-posta
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            Telefon
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            Apart Sayısı
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            Durum
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            İşlemler
+                          </th>
+                        </>
+                      )}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                    {activeTab === 'apartments' ? (
+                      filteredApartments.length > 0 ? (
+                        filteredApartments.map(apartment => (
+                          <tr key={apartment.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
+                              {apartment.name}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                              {getCompanyName(apartment.firm_id)}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                              {apartment.address}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                              {apartment.gender_type === 'MALE' ? 'Erkek' : apartment.gender_type === 'FEMALE' ? 'Kadın' : 'Karma'}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                apartment.status === 'active' 
+                                  ? 'bg-green-100 text-green-800 dark:bg-green-500/10 dark:text-green-400'
+                                  : 'bg-red-100 text-red-800 dark:bg-red-500/10 dark:text-red-400'
+                              }`}>
+                                {apartment.status === 'active' ? 'Aktif' : 'Pasif'}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => router.push(`/dashboard/apartments/${apartment.id}/edit`)}
+                                  className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
+                                >
+                                  Düzenle
+                                </button>
+                                <button
+                                  onClick={() => handleApartmentDelete(apartment.id)}
+                                  className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
+                                >
+                                  Sil
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan={6} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                            Henüz apart kaydı bulunmamaktadır.
+                          </td>
+                        </tr>
+                      )
+                    ) : (
+                      filteredCompanyData.length > 0 ? (
+                        filteredCompanyData.map(company => (
+                          <tr key={company.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
+                              {company.name}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                              {company.email}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                              {company.phone}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                              {company.aparts_count}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                company.status === 'active' 
+                                  ? 'bg-green-100 text-green-800 dark:bg-green-500/10 dark:text-green-400'
+                                  : 'bg-red-100 text-red-800 dark:bg-red-500/10 dark:text-red-400'
+                              }`}>
+                                {company.status === 'active' ? 'Aktif' : 'Pasif'}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => router.push(`/dashboard/companies/${company.id}/edit`)}
+                                  className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
+                                >
+                                  Düzenle
+                                </button>
+                                <button
+                                  onClick={() => handleCompanyDelete(company.id.toString())}
+                                  className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
+                                >
+                                  Sil
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan={6} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                            Henüz firma kaydı bulunmamaktadır.
+                          </td>
+                        </tr>
+                      )
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
 
           {/* Pagination */}
           {paginationMeta && paginationMeta.last_page > 1 && (

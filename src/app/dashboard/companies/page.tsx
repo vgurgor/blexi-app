@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/authExport';
-import { Plus, Search, Filter } from 'lucide-react';
+import { Plus, Search, Filter, Grid3X3, TableIcon } from 'lucide-react';
 import { firmsApi, type FirmDto, type FirmFilters } from '@/lib/api/firms';
 import { ICompany } from '@/types/models';
 import CompanyCard from '@/components/companies/CompanyCard';
@@ -16,6 +16,7 @@ export default function CompaniesPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilters, setShowFilters] = useState(false);
+  const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
   const [selectedStatus, setSelectedStatus] = useState<'all' | 'active' | 'inactive'>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [paginationMeta, setPaginationMeta] = useState<any>(null);
@@ -172,7 +173,7 @@ export default function CompaniesPage() {
         </div>
       )}
 
-      {/* Search and Filters */}
+      {/* Simple Search and View Toggle - Companies don't use the complex SearchAndFilters */}
       <div className="mb-6 flex flex-col md:flex-row gap-4">
         <div className="flex-1 relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -185,7 +186,33 @@ export default function CompaniesPage() {
           />
         </div>
         
-        <div className="flex gap-4">
+        <div className="flex gap-2">
+          {/* View Mode Toggle */}
+          <div className="flex bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-1">
+            <button
+              onClick={() => setViewMode('grid')}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition-colors ${
+                viewMode === 'grid'
+                  ? 'bg-blue-500 text-white'
+                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+              }`}
+            >
+              <Grid3X3 className="w-4 h-4" />
+              <span className="text-sm font-medium">Kart</span>
+            </button>
+            <button
+              onClick={() => setViewMode('table')}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition-colors ${
+                viewMode === 'table'
+                  ? 'bg-blue-500 text-white'
+                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+              }`}
+            >
+              <TableIcon className="w-4 h-4" />
+              <span className="text-sm font-medium">Tablo</span>
+            </button>
+          </div>
+
           <select
             value={selectedStatus}
             onChange={(e) => setSelectedStatus(e.target.value as 'all' | 'active' | 'inactive')}
@@ -216,22 +243,112 @@ export default function CompaniesPage() {
           <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredCompanies.length > 0 ? (
-            filteredCompanies.map(company => (
-              <CompanyCard
-                key={company.id}
-                company={company}
-                onStatusChange={handleStatusChange}
-                onDelete={handleDelete}
-              />
-            ))
+        <>
+          {viewMode === 'grid' ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredCompanies.length > 0 ? (
+                filteredCompanies.map(company => (
+                  <CompanyCard
+                    key={company.id}
+                    company={company}
+                    onStatusChange={handleStatusChange}
+                    onDelete={handleDelete}
+                  />
+                ))
+              ) : (
+                <div className="col-span-3 py-12 text-center text-gray-500 dark:text-gray-400">
+                  {searchTerm ? 'Arama kriterlerine uygun firma bulunamadı.' : 'Henüz firma kaydı bulunmamaktadır.'}
+                </div>
+              )}
+            </div>
           ) : (
-            <div className="col-span-3 py-12 text-center text-gray-500 dark:text-gray-400">
-              {searchTerm ? 'Arama kriterlerine uygun firma bulunamadı.' : 'Henüz firma kaydı bulunmamaktadır.'}
+            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50 dark:bg-gray-900">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Firma Adı
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        E-posta
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Telefon
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Adres
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Apart Sayısı
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Durum
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        İşlemler
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                    {filteredCompanies.length > 0 ? (
+                      filteredCompanies.map(company => (
+                        <tr key={company.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
+                            {company.name}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                            {company.email}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                            {company.phone}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                            {company.address}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                            {company.aparts_count || 0}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                              company.status === 'active' 
+                                ? 'bg-green-100 text-green-800 dark:bg-green-500/10 dark:text-green-400'
+                                : 'bg-red-100 text-red-800 dark:bg-red-500/10 dark:text-red-400'
+                            }`}>
+                              {company.status === 'active' ? 'Aktif' : 'Pasif'}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => router.push(`/dashboard/companies/${company.id}/edit`)}
+                                className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
+                              >
+                                Düzenle
+                              </button>
+                              <button
+                                onClick={() => handleDelete(company.id)}
+                                className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
+                              >
+                                Sil
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={7} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                          {searchTerm ? 'Arama kriterlerine uygun firma bulunamadı.' : 'Henüz firma kaydı bulunmamaktadır.'}
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
-        </div>
+        </>
       )}
 
       {/* Pagination */}

@@ -1,12 +1,14 @@
 'use client';
 
-import { Search, Filter, X } from 'lucide-react';
+import { Search, Filter, X, Grid3X3, TableIcon } from 'lucide-react';
 
 interface SearchAndFiltersProps {
   searchTerm: string;
   onSearchChange: (value: string) => void;
   showFilters: boolean;
   onToggleFilters: () => void;
+  viewMode?: 'grid' | 'table';
+  onViewModeChange?: (mode: 'grid' | 'table') => void;
   filters: {
     status: string[];
     occupancyRange: string;
@@ -24,6 +26,8 @@ export default function SearchAndFilters({
   onSearchChange,
   showFilters,
   onToggleFilters,
+  viewMode,
+  onViewModeChange,
   filters,
   onFilterChange,
   activeTab,
@@ -40,7 +44,7 @@ export default function SearchAndFilters({
 
   return (
     <div className="space-y-4 mb-6">
-      <div className="flex gap-4">
+      <div className="flex flex-col md:flex-row gap-4">
         <div className="flex-1 relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
           <input
@@ -51,17 +55,48 @@ export default function SearchAndFilters({
             className="w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 transition-all"
           />
         </div>
-        <button 
-          onClick={onToggleFilters}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-            showFilters 
-              ? 'bg-blue-500 hover:bg-blue-600 text-white' 
-              : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700'
-          }`}
-        >
-          {showFilters ? <X className="w-5 h-5" /> : <Filter className="w-5 h-5" />}
-          Filtreler
-        </button>
+        
+        <div className="flex gap-2">
+          {/* View Mode Toggle */}
+          {viewMode && onViewModeChange && (
+            <div className="flex bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-1">
+              <button
+                onClick={() => onViewModeChange('grid')}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition-colors ${
+                  viewMode === 'grid'
+                    ? 'bg-blue-500 text-white'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                }`}
+              >
+                <Grid3X3 className="w-4 h-4" />
+                <span className="text-sm font-medium">Kart</span>
+              </button>
+              <button
+                onClick={() => onViewModeChange('table')}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition-colors ${
+                  viewMode === 'table'
+                    ? 'bg-blue-500 text-white'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                }`}
+              >
+                <TableIcon className="w-4 h-4" />
+                <span className="text-sm font-medium">Tablo</span>
+              </button>
+            </div>
+          )}
+          
+          <button 
+            onClick={onToggleFilters}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+              showFilters 
+                ? 'bg-blue-500 hover:bg-blue-600 text-white' 
+                : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700'
+            }`}
+          >
+            {showFilters ? <X className="w-5 h-5" /> : <Filter className="w-5 h-5" />}
+            Filtreler
+          </button>
+        </div>
       </div>
 
       {showFilters && (

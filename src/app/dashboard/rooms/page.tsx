@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/authExport';
-import { Plus, DoorOpen, Bed, ChevronLeft, ChevronRight, Building2, Search, Filter } from 'lucide-react';
+import { Plus, DoorOpen, Bed, ChevronLeft, ChevronRight, Building2, Search, Filter, Grid3X3, TableIcon } from 'lucide-react';
 import RoomCard from '@/components/rooms/RoomCard';
 import { roomsApi, RoomFilters } from '@/lib/api/rooms';
 import { IRoom } from '@/types/models';
@@ -48,6 +48,7 @@ export default function RoomsPage() {
   const [rooms, setRooms] = useState<IRoom[]>([]);
   const [apartments, setApartments] = useState<Apartment[]>([]);
   const [showFilters, setShowFilters] = useState(false);
+  const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
   const [filters, setFilters] = useState<Filters>({
     status: [],
     roomType: 'all',
@@ -233,7 +234,7 @@ export default function RoomsPage() {
         </button>
       </div>
 
-      {/* Search and Filters */}
+      {/* Search, Filters and View Toggle */}
       <div className="mb-6 flex flex-col md:flex-row gap-4">
         <div className="flex-1 relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -246,17 +247,45 @@ export default function RoomsPage() {
           />
         </div>
         
-        <button 
-          onClick={() => setShowFilters(!showFilters)}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-            showFilters 
-              ? 'bg-blue-500 hover:bg-blue-600 text-white' 
-              : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700'
-          }`}
-        >
-          <Filter className="w-5 h-5" />
-          Filtreler
-        </button>
+        <div className="flex gap-2">
+          {/* View Mode Toggle */}
+          <div className="flex bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-1">
+            <button
+              onClick={() => setViewMode('grid')}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition-colors ${
+                viewMode === 'grid'
+                  ? 'bg-blue-500 text-white'
+                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+              }`}
+            >
+              <Grid3X3 className="w-4 h-4" />
+              <span className="text-sm font-medium">Kart</span>
+            </button>
+            <button
+              onClick={() => setViewMode('table')}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition-colors ${
+                viewMode === 'table'
+                  ? 'bg-blue-500 text-white'
+                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+              }`}
+            >
+              <TableIcon className="w-4 h-4" />
+              <span className="text-sm font-medium">Tablo</span>
+            </button>
+          </div>
+          
+          <button 
+            onClick={() => setShowFilters(!showFilters)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+              showFilters 
+                ? 'bg-blue-500 hover:bg-blue-600 text-white' 
+                : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700'
+            }`}
+          >
+            <Filter className="w-5 h-5" />
+            Filtreler
+          </button>
+        </div>
       </div>
 
       {showFilters && (
@@ -412,23 +441,119 @@ export default function RoomsPage() {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredRooms.length > 0 ? (
-              filteredRooms.map(room => (
-                <RoomCard
-                  key={room.id}
-                  room={room}
-                  getApartmentName={getApartmentName}
-                  onStatusChange={handleRoomStatusChange}
-                  onDelete={handleRoomDelete}
-                />
-              ))
-            ) : (
-              <div className="col-span-3 py-12 text-center text-gray-500 dark:text-gray-400">
-                Henüz oda kaydı bulunmamaktadır.
+          {viewMode === 'grid' ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredRooms.length > 0 ? (
+                filteredRooms.map(room => (
+                  <RoomCard
+                    key={room.id}
+                    room={room}
+                    getApartmentName={getApartmentName}
+                    onStatusChange={handleRoomStatusChange}
+                    onDelete={handleRoomDelete}
+                  />
+                ))
+              ) : (
+                <div className="col-span-3 py-12 text-center text-gray-500 dark:text-gray-400">
+                  Henüz oda kaydı bulunmamaktadır.
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50 dark:bg-gray-900">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Oda No
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Apart
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Kat
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Tip
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Yatak Sayısı
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Durum
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        İşlemler
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                    {filteredRooms.length > 0 ? (
+                      filteredRooms.map(room => (
+                        <tr key={room.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
+                            {room.room_number}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                            {getApartmentName(room.apart_id)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                            {room.floor}. Kat
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                            {room.room_type}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                            {room.bed_count || 0}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                              room.status === 'active' 
+                                ? 'bg-green-100 text-green-800 dark:bg-green-500/10 dark:text-green-400'
+                                : room.status === 'inactive'
+                                ? 'bg-red-100 text-red-800 dark:bg-red-500/10 dark:text-red-400'
+                                : 'bg-orange-100 text-orange-800 dark:bg-orange-500/10 dark:text-orange-400'
+                            }`}>
+                              {room.status === 'active' ? 'Aktif' : room.status === 'inactive' ? 'Pasif' : 'Bakımda'}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => router.push(`/dashboard/rooms/${room.id}/edit`)}
+                                className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
+                              >
+                                Düzenle
+                              </button>
+                              <button
+                                onClick={() => router.push(`/dashboard/rooms/${room.id}/beds`)}
+                                className="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300"
+                              >
+                                Yataklar
+                              </button>
+                              <button
+                                onClick={() => handleRoomDelete(room.id)}
+                                className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
+                              >
+                                Sil
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={7} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                          Henüz oda kaydı bulunmamaktadır.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
               </div>
-            )}
-          </div>
+            </div>
+          )}
 
           {/* Pagination */}
           {paginationMeta && paginationMeta.last_page > 1 && (
